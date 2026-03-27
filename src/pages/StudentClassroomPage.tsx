@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HelpCircle, MessageSquare, CheckCircle, LogOut, ArrowLeft } from 'lucide-react';
-import { ClassroomSession, ClassroomParticipant } from '../types';
+import { ClassroomSession, ClassroomParticipant, ClassroomPrompt } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 export default function StudentClassroomPage() {
@@ -15,14 +15,27 @@ export default function StudentClassroomPage() {
   const [session, setSession] = useState<ClassroomSession | null>(null);
   const [participant, setParticipant] = useState<ClassroomParticipant | null>(null);
   const [activeSignal, setActiveSignal] = useState<string | null>(null);
+  const [composingSignal, setComposingSignal] = useState<'HELP' | 'WORD' | 'CHECK' | null>(null);
+  const [signalText, setSignalText] = useState('');
+  const [activePrompt, setActivePrompt] = useState<ClassroomPrompt | null>(null);
+  const [promptResponse, setPromptResponse] = useState('');
+  const [promptSubmitted, setPromptSubmitted] = useState(false);
 
   useEffect(() => {
     if (!session) return;
 
     // Setup WebSocket for real-time updates
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     const ws = new WebSocket(wsUrl);
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
 
     ws.onmessage = (event) => {
       try {
@@ -32,6 +45,12 @@ export default function StudentClassroomPage() {
           setActiveSignal(null); // Reset signal on phase change
         } else if (data.type === 'SESSION_ENDED' && data.session_id === session.id) {
           setSession(prev => prev ? { ...prev, status: 'ENDED' } : prev);
+        } else if (data.type === 'PROMPT_CREATED' && data.session_id === session.id) {
+          setActivePrompt(data.prompt);
+          setPromptResponse('');
+          setPromptSubmitted(false);
+        } else if (data.type === 'PROMPT_CLOSED' && data.session_id === session.id) {
+          setActivePrompt(null);
         }
       } catch (e) {
         console.error('WebSocket message error:', e);
@@ -66,6 +85,13 @@ export default function StudentClassroomPage() {
       const data = await res.json();
       setSession(data.session);
       setParticipant(data.participant);
+
+      if (data.session.active_prompt_id) {
+        const promptRes = await fetch(`/api/sessions/${data.session.id}/prompts/${data.session.active_prompt_id}`);
+        if (promptRes.ok) {
+          setActivePrompt(await promptRes.json());
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Er is een fout opgetreden');
     } finally {
@@ -73,11 +99,17 @@ export default function StudentClassroomPage() {
     }
   };
 
-  const sendSignal = async (signalType: 'HELP' | 'WORD' | 'CHECK' | 'EXIT') => {
+  const sendSignal = async (signalType: 'HELP' | 'WORD' | 'CHECK' | 'EXIT' | 'RESPONSE', textValue?: string) => {
     if (!session || !participant) return;
     
     // Optimistic UI update
-    setActiveSignal(signalType);
+    if (signalType === 'RESPONSE') {
+      setPromptSubmitted(true);
+    } else {
+      setActiveSignal(signalType);
+      setComposingSignal(null);
+      setSignalText('');
+    }
 
     try {
       await fetch('/api/signals', {
@@ -88,12 +120,18 @@ export default function StudentClassroomPage() {
           participant_id: participant.id,
           phase: session.active_phase,
           signal_type: signalType,
+          text_value: textValue,
+          prompt_id: signalType === 'RESPONSE' ? activePrompt?.id : undefined,
           urgency: signalType === 'HELP' ? 'HIGH' : 'LOW'
         })
       });
     } catch (err) {
       console.error('Failed to send signal:', err);
-      setActiveSignal(null); // Revert on failure
+      if (signalType === 'RESPONSE') {
+        setPromptSubmitted(false);
+      } else {
+        setActiveSignal(null); // Revert on failure
+      }
     }
   };
 
@@ -216,75 +254,164 @@ export default function StudentClassroomPage() {
       {/* Main Content: Signal Buttons */}
       <main className="flex-1 p-4 flex flex-col items-center justify-center max-w-md mx-auto w-full space-y-4">
         
-        {/* Only show relevant buttons based on phase */}
-        {session.active_phase === 'INSTRUCTION' && (
-          <>
-            <button 
-              onClick={() => sendSignal('HELP')}
-              className={`w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 ${
-                activeSignal === 'HELP' 
-                  ? 'bg-red-50 border-red-500 text-red-700 scale-95' 
-                  : 'bg-white border-gray-200 text-gray-700 hover:border-red-200 hover:bg-red-50 active:scale-95'
-              }`}
-            >
-              <HelpCircle className={`w-10 h-10 ${activeSignal === 'HELP' ? 'text-red-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-lg">Ik snap het niet</span>
-            </button>
+        {activePrompt ? (
+          <div className={`p-6 rounded-2xl shadow-sm border-2 w-full animate-in fade-in slide-in-from-bottom-4 ${
+            activePrompt.prompt_type === 'HINT' ? 'bg-amber-50 border-amber-200' :
+            activePrompt.prompt_type === 'REFLECTION' ? 'bg-emerald-50 border-emerald-200' :
+            'bg-white border-indigo-200'
+          }`}>
+            <div className={`flex items-center gap-2 mb-2 ${
+              activePrompt.prompt_type === 'HINT' ? 'text-amber-600' :
+              activePrompt.prompt_type === 'REFLECTION' ? 'text-emerald-600' :
+              'text-indigo-600'
+            }`}>
+              <MessageSquare className="w-5 h-5" />
+              <span className="font-semibold uppercase tracking-wider text-xs">
+                {activePrompt.prompt_type === 'HINT' ? 'Hint van de docent' :
+                 activePrompt.prompt_type === 'REFLECTION' ? 'Reflectievraag' :
+                 'Vraag van de docent'}
+              </span>
+            </div>
+            <h2 className="text-xl font-bold mb-4 text-gray-900">
+              {activePrompt.prompt_text}
+            </h2>
             
-            <button 
-              onClick={() => sendSignal('WORD')}
-              className={`w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 ${
-                activeSignal === 'WORD' 
-                  ? 'bg-blue-50 border-blue-500 text-blue-700 scale-95' 
-                  : 'bg-white border-gray-200 text-gray-700 hover:border-blue-200 hover:bg-blue-50 active:scale-95'
-              }`}
+            {activePrompt.response_mode === 'ACKNOWLEDGE' ? (
+              <div className="flex justify-center mt-6">
+                {promptSubmitted ? (
+                  <div className="bg-green-50 text-green-700 p-4 rounded-lg flex items-center gap-3 w-full">
+                    <CheckCircle className="w-6 h-6" />
+                    <span className="font-medium">Gelezen!</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => sendSignal('RESPONSE', 'Gelezen')}
+                    className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Ik heb dit gelezen
+                  </button>
+                )}
+              </div>
+            ) : promptSubmitted ? (
+              <div className="bg-green-50 text-green-700 p-4 rounded-lg flex items-center gap-3">
+                <CheckCircle className="w-6 h-6" />
+                <span className="font-medium">Jouw antwoord is verzonden! Wacht op de docent.</span>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  value={promptResponse}
+                  onChange={(e) => setPromptResponse(e.target.value)}
+                  placeholder="Typ hier je antwoord..."
+                  className="w-full p-3 border rounded-lg mb-4 min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                  autoFocus
+                />
+                <button
+                  onClick={() => sendSignal('RESPONSE', promptResponse)}
+                  disabled={!promptResponse.trim()}
+                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium disabled:opacity-50 transition-colors"
+                >
+                  Verstuur Antwoord
+                </button>
+              </>
+            )}
+          </div>
+        ) : composingSignal ? (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border w-full animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-xl font-bold mb-4 text-gray-900">
+              {composingSignal === 'WORD' ? 'Welk woord begrijp je niet?' : 'Waar loop je precies vast?'}
+            </h2>
+            <textarea
+              value={signalText}
+              onChange={(e) => setSignalText(e.target.value)}
+              placeholder={composingSignal === 'WORD' ? 'Typ het woord hier...' : 'Optioneel: leg kort uit wat je niet snapt...'}
+              className="w-full p-3 border rounded-lg mb-4 min-h-[100px] focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setComposingSignal(null);
+                  setSignalText('');
+                }}
+                className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={() => sendSignal(composingSignal, signalText)}
+                disabled={composingSignal === 'WORD' && !signalText.trim()}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 transition-colors"
+              >
+                Versturen
+              </button>
+            </div>
+          </div>
+        ) : activeSignal ? (
+          <div className="bg-white p-8 rounded-2xl shadow-sm border w-full text-center animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2 text-gray-900">Verzonden!</h2>
+            <p className="text-gray-600 mb-6">De docent heeft je bericht ontvangen.</p>
+            <button
+              onClick={() => setActiveSignal(null)}
+              className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition-colors"
             >
-              <MessageSquare className={`w-10 h-10 ${activeSignal === 'WORD' ? 'text-blue-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-lg">Wat betekent dit woord?</span>
+              Terug naar opties
             </button>
-          </>
-        )}
-
-        {session.active_phase === 'PRACTICE' && (
+          </div>
+        ) : (
           <>
-            <button 
-              onClick={() => sendSignal('HELP')}
-              className={`w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 ${
-                activeSignal === 'HELP' 
-                  ? 'bg-red-50 border-red-500 text-red-700 scale-95' 
-                  : 'bg-white border-gray-200 text-gray-700 hover:border-red-200 hover:bg-red-50 active:scale-95'
-              }`}
-            >
-              <HelpCircle className={`w-10 h-10 ${activeSignal === 'HELP' ? 'text-red-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-lg">Ik loop vast</span>
-            </button>
+            {/* Only show relevant buttons based on phase */}
+            {session.active_phase === 'INSTRUCTION' && (
+              <>
+                <button 
+                  onClick={() => setComposingSignal('HELP')}
+                  className="w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 bg-white border-gray-200 text-gray-700 hover:border-red-200 hover:bg-red-50 active:scale-95"
+                >
+                  <HelpCircle className="w-10 h-10 text-gray-400" />
+                  <span className="font-bold text-lg">Ik snap het niet</span>
+                </button>
+                
+                <button 
+                  onClick={() => setComposingSignal('WORD')}
+                  className="w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 bg-white border-gray-200 text-gray-700 hover:border-blue-200 hover:bg-blue-50 active:scale-95"
+                >
+                  <MessageSquare className="w-10 h-10 text-gray-400" />
+                  <span className="font-bold text-lg">Wat betekent dit woord?</span>
+                </button>
+              </>
+            )}
 
-            <button 
-              onClick={() => sendSignal('CHECK')}
-              className={`w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 ${
-                activeSignal === 'CHECK' 
-                  ? 'bg-green-50 border-green-500 text-green-700 scale-95' 
-                  : 'bg-white border-gray-200 text-gray-700 hover:border-green-200 hover:bg-green-50 active:scale-95'
-              }`}
-            >
-              <CheckCircle className={`w-10 h-10 ${activeSignal === 'CHECK' ? 'text-green-500' : 'text-gray-400'}`} />
-              <span className="font-bold text-lg">Ik ben klaar</span>
-            </button>
+            {session.active_phase === 'PRACTICE' && (
+              <>
+                <button 
+                  onClick={() => setComposingSignal('HELP')}
+                  className="w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 bg-white border-gray-200 text-gray-700 hover:border-red-200 hover:bg-red-50 active:scale-95"
+                >
+                  <HelpCircle className="w-10 h-10 text-gray-400" />
+                  <span className="font-bold text-lg">Ik loop vast</span>
+                </button>
+
+                <button 
+                  onClick={() => sendSignal('CHECK')}
+                  className="w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 bg-white border-gray-200 text-gray-700 hover:border-green-200 hover:bg-green-50 active:scale-95"
+                >
+                  <CheckCircle className="w-10 h-10 text-gray-400" />
+                  <span className="font-bold text-lg">Ik ben klaar</span>
+                </button>
+              </>
+            )}
+
+            {(session.active_phase === 'START' || session.active_phase === 'CLOSING') && (
+              <div className="text-center p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-black/5">
+                <p className="text-lg font-medium text-gray-600">
+                  {session.active_phase === 'START' ? 'Kijk naar het bord voor de start van de les.' : 'De les is afgelopen. Kijk naar het bord.'}
+                </p>
+              </div>
+            )}
           </>
-        )}
-
-        {(session.active_phase === 'START' || session.active_phase === 'CLOSING') && (
-          <div className="text-center p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-black/5">
-            <p className="text-lg font-medium text-gray-600">
-              {session.active_phase === 'START' ? 'Kijk naar het bord voor de start van de les.' : 'De les is afgelopen. Kijk naar het bord.'}
-            </p>
-          </div>
-        )}
-
-        {activeSignal && (
-          <div className="text-sm font-medium text-gray-500 animate-pulse mt-4">
-            Signaal verzonden naar docent
-          </div>
         )}
 
       </main>

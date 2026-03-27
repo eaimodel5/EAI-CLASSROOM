@@ -21,7 +21,7 @@ function generateSessionCode() {
 async function startServer() {
   const app = express();
   const server = http.createServer(app);
-  const wss = new WebSocketServer({ server });
+  const wss = new WebSocketServer({ server, path: '/ws' });
   const PORT = process.env.NODE_ENV === 'production' ? parseInt(process.env.PORT || '3000', 10) : 3000;
 
   app.use(express.json());
@@ -92,6 +92,78 @@ async function startServer() {
     }
   });
 
+  // GET /api/sessions/:id/prompts/:promptId - Get prompt details
+  app.get('/api/sessions/:id/prompts/:promptId', (req, res) => {
+    try {
+      const prompt = db.prepare('SELECT * FROM classroom_prompts WHERE id = ?').get(req.params.promptId);
+      if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
+      res.json(prompt);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch prompt' });
+    }
+  });
+
+  // POST /api/sessions/:id/prompts - Create a new prompt (checkvraag)
+  app.post('/api/sessions/:id/prompts', (req, res) => {
+    try {
+      const { title, prompt_text, prompt_type, response_mode } = req.body;
+      const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(req.params.id) as any;
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+
+      const promptId = uuidv4();
+      const stmt = db.prepare(`
+        INSERT INTO classroom_prompts (id, classroom_session_id, created_by_user_id, phase, prompt_type, title, prompt_text, response_mode, status, opened_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', CURRENT_TIMESTAMP)
+      `);
+      stmt.run(promptId, session.id, session.teacher_user_id, session.active_phase, prompt_type || 'OPEN_ENDED', title, prompt_text, response_mode || 'TEXT');
+
+      // Set active prompt on session
+      db.prepare('UPDATE classroom_sessions SET active_prompt_id = ? WHERE id = ?').run(promptId, session.id);
+      const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(session.id);
+
+      const prompt = db.prepare('SELECT * FROM classroom_prompts WHERE id = ?').get(promptId);
+
+      // Broadcast to all clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ type: 'PROMPT_CREATED', session_id: session.id, prompt, session: updatedSession }));
+        }
+      });
+
+      res.status(201).json(prompt);
+    } catch (error) {
+      console.error('Error creating prompt:', error);
+      res.status(500).json({ error: 'Failed to create prompt' });
+    }
+  });
+
+  // POST /api/sessions/:id/prompts/:promptId/close - Close a prompt
+  app.post('/api/sessions/:id/prompts/:promptId/close', (req, res) => {
+    try {
+      const { id, promptId } = req.params;
+      const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id) as any;
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+
+      db.prepare('UPDATE classroom_prompts SET status = ?, closed_at = CURRENT_TIMESTAMP WHERE id = ?').run('CLOSED', promptId);
+      db.prepare('UPDATE classroom_sessions SET active_prompt_id = NULL WHERE id = ?').run(session.id);
+      
+      const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(session.id);
+      const prompt = db.prepare('SELECT * FROM classroom_prompts WHERE id = ?').get(promptId);
+
+      // Broadcast to all clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ type: 'PROMPT_CLOSED', session_id: session.id, prompt, session: updatedSession }));
+        }
+      });
+
+      res.json(prompt);
+    } catch (error) {
+      console.error('Error closing prompt:', error);
+      res.status(500).json({ error: 'Failed to close prompt' });
+    }
+  });
+
   // POST /api/sessions/:id/summarize - Generate AI summary for current phase
   app.post('/api/sessions/:id/summarize', async (req, res) => {
     try {
@@ -113,6 +185,10 @@ async function startServer() {
       const signalsText = signals.map(s => `- ${s.display_name}: ${s.signal_type} ${s.text_value ? `("${s.text_value}")` : ''}`).join('\n');
       const ssotContext = getSsotContextForPrompt(session.active_phase);
       
+      if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: 'GEMINI_API_KEY is not configured.' });
+      }
+
       const prompt = `
 Je bent de EAI CLASSROOM Agent. Je helpt een docent tijdens de les door live signalen van leerlingen te clusteren.
 De huidige lesfase is: ${session.active_phase}.
@@ -264,15 +340,15 @@ Zorg dat de output uitsluitend geldige JSON is, zonder markdown formatting.
 
   // POST /api/signals - Student sends a signal
   app.post('/api/signals', (req, res) => {
-    const { classroom_session_id, participant_id, phase, signal_type, urgency, text_value } = req.body;
+    const { classroom_session_id, participant_id, phase, signal_type, urgency, text_value, prompt_id } = req.body;
     const id = uuidv4();
 
     try {
       const stmt = db.prepare(`
-        INSERT INTO classroom_signals (id, classroom_session_id, participant_id, phase, signal_type, urgency, status, text_value)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO classroom_signals (id, classroom_session_id, participant_id, phase, signal_type, urgency, status, text_value, prompt_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
-      stmt.run(id, classroom_session_id, participant_id, phase, signal_type, urgency || 'LOW', 'NEW', text_value || null);
+      stmt.run(id, classroom_session_id, participant_id, phase, signal_type, urgency || 'LOW', 'NEW', text_value || null, prompt_id || null);
 
       const signal = db.prepare('SELECT * FROM classroom_signals WHERE id = ?').get(id);
       
@@ -291,12 +367,13 @@ Zorg dat de output uitsluitend geldige JSON is, zonder markdown formatting.
   });
 
   // WebSocket Realtime Sync (vervangt Supabase realtime voor deze MVP)
-  wss.on('connection', (ws) => {
-    console.log('New WebSocket connection');
+  wss.on('connection', (ws, req) => {
+    console.log('New WebSocket connection from:', req.socket.remoteAddress, 'path:', req.url);
     
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
+        console.log('WS message received:', data.type);
         // Simple broadcast for MVP realtime sync
         wss.clients.forEach((client) => {
           if (client !== ws && client.readyState === 1) {
@@ -306,6 +383,10 @@ Zorg dat de output uitsluitend geldige JSON is, zonder markdown formatting.
       } catch (e) {
         console.error('WS message error', e);
       }
+    });
+
+    ws.on('close', () => {
+      console.log('WebSocket connection closed');
     });
   });
 

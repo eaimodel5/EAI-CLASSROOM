@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Users, Presentation, Settings, CheckCircle2, HelpCircle, MessageSquare, CheckCircle, Clock, Sparkles, XCircle, ArrowLeft } from 'lucide-react';
-import { ClassroomSession, ClassroomParticipant, ClassroomSignal, ClassroomSummary } from '../types';
+import { ClassroomSession, ClassroomParticipant, ClassroomSignal, ClassroomSummary, ClassroomPrompt } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 export default function TeacherClassroomPage() {
@@ -13,6 +13,10 @@ export default function TeacherClassroomPage() {
   const [participants, setParticipants] = useState<ClassroomParticipant[]>([]);
   const [signals, setSignals] = useState<ClassroomSignal[]>([]);
   const [summaries, setSummaries] = useState<ClassroomSummary[]>([]);
+  const [activePrompt, setActivePrompt] = useState<ClassroomPrompt | null>(null);
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const [promptType, setPromptType] = useState<'CHECK_QUESTION' | 'HINT' | 'REFLECTION'>('CHECK_QUESTION');
+  const [newPromptText, setNewPromptText] = useState('');
 
   // Form state
   const [subject, setSubject] = useState('');
@@ -42,12 +46,13 @@ export default function TeacherClassroomPage() {
 
     // Setup WebSocket
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     const ws = new WebSocket(wsUrl);
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log('WS message received:', data);
         if (data.session_id !== session.id) return;
 
         if (data.type === 'PARTICIPANT_JOINED') {
@@ -59,6 +64,12 @@ export default function TeacherClassroomPage() {
           setSignals(prev => [data.signal, ...prev]);
         } else if (data.type === 'SUMMARY_GENERATED') {
           setSummaries(prev => [data.summary, ...prev]);
+        } else if (data.type === 'PROMPT_CREATED') {
+          setActivePrompt(data.prompt);
+          setSession(data.session);
+        } else if (data.type === 'PROMPT_CLOSED') {
+          setActivePrompt(null);
+          setSession(data.session);
         }
       } catch (e) {
         console.error('WebSocket message error:', e);
@@ -111,9 +122,23 @@ export default function TeacherClassroomPage() {
     if (!session) return;
     setGeneratingSummary(true);
     try {
-      await fetch(`/api/sessions/${session.id}/summarize`, { method: 'POST' });
+      const res = await fetch(`/api/sessions/${session.id}/summarize`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Summary generation error:', data);
+        alert(data.error || 'Fout bij genereren van de samenvatting.');
+      } else if (data.message) {
+        alert(data.message);
+      } else if (data.id) {
+        // Successfully generated, update state directly just in case WebSocket misses it
+        setSummaries(prev => {
+          if (prev.find(s => s.id === data.id)) return prev;
+          return [data, ...prev];
+        });
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Network error during summary generation:', err);
+      alert('Netwerkfout bij het genereren van de samenvatting.');
     } finally {
       setGeneratingSummary(false);
     }
@@ -127,6 +152,38 @@ export default function TeacherClassroomPage() {
       setParticipants([]);
       setSignals([]);
       setSummaries([]);
+      setActivePrompt(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const createPrompt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session || !newPromptText.trim()) return;
+    try {
+      await fetch(`/api/sessions/${session.id}/prompts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: promptType === 'CHECK_QUESTION' ? 'Checkvraag' : promptType === 'HINT' ? 'Hint' : 'Reflectie',
+          prompt_text: newPromptText,
+          prompt_type: promptType,
+          response_mode: promptType === 'HINT' ? 'ACKNOWLEDGE' : 'TEXT'
+        })
+      });
+      setShowPromptModal(false);
+      setNewPromptText('');
+    } catch (err) {
+      console.error(err);
+      alert('Fout bij het aanmaken van de checkvraag');
+    }
+  };
+
+  const closePrompt = async () => {
+    if (!session || !activePrompt) return;
+    try {
+      await fetch(`/api/sessions/${session.id}/prompts/${activePrompt.id}/close`, { method: 'POST' });
     } catch (err) {
       console.error(err);
     }
@@ -162,6 +219,7 @@ export default function TeacherClassroomPage() {
           
           {/* Left Column: Phase Control & Regie */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
+            {/* Phase Control */}
             <div className="bg-white rounded-xl shadow-sm border p-5">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Settings className="w-5 h-5 text-gray-400" />
@@ -187,6 +245,40 @@ export default function TeacherClassroomPage() {
                     {session.active_phase === phase && <CheckCircle2 className="w-5 h-5 text-blue-600" />}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Didactische Interventies */}
+            <div className="bg-white rounded-xl shadow-sm border p-5">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-gray-400" />
+                Didactische Interventies
+              </h2>
+              <div className="space-y-3">
+                <button
+                  onClick={() => { setPromptType('CHECK_QUESTION'); setShowPromptModal(true); }}
+                  disabled={!!activePrompt}
+                  className="w-full py-3 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-lg border border-indigo-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  Stel een Checkvraag
+                </button>
+                <button
+                  onClick={() => { setPromptType('HINT'); setShowPromptModal(true); }}
+                  disabled={!!activePrompt}
+                  className="w-full py-3 px-4 bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium rounded-lg border border-amber-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Deel een Hint
+                </button>
+                <button
+                  onClick={() => { setPromptType('REFLECTION'); setShowPromptModal(true); }}
+                  disabled={!!activePrompt}
+                  className="w-full py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium rounded-lg border border-emerald-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                  Vraag om Reflectie
+                </button>
               </div>
             </div>
 
@@ -227,6 +319,76 @@ export default function TeacherClassroomPage() {
           {/* Right Column: Live Signals & Summary */}
           <div className="col-span-12 lg:col-span-8 space-y-6">
             
+            {/* Active Prompt Card */}
+            {activePrompt && (
+              <div className={`rounded-xl shadow-sm border p-5 text-white ${
+                activePrompt.prompt_type === 'HINT' ? 'bg-amber-600 border-amber-700' :
+                activePrompt.prompt_type === 'REFLECTION' ? 'bg-emerald-600 border-emerald-700' :
+                'bg-indigo-600 border-indigo-700'
+              }`}>
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    {activePrompt.prompt_type === 'HINT' ? <Sparkles className="w-5 h-5 text-amber-200" /> :
+                     activePrompt.prompt_type === 'REFLECTION' ? <CheckCircle2 className="w-5 h-5 text-emerald-200" /> :
+                     <MessageSquare className="w-5 h-5 text-indigo-200" />}
+                    Actieve {activePrompt.title}
+                  </h2>
+                  <button 
+                    onClick={closePrompt}
+                    className={`text-sm px-3 py-1.5 border rounded-lg transition-colors ${
+                      activePrompt.prompt_type === 'HINT' ? 'bg-amber-700 border-amber-500 hover:bg-amber-800' :
+                      activePrompt.prompt_type === 'REFLECTION' ? 'bg-emerald-700 border-emerald-500 hover:bg-emerald-800' :
+                      'bg-indigo-700 border-indigo-500 hover:bg-indigo-800'
+                    }`}
+                  >
+                    Sluit {activePrompt.title}
+                  </button>
+                </div>
+                <p className="text-xl font-medium mb-4">{activePrompt.prompt_text}</p>
+                
+                <div className={`rounded-lg p-4 ${
+                  activePrompt.prompt_type === 'HINT' ? 'bg-amber-700/50' :
+                  activePrompt.prompt_type === 'REFLECTION' ? 'bg-emerald-700/50' :
+                  'bg-indigo-700/50'
+                }`}>
+                  <h3 className={`text-sm font-semibold mb-3 uppercase tracking-wider ${
+                    activePrompt.prompt_type === 'HINT' ? 'text-amber-200' :
+                    activePrompt.prompt_type === 'REFLECTION' ? 'text-emerald-200' :
+                    'text-indigo-200'
+                  }`}>
+                    {activePrompt.response_mode === 'ACKNOWLEDGE' ? 'Gelezen door' : 'Antwoorden van leerlingen'}
+                  </h3>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {signals.filter(s => s.prompt_id === activePrompt.id && s.signal_type === 'RESPONSE').length === 0 ? (
+                      <p className={`italic text-sm ${
+                        activePrompt.prompt_type === 'HINT' ? 'text-amber-300' :
+                        activePrompt.prompt_type === 'REFLECTION' ? 'text-emerald-300' :
+                        'text-indigo-300'
+                      }`}>
+                        Nog geen reacties ontvangen...
+                      </p>
+                    ) : (
+                      signals.filter(s => s.prompt_id === activePrompt.id && s.signal_type === 'RESPONSE').map(signal => {
+                        const student = participants.find(p => p.id === signal.participant_id);
+                        return (
+                          <div key={signal.id} className="bg-white/10 rounded px-3 py-2 text-sm flex justify-between items-center">
+                            <span className={`font-medium ${
+                              activePrompt.prompt_type === 'HINT' ? 'text-amber-100' :
+                              activePrompt.prompt_type === 'REFLECTION' ? 'text-emerald-100' :
+                              'text-indigo-100'
+                            }`}>{student?.display_name || 'Onbekend'}</span>
+                            <span className="text-white">
+                              {activePrompt.response_mode === 'ACKNOWLEDGE' ? 'Gelezen ✓' : signal.text_value}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* AI Summary Card */}
             <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl shadow-sm border border-indigo-100 p-5">
               <div className="flex justify-between items-start mb-4">
@@ -332,6 +494,10 @@ export default function TeacherClassroomPage() {
                         Icon = CheckCircle;
                         colorClass = 'text-green-600 bg-green-100';
                         label = 'Is klaar met de taak';
+                      } else if (signal.signal_type === 'RESPONSE') {
+                        Icon = MessageSquare;
+                        colorClass = 'text-indigo-600 bg-indigo-100';
+                        label = 'Heeft gereageerd op een vraag';
                       }
 
                       return (
@@ -348,7 +514,12 @@ export default function TeacherClassroomPage() {
                               </span>
                             </div>
                             <p className="text-sm text-gray-600 mt-0.5">{label}</p>
-                            <div className="mt-1 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                            {signal.text_value && (
+                              <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 text-sm text-gray-800 italic shadow-sm">
+                                "{signal.text_value}"
+                              </div>
+                            )}
+                            <div className="mt-2 text-xs font-medium text-gray-400 uppercase tracking-wider">
                               Fase: {signal.phase}
                             </div>
                           </div>
@@ -363,6 +534,57 @@ export default function TeacherClassroomPage() {
           </div>
 
         </main>
+
+        {/* Prompt Modal */}
+        {showPromptModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+              <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {promptType === 'CHECK_QUESTION' ? 'Stel een Checkvraag' : promptType === 'HINT' ? 'Deel een Hint' : 'Vraag om Reflectie'}
+                </h2>
+                <button onClick={() => setShowPromptModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+              <form onSubmit={createPrompt} className="p-6">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {promptType === 'CHECK_QUESTION' ? 'Wat wil je de leerlingen vragen?' : promptType === 'HINT' ? 'Welke hint wil je delen?' : 'Waar wil je dat de leerlingen op reflecteren?'}
+                  </label>
+                  <textarea
+                    value={newPromptText}
+                    onChange={(e) => setNewPromptText(e.target.value)}
+                    placeholder={promptType === 'CHECK_QUESTION' ? 'Bijv. Wat is de belangrijkste oorzaak van...' : promptType === 'HINT' ? 'Bijv. Let op de eenheden bij het berekenen van...' : 'Bijv. Wat vond je het lastigst aan deze opdracht?'}
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none min-h-[100px] resize-none"
+                    autoFocus
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowPromptModal(false)}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+                  >
+                    Annuleren
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!newPromptText.trim()}
+                    className={`px-4 py-2 text-white rounded-lg font-medium transition-colors disabled:opacity-50 ${
+                      promptType === 'HINT' ? 'bg-amber-600 hover:bg-amber-700' :
+                      promptType === 'REFLECTION' ? 'bg-emerald-600 hover:bg-emerald-700' :
+                      'bg-indigo-600 hover:bg-indigo-700'
+                    }`}
+                  >
+                    Verstuur naar klas
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

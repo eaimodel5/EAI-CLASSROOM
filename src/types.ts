@@ -37,7 +37,7 @@ export interface ClassroomSignal {
   participant_id: string;
   prompt_id: string | null;
   phase: string;
-  signal_type: 'HELP' | 'WORD' | 'CHECK' | 'EXIT';
+  signal_type: 'HELP' | 'WORD' | 'CHECK' | 'EXIT' | 'RESPONSE';
   subtype: string | null;
   urgency: 'LOW' | 'MEDIUM' | 'HIGH';
   status: 'NEW' | 'ACKNOWLEDGED' | 'RESOLVED';
@@ -62,4 +62,17 @@ export interface ClassroomSummary {
   is_active: boolean;
   generated_at: string;
   created_at: string;
+}
+
+export interface ClassroomPrompt {
+  id: string;
+  classroom_session_id: string;
+  phase: string;
+  prompt_type: string;
+  title: string;
+  prompt_text: string;
+  response_mode: string;
+  status: string;
+  opened_at: string;
+  closed_at: string | null;
 }

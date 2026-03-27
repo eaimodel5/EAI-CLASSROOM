@@ -24,16 +24,20 @@ export default function ClassroomBoardPage() {
     };
 
     fetchSession();
+  }, [sessionCode]);
+
+  useEffect(() => {
+    if (!session) return;
 
     // 2. Setup WebSocket for real-time updates
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     const ws = new WebSocket(wsUrl);
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === 'PHASE_CHANGED' && session && data.session_id === session.id) {
+        if (data.type === 'PHASE_CHANGED' && data.session_id === session.id) {
           setSession(prev => prev ? { ...prev, active_phase: data.active_phase } : prev);
         }
       } catch (e) {
@@ -44,7 +48,7 @@ export default function ClassroomBoardPage() {
     return () => {
       ws.close();
     };
-  }, [sessionCode, session?.id]);
+  }, [session?.id]);
 
   if (loading) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-500">Laden...</div>;

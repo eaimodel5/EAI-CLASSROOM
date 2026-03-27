@@ -1,0 +1,114 @@
+{
+  "$schema": "urn:eai:schemas:ssot:16.2:governed:nl:foundation",
+  "version": "16.2.0-governed",
+  "metadata": {
+    "system": "EAI Master Architecture (NL)",
+    "description": "v16.2.0 Governed Semantic-Bandwidth Foundation: non-destructive upgrade op v16.1 met expliciete command profiles, meta-flag definities en AI-bandwidth-contracten, behoud van canonieke owner control.",
+    "integrity": "CANONICAL_OWNER_CONTROLLED_SSOT"
+  },
+  "command_library": {
+    "commands": {
+      "/checkin": "Vraag expliciet: 'Wat is je concrete doel en welke rol wil je dat ik neem?'",
+      "/beurtvraag": "Stop met zenden. Vraag: 'Vat de kern in één zin samen.'",
+      "/keuze": "Bied twee routes (A/B) en laat de leerling kiezen.",
+      "/meta": "Proces-check: 'Hoe werkt onze aanpak tot nu toe?'",
+      "/ref": "Expliciteren: 'Waarom kies je deze aanpak/aanname?'",
+      "/devil": "Tegenwerping: 'Welke zwakke plek zit er in je plan?'",
+      "/fase_check": "Fase-check: 'Oriëntatie, uitvoering of evaluatie?'",
+      "/intro": "Voorkennis: 'Noem 3 begrippen die je met dit onderwerp associeert.'",
+      "/schema": "Ordenen: 'Maak een korte lijst of conceptmap van wat je al weet.'",
+      "/beeld": "Uitleg: 'Gebruik een metafoor/visualisatie om dit helder te maken.'",
+      "/quizgen": "Toets: 'Maak 3 formatieve vragen (MC/open/stelling).'",
+      "/rubric": "Zelfbeoordeling: 'Scoor jezelf per criterium en licht toe.'",
+      "/leervraag": "Doel: 'Wat wil je bereiken en wat is het eindproduct?'",
+      "/twist": "Perspectief: 'Redeneer dit vanuit het tegenovergestelde standpunt.'",
+      "/vocab": "Begrippen: 'Verwerk 5 kernbegrippen in je eigen formulering.'",
+      "/co-construct": "Samen bouwen: 'Jij argument, ik tegenargument, jij synthese.'",
+      "/diff": "Niveaus: 'Kies: basis / midden / diep.'",
+      "/misvatting": "Fout-check: 'Hier is een fout antwoord; vind en corrigeer de fout.'",
+      "/nieuwsgierig": "Nieuwsgierigheid: 'Formuleer 3 vragen die nog open staan.'",
+      "/vergelijk": "Vergelijking: 'Zet dit naast X: overeenkomsten/verschillen.'",
+      "/contextualise": "Toepassing: 'Pas dit toe in een nieuwe korte casus.'",
+      "/tool_aware": "Rol van AI: 'Ik voorspel taalpatronen; controleer feiten waar nodig extern.'",
+      "/verify": "Verificatie: 'Welke bron/controleactie kan dit bevestigen?'",
+      "/prompt_steer": "Sturing: 'Wil je korter, concreter of dieper?'",
+      "/chain": "Transparantie: 'Welke stappen volg ik (in gewone taal)? Klopt dat voor jou?'",
+      "/mens_vs_ai": "Verdeling: 'Wat doe jij, wat doe ik, en waarom is dat handig?'",
+      "/bias_check": "Bias-check: 'Welke aannames of databeperkingen kunnen dit kleuren?'",
+      "/feit_mening": "Afspraak: 'Gaat dit om feitencheck of om mening/interpretatie?'",
+      "/bron_vraag": "Bron: 'Welke specifieke bron/theorie gebruik je hiervoor?'",
+      "/triangulatie": "Triangulatie: 'Check dit met een tweede onafhankelijke bron.'",
+      "/falsificatie": "Tegenbewijs: 'Welke informatie zou dit onderuit halen?'",
+      "/synthese": "Weging: 'Wat is je gewogen conclusie met voorwaarden?'",
+      "/social_check": "Context: 'Individueel of samen? Voor wie is dit bedoeld?'",
+      "/peer": "Peer: 'Hoe zou een klasgenoot dit bekritiseren?'",
+      "/teach": "Doceren: 'Leg dit uit aan een jongere leerling.'",
+      "/rolwissel": "Rolwissel: 'Neem een andere rol (bv. journalist) en stel kritische vragen.'",
+      "/co-teach": "Samen: 'Ik verzamel; jij kiest en presenteert.'",
+      "/collectief": "Collectief: 'Wat betekent dit voor de groep als geheel?'",
+      "/proces_eval": "Terugblik: 'Wat hebben we gedaan en wat is de volgende stap?'",
+      "/fading": "Zelfstandig: 'Doe deze stap nu zonder hulp.'",
+      "/generalise": "Generaliseer: 'Wat is de algemene regel hier?'",
+      "/doel_link": "Doelkoppeling: 'Hoe brengt dit je dichter bij het vakdoel?'",
+      "/transfeer": "Transfer: 'Noem een toepassing buiten deze context.'",
+      "/afsluiter": "Afronding: 'Noem één ding dat je nu beter begrijpt.'",
+      "/relevantie": "Relevantie: 'Waarom is dit belangrijk en voor wie?'",
+      "/inclusie": "Inclusie: 'Herschrijf neutraler en inclusiever.'",
+      "/exclusie_check": "Exclusie: 'Welke perspectieven of groepen ontbreken?'",
+      "/algo_kritiek": "Modelkritiek: 'Waardoor kan hier bias ontstaan in AI-uitvoer?'",
+      "/modelen": "Modeling: 'Ik doe het één keer voor; daarna doe jij het stap voor stap.'",
+      "/flits": "Flits: 'Vijf korte recall-vragen op tempo.'",
+      "/stappenplan": "Stappenplan: 'Werk in genummerde stappen.'",
+      "/feedback_keuze": "Feedbackkeuze: 'Welke feedback neem je over, welke niet, en waarom?'",
+      "/bronweging": "Bronweging: 'Welke bron of feedbackgever verdient hier het meeste vertrouwen, en op basis waarvan?'",
+      "/ssrl_check": "Gedeelde regulatie: 'Wat is ons gedeelde doel, wie bewaakt voortgang, wie checkt kwaliteit en wanneer evalueren we?'",
+      "/zonder_ai": "Zelfstandige herneming: 'Doe nu dezelfde stap zonder AI en leg je keuze in eigen woorden uit.'",
+      "/vertraging": "Vertraagde herneming: 'Kom hier later zonder hulp op terug: wat weet je nog en wanneer gebruik je dit?'",
+      "/auteurschap": "Auteurschap: 'Markeer wat van jou is, wat van AI komt en waarom je dat hebt gebruikt.'",
+      "/evidence_chain": "Bewijsketen: 'Maak expliciet hoe je van bron of feedback naar claim en conclusie gaat.'"
+    }
+  },
+  "rubrics": [
+    {
+      "rubric_id": "P_Procesfase",
+      "name": "Procesfase",
+      "bands": [
+        {
+          "band_id": "P1",
+          "label": "Oriëntatie",
+          "description": "Oriëntatie: verkennen van opdracht, eisen, context en startpunt.",
+          "fix": "Maak doel/scope expliciet en activeer minimale voorkennis om te kunnen starten.",
+          "didactic_principle": "Oriëntatie"
+        },
+        {
+          "band_id": "P2",
+          "label": "Voorkennis",
+          "description": "Voorkennis activeren en ordenen om een werkbaar schema te bouwen.",
+          "fix": "Laat voorkennis structureren (lijst/conceptmap) en verbind aan de opdracht.",
+          "didactic_principle": "Organisatie"
+        },
+        {
+          "band_id": "P3",
+          "label": "Instructie",
+          "description": "Instructie/verwerking: begrip opbouwen en relaties verklaren.",
+          "fix": "Geef compacte uitleg met metafoor/voorbeeld en controleer begrip met een vraag.",
+          "didactic_principle": "Uitleg"
+        },
+        {
+          "band_id": "P4",
+          "label": "Toepassen",
+          "description": "Toepassen: oefenen in een nieuwe context, fouten gebruiken als leersignaal en ten minste een kernstap zelf uitvoeren.",
+          "fix": "Laat proberen; geef hints en foutanalyse; herhaal met variatie.",
+          "didactic_principle": "Oefenen"
+        },
+        {
+          "band_id": "P5",
+          "label": "Evaluatie",
+          "description": "Evaluatie: kwaliteit toetsen aan criteria, feedback wegen en conclusies trekken over vervolgstappen.",
+          "fix": "Gebruik rubric/criteria; laat de leerling zichzelf scoren en onderbouwen.",
+          "didactic_principle": "Beoordelen"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "EAI Classroom",
+  "description": "Een live classroom dashboard voor docenten om realtime leerlingsignalen te ontvangen en te clusteren met AI.",
+  "requestFramePermissions": []
+}

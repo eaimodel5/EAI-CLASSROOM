@@ -28,6 +28,9 @@ db.exec(`
     active_prompt_id TEXT,
     timer_started_at DATETIME,
     timer_duration_seconds INTEGER,
+    is_locked INTEGER DEFAULT 0,
+    shared_signal_id TEXT,
+    widgets_json TEXT DEFAULT '[]',
     started_at DATETIME,
     ended_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -102,6 +105,48 @@ db.exec(`
     generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS admin_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `);
+
+// Migrations
+try {
+  db.exec(`ALTER TABLE classroom_sessions ADD COLUMN is_locked INTEGER DEFAULT 0;`);
+} catch (e) {
+  // Column might already exist
+}
+
+try {
+  db.exec(`ALTER TABLE classroom_sessions ADD COLUMN shared_signal_id TEXT;`);
+} catch (e) {
+  // Column might already exist
+}
+
+// Insert default settings if they don't exist
+const defaultSettings = [
+  { key: 'theme_color_primary', value: '#2563eb' },
+  { key: 'theme_font_family', value: 'Inter, sans-serif' },
+  { key: 'ui_teacher_show_timer', value: 'true' },
+  { key: 'ui_student_show_names', value: 'false' },
+  { key: 'ui_board_animations', value: 'true' },
+  { key: 'app_title', value: 'EAI CLASSROOM' }
+];
+
+const insertSetting = db.prepare('INSERT OR IGNORE INTO admin_settings (key, value) VALUES (?, ?)');
+db.transaction(() => {
+  for (const setting of defaultSettings) {
+    insertSetting.run(setting.key, setting.value);
+  }
+})();
+
+// Add widgets_json column if it doesn't exist
+try {
+  db.exec("ALTER TABLE classroom_sessions ADD COLUMN widgets_json TEXT DEFAULT '[]'");
+} catch (e) {
+  // Ignore error if column already exists
+}
 
 export default db;

@@ -1,7 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, MessageSquare, CheckCircle, LogOut, ArrowLeft } from 'lucide-react';
+import { HelpCircle, MessageSquare, CheckCircle, LogOut, ArrowLeft, Clock } from 'lucide-react';
 import { ClassroomSession, ClassroomParticipant, ClassroomPrompt } from '../types';
 import { useNavigate } from 'react-router-dom';
+
+function TimerDisplay({ session }: { session: ClassroomSession }) {
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!session.timer_started_at || !session.timer_duration_seconds) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const endTime = new Date(session.timer_started_at).getTime() + session.timer_duration_seconds * 1000;
+    
+    const updateTimer = () => {
+      const remaining = Math.max(0, endTime - Date.now());
+      setTimeLeft(remaining);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [session.timer_started_at, session.timer_duration_seconds]);
+
+  if (timeLeft === null) return null;
+
+  const minutes = Math.floor(timeLeft / 60000);
+  const seconds = Math.floor((timeLeft % 60000) / 1000);
+  const isWarning = timeLeft > 0 && timeLeft <= 60000; // Last minute warning
+  const isEnded = timeLeft === 0;
+
+  return (
+    <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-mono font-bold text-lg shadow-sm border ${
+      isEnded ? 'bg-red-100 text-red-700 border-red-200' :
+      isWarning ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
+      'bg-white text-gray-800 border-gray-200'
+    }`}>
+      <Clock className={`w-5 h-5 ${isEnded ? 'text-red-500' : isWarning ? 'text-amber-500' : 'text-blue-500'}`} />
+      {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
+    </div>
+  );
+}
 
 export default function StudentClassroomPage() {
   const navigate = useNavigate();
@@ -51,6 +91,13 @@ export default function StudentClassroomPage() {
           setPromptSubmitted(false);
         } else if (data.type === 'PROMPT_CLOSED' && data.session_id === session.id) {
           setActivePrompt(null);
+        } else if (data.type === 'PARTICIPANT_REMOVED' && data.session_id === session.id) {
+          if (participant && data.participant_id === participant.id) {
+            alert('Je bent uit de sessie verwijderd door de docent.');
+            navigate('/');
+          }
+        } else if (data.type === 'SESSION_UPDATED' && data.session.id === session.id) {
+          setSession(data.session);
         }
       } catch (e) {
         console.error('WebSocket message error:', e);
@@ -60,7 +107,7 @@ export default function StudentClassroomPage() {
     return () => {
       ws.close();
     };
-  }, [session?.id]);
+  }, [session?.id, participant?.id, navigate]);
 
   const joinSession = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,19 +159,31 @@ export default function StudentClassroomPage() {
     }
 
     try {
-      await fetch('/api/signals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          classroom_session_id: session.id,
-          participant_id: participant.id,
-          phase: session.active_phase,
-          signal_type: signalType,
-          text_value: textValue,
-          prompt_id: signalType === 'RESPONSE' ? activePrompt?.id : undefined,
-          urgency: signalType === 'HELP' ? 'HIGH' : 'LOW'
-        })
-      });
+      if (signalType === 'WORD') {
+        await fetch(`/api/sessions/${session.id}/difficult-words`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            participant_id: participant.id,
+            phase: session.active_phase,
+            word: textValue
+          })
+        });
+      } else {
+        await fetch('/api/signals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            classroom_session_id: session.id,
+            participant_id: participant.id,
+            phase: session.active_phase,
+            signal_type: signalType,
+            text_value: textValue,
+            prompt_id: signalType === 'RESPONSE' ? activePrompt?.id : undefined,
+            urgency: signalType === 'HELP' ? 'HIGH' : 'LOW'
+          })
+        });
+      }
     } catch (err) {
       console.error('Failed to send signal:', err);
       if (signalType === 'RESPONSE') {
@@ -199,9 +258,10 @@ export default function StudentClassroomPage() {
   const getPhaseStyles = () => {
     switch (session.active_phase) {
       case 'START': return 'bg-blue-50';
-      case 'INSTRUCTION': return 'bg-amber-50';
-      case 'PRACTICE': return 'bg-emerald-50';
-      case 'CLOSING': return 'bg-purple-50';
+      case 'INSTRUCTIE': return 'bg-amber-50';
+      case 'CHECK': return 'bg-orange-50';
+      case 'VERWERKEN': return 'bg-emerald-50';
+      case 'AFSLUITING': return 'bg-purple-50';
       default: return 'bg-gray-50';
     }
   };
@@ -209,9 +269,10 @@ export default function StudentClassroomPage() {
   const getPhaseTitle = () => {
     switch (session.active_phase) {
       case 'START': return 'Start & Doel';
-      case 'INSTRUCTION': return 'Instructie';
-      case 'PRACTICE': return 'Zelfstandig Werken';
-      case 'CLOSING': return 'Afsluiting';
+      case 'INSTRUCTIE': return 'Instructie';
+      case 'CHECK': return 'Check van Begrip';
+      case 'VERWERKEN': return 'Zelfstandig Werken';
+      case 'AFSLUITING': return 'Afsluiting';
       default: return '';
     }
   };
@@ -244,7 +305,8 @@ export default function StudentClassroomPage() {
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{session.subject}</div>
           <div className="font-bold text-gray-900">{getPhaseTitle()}</div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <TimerDisplay session={session} />
           <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-bold text-gray-600">
             {participant.display_name.charAt(0).toUpperCase()}
           </div>
@@ -256,19 +318,21 @@ export default function StudentClassroomPage() {
         
         {activePrompt ? (
           <div className={`p-6 rounded-2xl shadow-sm border-2 w-full animate-in fade-in slide-in-from-bottom-4 ${
-            activePrompt.prompt_type === 'HINT' ? 'bg-amber-50 border-amber-200' :
-            activePrompt.prompt_type === 'REFLECTION' ? 'bg-emerald-50 border-emerald-200' :
+            ['HINT', 'CLASS_INTERVENTION'].includes(activePrompt.prompt_type) ? 'bg-amber-50 border-amber-200' :
+            ['REFLECTION', 'CONFIDENCE', 'EXIT_TICKET'].includes(activePrompt.prompt_type) ? 'bg-emerald-50 border-emerald-200' :
+            ['MISCONCEPTION'].includes(activePrompt.prompt_type) ? 'bg-orange-50 border-orange-200' :
             'bg-white border-indigo-200'
           }`}>
             <div className={`flex items-center gap-2 mb-2 ${
-              activePrompt.prompt_type === 'HINT' ? 'text-amber-600' :
-              activePrompt.prompt_type === 'REFLECTION' ? 'text-emerald-600' :
+              ['HINT', 'CLASS_INTERVENTION'].includes(activePrompt.prompt_type) ? 'text-amber-600' :
+              ['REFLECTION', 'CONFIDENCE', 'EXIT_TICKET'].includes(activePrompt.prompt_type) ? 'text-emerald-600' :
+              ['MISCONCEPTION'].includes(activePrompt.prompt_type) ? 'text-orange-600' :
               'text-indigo-600'
             }`}>
               <MessageSquare className="w-5 h-5" />
               <span className="font-semibold uppercase tracking-wider text-xs">
-                {activePrompt.prompt_type === 'HINT' ? 'Hint van de docent' :
-                 activePrompt.prompt_type === 'REFLECTION' ? 'Reflectievraag' :
+                {['HINT', 'CLASS_INTERVENTION'].includes(activePrompt.prompt_type) ? 'Bericht van de docent' :
+                 ['REFLECTION', 'CONFIDENCE', 'EXIT_TICKET'].includes(activePrompt.prompt_type) ? 'Reflectievraag' :
                  'Vraag van de docent'}
               </span>
             </div>
@@ -363,28 +427,38 @@ export default function StudentClassroomPage() {
           </div>
         ) : (
           <>
-            {/* Only show relevant buttons based on phase */}
-            {session.active_phase === 'INSTRUCTION' && (
+            {/* Phase Specific Overviews */}
+            {session.active_phase === 'INSTRUCTIE' && (
+              <button 
+                onClick={() => setComposingSignal('HELP')}
+                className="w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 bg-white border-gray-200 text-gray-700 hover:border-red-200 hover:bg-red-50 active:scale-95"
+              >
+                <HelpCircle className="w-10 h-10 text-gray-400" />
+                <span className="font-bold text-lg">Ik snap het niet</span>
+              </button>
+            )}
+
+            {session.active_phase === 'CHECK' && (
               <>
                 <button 
-                  onClick={() => setComposingSignal('HELP')}
-                  className="w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 bg-white border-gray-200 text-gray-700 hover:border-red-200 hover:bg-red-50 active:scale-95"
+                  onClick={() => sendSignal('CHECK')}
+                  className="w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 bg-white border-gray-200 text-gray-700 hover:border-green-200 hover:bg-green-50 active:scale-95"
                 >
-                  <HelpCircle className="w-10 h-10 text-gray-400" />
-                  <span className="font-bold text-lg">Ik snap het niet</span>
+                  <CheckCircle className="w-10 h-10 text-gray-400" />
+                  <span className="font-bold text-lg">Ik kan door</span>
                 </button>
                 
                 <button 
-                  onClick={() => setComposingSignal('WORD')}
-                  className="w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 bg-white border-gray-200 text-gray-700 hover:border-blue-200 hover:bg-blue-50 active:scale-95"
+                  onClick={() => setComposingSignal('HELP')}
+                  className="w-full p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 bg-white border-gray-200 text-gray-700 hover:border-amber-200 hover:bg-amber-50 active:scale-95"
                 >
-                  <MessageSquare className="w-10 h-10 text-gray-400" />
-                  <span className="font-bold text-lg">Wat betekent dit woord?</span>
+                  <HelpCircle className="w-10 h-10 text-gray-400" />
+                  <span className="font-bold text-lg">Ik twijfel nog</span>
                 </button>
               </>
             )}
 
-            {session.active_phase === 'PRACTICE' && (
+            {session.active_phase === 'VERWERKEN' && (
               <>
                 <button 
                   onClick={() => setComposingSignal('HELP')}
@@ -404,7 +478,17 @@ export default function StudentClassroomPage() {
               </>
             )}
 
-            {(session.active_phase === 'START' || session.active_phase === 'CLOSING') && (
+            {['INSTRUCTIE', 'CHECK', 'VERWERKEN'].includes(session.active_phase) && (
+              <button 
+                onClick={() => setComposingSignal('WORD')}
+                className="w-full mt-4 p-4 rounded-xl border-2 transition-all flex items-center justify-center gap-3 bg-white border-blue-100 text-blue-700 hover:border-blue-300 hover:bg-blue-50 active:scale-95"
+              >
+                <MessageSquare className="w-6 h-6" />
+                <span className="font-bold">Moeilijk woord melden</span>
+              </button>
+            )}
+
+            {(session.active_phase === 'START' || session.active_phase === 'AFSLUITING') && (
               <div className="text-center p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-black/5">
                 <p className="text-lg font-medium text-gray-600">
                   {session.active_phase === 'START' ? 'Kijk naar het bord voor de start van de les.' : 'De les is afgelopen. Kijk naar het bord.'}

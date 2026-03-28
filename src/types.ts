@@ -7,12 +7,15 @@ export interface ClassroomSession {
   grade: string | null;
   level: string | null;
   lesson_goal: string | null;
-  active_phase: 'START' | 'INSTRUCTION' | 'PRACTICE' | 'CLOSING';
+  active_phase: 'START' | 'INSTRUCTIE' | 'CHECK' | 'VERWERKEN' | 'AFSLUITING';
   status: 'PLANNED' | 'ACTIVE' | 'PAUSED' | 'ENDED';
   board_message: string | null;
   active_prompt_id: string | null;
   timer_started_at: string | null;
   timer_duration_seconds: number | null;
+  is_locked: number;
+  shared_signal_id: string | null;
+  widgets_json: string | null;
   started_at: string | null;
   ended_at: string | null;
   created_at: string;

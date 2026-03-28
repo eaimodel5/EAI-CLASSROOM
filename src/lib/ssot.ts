@@ -39,17 +39,28 @@ export const getSsotMetadata = () => {
 export const getSsotContextForPrompt = (phaseId: string) => {
   if (!ssotData) return '';
 
-  // Find the specific phase
-  const phaseRubric = ssotData.rubrics.find((r: any) => r.rubric_id === 'P_Procesfase');
-  const phase = phaseRubric?.bands.find((b: any) => b.band_id === phaseId || b.label.toUpperCase() === phaseId);
-
-  if (!phase) return '';
+  let phaseDescription = '';
+  switch (phaseId) {
+    case 'START':
+      phaseDescription = 'De les is net begonnen. Leerlingen komen binnen en oriënteren zich op het doel.';
+      break;
+    case 'INSTRUCTIE':
+      phaseDescription = 'De docent is bezig met instructie of uitleg. Leerlingen geven aan of ze het snappen of vragen om woordverklaringen.';
+      break;
+    case 'CHECK':
+      phaseDescription = 'De docent checkt of de klas het begrepen heeft. Leerlingen geven aan of ze door kunnen of nog twijfelen.';
+      break;
+    case 'VERWERKEN':
+      phaseDescription = 'Leerlingen werken zelfstandig of in groepjes aan opdrachten. Ze kunnen vastlopen of aangeven dat ze klaar zijn.';
+      break;
+    case 'AFSLUITING':
+      phaseDescription = 'De les wordt afgesloten. Leerlingen reflecteren op wat ze geleerd hebben.';
+      break;
+  }
 
   return `
-Didactische Context (SSOT 16.2):
-- Fase: ${phase.label}
-- Doel van deze fase: ${phase.description}
-- Didactisch principe: ${phase.didactic_principle}
-- Aanbevolen docent-interventie: ${phase.fix}
+Didactische Context:
+- Fase: ${phaseId}
+- Doel van deze fase: ${phaseDescription}
   `;
 };

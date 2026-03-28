@@ -7,6 +7,9 @@ import db from './src/db/index.ts';
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI } from '@google/genai';
 import { getSsotContextForPrompt } from './src/lib/ssot.ts';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 function generateSessionCode() {
   // Generate a 6-character uppercase alphanumeric code, avoiding ambiguous characters like O/0, I/1
@@ -72,6 +75,109 @@ async function startServer() {
     }
   });
 
+  // DELETE /api/sessions/:id/participants/:participantId - Remove a participant
+  app.delete('/api/sessions/:id/participants/:participantId', (req, res) => {
+    try {
+      const { id, participantId } = req.params;
+      const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id) as any;
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+
+      db.prepare('DELETE FROM classroom_participants WHERE id = ? AND classroom_session_id = ?').run(participantId, id);
+      
+      // Broadcast to all clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ type: 'PARTICIPANT_REMOVED', session_id: id, participant_id: participantId }));
+        }
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing participant:', error);
+      res.status(500).json({ error: 'Failed to remove participant' });
+    }
+  });
+
+  // PUT /api/sessions/:id/lock - Toggle session lock
+  app.put('/api/sessions/:id/lock', (req, res) => {
+    try {
+      const { id } = req.params;
+      const { is_locked } = req.body;
+      const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id) as any;
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+
+      db.prepare('UPDATE classroom_sessions SET is_locked = ? WHERE id = ?').run(is_locked ? 1 : 0, id);
+      const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
+
+      // Broadcast to all clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ type: 'SESSION_UPDATED', session: updatedSession }));
+        }
+      });
+
+      res.json(updatedSession);
+    } catch (error) {
+      console.error('Error locking session:', error);
+      res.status(500).json({ error: 'Failed to lock session' });
+    }
+  });
+
+  // PUT /api/sessions/:id/widgets - Update board widgets
+  app.put('/api/sessions/:id/widgets', (req, res) => {
+    try {
+      const { id } = req.params;
+      const { widgets_json } = req.body;
+      const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id) as any;
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+
+      db.prepare('UPDATE classroom_sessions SET widgets_json = ? WHERE id = ?').run(widgets_json, id);
+      const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
+
+      // Broadcast to all clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ type: 'SESSION_UPDATED', session: updatedSession }));
+        }
+      });
+
+      res.json(updatedSession);
+    } catch (error) {
+      console.error('Error updating widgets:', error);
+      res.status(500).json({ error: 'Failed to update widgets' });
+    }
+  });
+
+  // PUT /api/sessions/:id/timer - Set session timer
+  app.put('/api/sessions/:id/timer', (req, res) => {
+    try {
+      const { id } = req.params;
+      const { duration_seconds } = req.body; // if null, clears timer
+      const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id) as any;
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+
+      if (duration_seconds === null) {
+        db.prepare('UPDATE classroom_sessions SET timer_started_at = NULL, timer_duration_seconds = NULL WHERE id = ?').run(id);
+      } else {
+        db.prepare('UPDATE classroom_sessions SET timer_started_at = CURRENT_TIMESTAMP, timer_duration_seconds = ? WHERE id = ?').run(duration_seconds, id);
+      }
+      
+      const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
+
+      // Broadcast to all clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ type: 'SESSION_UPDATED', session: updatedSession }));
+        }
+      });
+
+      res.json(updatedSession);
+    } catch (error) {
+      console.error('Error setting timer:', error);
+      res.status(500).json({ error: 'Failed to set timer' });
+    }
+  });
+
   // GET /api/sessions/:id/signals - Get session signals
   app.get('/api/sessions/:id/signals', (req, res) => {
     try {
@@ -89,6 +195,16 @@ async function startServer() {
       res.json(summaries);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch summaries' });
+    }
+  });
+
+  // GET /api/sessions/:id/prompts - Get all session prompts
+  app.get('/api/sessions/:id/prompts', (req, res) => {
+    try {
+      const prompts = db.prepare('SELECT * FROM classroom_prompts WHERE classroom_session_id = ? ORDER BY created_at DESC').all(req.params.id);
+      res.json(prompts);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch prompts' });
     }
   });
 
@@ -199,11 +315,16 @@ ${ssotContext}
 Hier zijn de recente signalen van leerlingen:
 ${signalsText}
 
+Guardrails:
+- Noem NOOIT namen van leerlingen (privacy-by-design). Gebruik percentages of aantallen.
+- Oordeel niet (bijv. niet: "De klas snapt er niks van", maar: "30% van de signalen wijst op verwarring rond concept X").
+- Wees handelingsgericht: sluit altijd af met een suggestie voor de docent.
+
 Maak een zeer korte, bondige samenvatting voor de docent.
 Geef me een JSON object terug met de volgende structuur:
 {
   "headline": "Eén korte, actiegerichte zin (max 8 woorden)",
-  "body": "Een korte toelichting of clustering van de signalen (max 2 zinnen). Koppel dit indien mogelijk aan de didactische context.",
+  "body": "Een korte toelichting of clustering van de signalen (max 2 zinnen). Koppel dit indien mogelijk aan de didactische context en sluit af met een suggestie.",
   "confidence_label": "HIGH" of "MEDIUM" of "LOW"
 }
 Zorg dat de output uitsluitend geldige JSON is, zonder markdown formatting.
@@ -283,6 +404,27 @@ Zorg dat de output uitsluitend geldige JSON is, zonder markdown formatting.
     }
   });
 
+  // PUT /api/sessions/:id/share-signal - Share a signal to the board
+  app.put('/api/sessions/:id/share-signal', (req, res) => {
+    const { shared_signal_id } = req.body;
+    try {
+      db.prepare('UPDATE classroom_sessions SET shared_signal_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+        .run(shared_signal_id, req.params.id);
+      const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(req.params.id);
+      
+      // Broadcast update to all connected clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ type: 'SESSION_UPDATED', session }));
+        }
+      });
+      
+      res.json(session);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to share signal' });
+    }
+  });
+
   // PUT /api/sessions/:id/end - End session
   app.put('/api/sessions/:id/end', (req, res) => {
     try {
@@ -311,6 +453,7 @@ Zorg dat de output uitsluitend geldige JSON is, zonder markdown formatting.
       // 1. Find active session
       const session = db.prepare('SELECT * FROM classroom_sessions WHERE session_code = ? AND status = ?').get(session_code.toUpperCase(), 'ACTIVE') as any;
       if (!session) return res.status(404).json({ error: 'Sessie niet gevonden of niet actief' });
+      if (session.is_locked) return res.status(403).json({ error: 'Sessie is vergrendeld door de docent' });
 
       // 2. Create or update participant
       const id = uuidv4();
@@ -365,6 +508,95 @@ Zorg dat de output uitsluitend geldige JSON is, zonder markdown formatting.
       res.status(500).json({ error: 'Failed to send signal' });
     }
   });
+
+  // POST /api/sessions/:id/difficult-words - Student submits a difficult word
+  app.post('/api/sessions/:id/difficult-words', async (req, res) => {
+    const { id: sessionId } = req.params;
+    const { participant_id, word, phase } = req.body;
+    const id = uuidv4();
+
+    try {
+      // Get definition from LLM
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const prompt = `Geef een korte, kindvriendelijke en duidelijke betekenis voor het Nederlandse woord "${word}". Maximaal 2 zinnen.`;
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+      });
+      
+      const definition = response.text?.trim() || 'Geen betekenis gevonden.';
+      const payload_json = JSON.stringify({ definition });
+
+      const stmt = db.prepare(`
+        INSERT INTO classroom_signals (id, classroom_session_id, participant_id, phase, signal_type, urgency, status, text_value, payload_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      stmt.run(id, sessionId, participant_id, phase, 'WORD', 'LOW', 'NEW', word, payload_json);
+
+      const signal = db.prepare('SELECT * FROM classroom_signals WHERE id = ?').get(id);
+      
+      // Broadcast signal to teacher
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ type: 'SIGNAL_RECEIVED', session_id: sessionId, signal }));
+        }
+      });
+
+      res.status(201).json(signal);
+    } catch (error) {
+      console.error('Error processing difficult word:', error);
+      res.status(500).json({ error: 'Failed to process difficult word' });
+    }
+  });
+
+  // --- ADMIN ROUTES ---
+  app.get('/api/admin/settings', (req, res) => {
+    try {
+      const settings = db.prepare('SELECT * FROM admin_settings').all();
+      const settingsMap = settings.reduce((acc: any, curr: any) => {
+        acc[curr.key] = curr.value;
+        return acc;
+      }, {});
+      res.json(settingsMap);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  app.put('/api/admin/settings', (req, res) => {
+    try {
+      const settings = req.body;
+      const updateStmt = db.prepare('INSERT INTO admin_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
+      
+      db.transaction(() => {
+        for (const [key, value] of Object.entries(settings)) {
+          updateStmt.run(key, String(value));
+        }
+      })();
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update settings' });
+    }
+  });
+
+  app.get('/api/admin/sessions', (req, res) => {
+    try {
+      const sessions = db.prepare(`
+        SELECT 
+          s.*,
+          (SELECT COUNT(*) FROM classroom_participants p WHERE p.classroom_session_id = s.id) as participant_count,
+          (SELECT COUNT(*) FROM classroom_signals sig WHERE sig.classroom_session_id = s.id) as signal_count
+        FROM classroom_sessions s
+        ORDER BY s.created_at DESC
+      `).all();
+      res.json(sessions);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch sessions' });
+    }
+  });
+  // --- END ADMIN ROUTES ---
 
   // WebSocket Realtime Sync (vervangt Supabase realtime voor deze MVP)
   wss.on('connection', (ws, req) => {

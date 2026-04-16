@@ -36,9 +36,10 @@ export const getSsotMetadata = () => {
   };
 };
 
-export const getSsotContextForPrompt = (phaseId: string) => {
+export const getSsotContextForPrompt = (session: any) => {
   if (!ssotData) return '';
 
+  const phaseId = session.active_phase;
   let phaseDescription = '';
   switch (phaseId) {
     case 'START':
@@ -58,9 +59,26 @@ export const getSsotContextForPrompt = (phaseId: string) => {
       break;
   }
 
+  let prepContext = '';
+  if (session.prep_json) {
+    try {
+      const prep = JSON.parse(session.prep_json);
+      prepContext = `
+Lesvoorbereiding Context:
+- Vak: ${prep.subject || 'Niet gespecificeerd'}
+- Klas: ${prep.className || 'Niet gespecificeerd'}
+- Niveau: ${prep.level || 'Niet gespecificeerd'}
+- Leerdoel: ${prep.learningGoal || 'Niet gespecificeerd'}
+`;
+    } catch (e) {
+      console.error('Failed to parse prep_json', e);
+    }
+  }
+
   return `
 Didactische Context:
 - Fase: ${phaseId}
 - Doel van deze fase: ${phaseDescription}
+${prepContext}
   `;
 };

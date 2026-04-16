@@ -7,7 +7,7 @@ export type WidgetType =
   | 'CALENDAR' | 'CALCULATOR' | 'POLL' | 'GROUP_MAKER' | 'IMAGE' 
   | 'VIDEO' | 'STOPWATCH' | 'WEATHER' | 'SOUNDBOARD' | 'EXIT_TICKET' 
   | 'EAI_FEEDBACK' | 'EAI_SUMMARY' | 'EAI_QUIZ' | 'EAI_EXPLAINER' | 'EAI_TRANSLATOR' 
-  | 'DAILY_QUOTE' | 'WORD_OF_DAY' | 'EMOJI_METER' | 'TODO_LIST' | 'BGM';
+  | 'DAILY_QUOTE' | 'WORD_OF_DAY' | 'EMOJI_METER' | 'TODO_LIST' | 'BGM' | 'LESSON_PLAN';
 
 export interface WidgetDefinition {
   type: WidgetType;
@@ -48,6 +48,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
   { type: 'EMOJI_METER', name: 'Emoji Meter', icon: Smile, description: 'Hoe voelt de klas zich?', category: 'CLASS_MANAGEMENT' },
   { type: 'TODO_LIST', name: 'Takenlijst', icon: ListTodo, description: 'Lijst met taken voor de les', category: 'TOOLS' },
   { type: 'BGM', name: 'Achtergrondmuziek', icon: Headphones, description: 'Rustgevende muziek', category: 'MEDIA' },
+  { type: 'LESSON_PLAN', name: 'Lesplan', icon: FileText, description: 'Toon lesdoelen en notities', category: 'CLASS_MANAGEMENT' },
 ];
 
 export interface WidgetInstance {

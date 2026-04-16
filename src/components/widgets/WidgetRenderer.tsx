@@ -3,25 +3,77 @@ import { WidgetInstance, WIDGET_REGISTRY } from './WidgetRegistry';
 
 interface WidgetRendererProps {
   widget: WidgetInstance;
-  onUpdate?: (id: string, data: any) => void;
+  onUpdate?: (id: string, updates: Partial<WidgetInstance>) => void;
   onRemove?: (id: string) => void;
   isTeacher?: boolean;
 }
 
 export const WidgetRenderer: React.FC<WidgetRendererProps> = ({ widget, onUpdate, onRemove, isTeacher }) => {
   const def = WIDGET_REGISTRY.find(w => w.type === widget.type);
+  const [isDragging, setIsDragging] = useState(false);
+  const [pos, setPos] = useState({ x: widget.x, y: widget.y });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
   if (!def) return null;
 
   const Icon = def.icon;
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isTeacher) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging || !isTeacher) return;
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    
+    // Convert pixel delta to percentage roughly (assuming 1920x1080 screen for simplicity)
+    const dxPct = (dx / window.innerWidth) * 100;
+    const dyPct = (dy / window.innerHeight) * 100;
+
+    setPos(p => ({ x: p.x + dxPct, y: p.y + dyPct }));
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging || !isTeacher) return;
+    setIsDragging(false);
+    if (onUpdate) {
+      onUpdate(widget.id, { x: pos.x, y: pos.y });
+    }
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragStart, pos]);
+
+  // Sync with props if they change externally
+  useEffect(() => {
+    setPos({ x: widget.x, y: widget.y });
+  }, [widget.x, widget.y]);
 
   const renderContent = () => {
     switch (widget.type) {
       case 'CLOCK':
         return <ClockWidget />;
       case 'TEXT_NOTE':
-        return <TextNoteWidget data={widget.data} onUpdate={(data) => onUpdate?.(widget.id, data)} isTeacher={isTeacher} />;
+        return <TextNoteWidget data={widget.data} onUpdate={(data: any) => onUpdate?.(widget.id, { data })} isTeacher={isTeacher} />;
       case 'EAI_EXPLAINER':
-        return <EAIExplainerWidget data={widget.data} onUpdate={(data) => onUpdate?.(widget.id, data)} isTeacher={isTeacher} />;
+        return <EAIExplainerWidget data={widget.data} onUpdate={(data: any) => onUpdate?.(widget.id, { data })} isTeacher={isTeacher} />;
+      case 'LESSON_PLAN':
+        return <LessonPlanWidget data={widget.data} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4 text-center">
@@ -37,14 +89,17 @@ export const WidgetRenderer: React.FC<WidgetRendererProps> = ({ widget, onUpdate
     <div 
       className="absolute bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col"
       style={{
-        left: \`\${widget.x}%\`,
-        top: \`\${widget.y}%\`,
-        width: \`\${widget.w}%\`,
-        height: \`\${widget.h}%\`,
+        left: `${pos.x}%`,
+        top: `${pos.y}%`,
+        width: `${widget.w}%`,
+        height: `${widget.h}%`,
         zIndex: 50
       }}
     >
-      <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex justify-between items-center cursor-move">
+      <div 
+        className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex justify-between items-center cursor-move"
+        onMouseDown={handleMouseDown}
+      >
         <div className="flex items-center gap-2 text-gray-600">
           <Icon className="w-4 h-4" />
           <span className="text-sm font-medium">{def.name}</span>
@@ -105,6 +160,52 @@ const TextNoteWidget = ({ data, onUpdate, isTeacher }: any) => {
   );
 };
 
+const LessonPlanWidget = ({ data }: any) => {
+  const prep = data?.prep;
+  
+  if (!prep) {
+    return (
+      <div className="p-4 h-full flex items-center justify-center text-gray-500 italic text-center">
+        Geen lesvoorbereiding gevonden voor deze sessie.
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 h-full overflow-y-auto space-y-4">
+      <div>
+        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Leerdoel</h3>
+        <p className="text-gray-800 font-medium">{prep.learningGoal || 'Niet ingevuld'}</p>
+      </div>
+      
+      {prep.successCriteria && prep.successCriteria.length > 0 && prep.successCriteria[0] !== "" && (
+        <div>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Succescriteria</h3>
+          <ul className="list-disc list-inside text-gray-700 text-sm space-y-1">
+            {prep.successCriteria.map((c: string, i: number) => c && <li key={i}>{c}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {prep.misconceptions && prep.misconceptions.length > 0 && prep.misconceptions[0] !== "" && (
+        <div>
+          <h3 className="text-xs font-bold text-orange-500 uppercase tracking-wider mb-1">Misconcepties</h3>
+          <ul className="list-disc list-inside text-gray-700 text-sm space-y-1">
+            {prep.misconceptions.map((m: string, i: number) => m && <li key={i}>{m}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {prep.teacherNotes && (
+        <div>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Notities</h3>
+          <p className="text-gray-700 text-sm whitespace-pre-wrap">{prep.teacherNotes}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const EAIExplainerWidget = ({ data, onUpdate, isTeacher }: any) => {
   const [topic, setTopic] = useState(data?.topic || '');
   const [explanation, setExplanation] = useState(data?.explanation || '');
@@ -119,7 +220,7 @@ const EAIExplainerWidget = ({ data, onUpdate, isTeacher }: any) => {
       // Since we don't have a generic LLM endpoint, we'll just mock it for the demo,
       // or we could add one to server.ts. Let's mock it for now to avoid server changes.
       setTimeout(() => {
-        const result = \`EAI Uitleg over "\${topic}": Dit is een complex concept dat we eenvoudig kunnen uitleggen als...\`;
+        const result = `EAI Uitleg over "${topic}": Dit is een complex concept dat we eenvoudig kunnen uitleggen als...`;
         setExplanation(result);
         if (onUpdate) onUpdate({ topic, explanation: result });
         setLoading(false);

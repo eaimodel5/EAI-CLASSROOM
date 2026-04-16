@@ -31,6 +31,7 @@ db.exec(`
     is_locked INTEGER DEFAULT 0,
     shared_signal_id TEXT,
     widgets_json TEXT DEFAULT '[]',
+    prep_json TEXT,
     started_at DATETIME,
     ended_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -145,6 +146,13 @@ db.transaction(() => {
 // Add widgets_json column if it doesn't exist
 try {
   db.exec("ALTER TABLE classroom_sessions ADD COLUMN widgets_json TEXT DEFAULT '[]'");
+} catch (e) {
+  // Ignore error if column already exists
+}
+
+// Add prep_json column if it doesn't exist
+try {
+  db.exec("ALTER TABLE classroom_sessions ADD COLUMN prep_json TEXT");
 } catch (e) {
   // Ignore error if column already exists
 }

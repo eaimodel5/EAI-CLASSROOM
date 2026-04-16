@@ -36,7 +36,7 @@ async function startServer() {
 
   // POST /api/sessions - Start a new session
   app.post('/api/sessions', (req, res) => {
-    const { teacher_user_id, subject, grade, level, lesson_goal } = req.body;
+    const { teacher_user_id, subject, grade, level, lesson_goal, prep_json } = req.body;
     const id = uuidv4();
     const session_code = generateSessionCode();
     const active_phase = 'START';
@@ -45,10 +45,10 @@ async function startServer() {
 
     try {
       const stmt = db.prepare(`
-        INSERT INTO classroom_sessions (id, teacher_user_id, session_code, subject, grade, level, lesson_goal, active_phase, status, started_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO classroom_sessions (id, teacher_user_id, session_code, subject, grade, level, lesson_goal, active_phase, status, started_at, prep_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
-      stmt.run(id, teacher_user_id || 'teacher-1', session_code, subject, grade, level, lesson_goal, active_phase, status, started_at);
+      stmt.run(id, teacher_user_id || 'teacher-1', session_code, subject, grade, level, lesson_goal, active_phase, status, started_at, prep_json || null);
 
       const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
       res.status(201).json(session);
@@ -145,6 +145,31 @@ async function startServer() {
     } catch (error) {
       console.error('Error updating widgets:', error);
       res.status(500).json({ error: 'Failed to update widgets' });
+    }
+  });
+
+  // PUT /api/sessions/:id/prep - Update lesson preparation
+  app.put('/api/sessions/:id/prep', (req, res) => {
+    try {
+      const { id } = req.params;
+      const { prep_json } = req.body;
+      const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id) as any;
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+
+      db.prepare('UPDATE classroom_sessions SET prep_json = ? WHERE id = ?').run(prep_json, id);
+      const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
+
+      // Broadcast to all clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ type: 'SESSION_UPDATED', session: updatedSession }));
+        }
+      });
+
+      res.json(updatedSession);
+    } catch (error) {
+      console.error('Error updating prep:', error);
+      res.status(500).json({ error: 'Failed to update prep' });
     }
   });
 
@@ -299,7 +324,7 @@ async function startServer() {
 
       // Prepare prompt for Gemini
       const signalsText = signals.map(s => `- ${s.display_name}: ${s.signal_type} ${s.text_value ? `("${s.text_value}")` : ''}`).join('\n');
-      const ssotContext = getSsotContextForPrompt(session.active_phase);
+      const ssotContext = getSsotContextForPrompt(session);
       
       if (!process.env.GEMINI_API_KEY) {
         return res.status(500).json({ error: 'GEMINI_API_KEY is not configured.' });
@@ -319,6 +344,7 @@ Guardrails:
 - Noem NOOIT namen van leerlingen (privacy-by-design). Gebruik percentages of aantallen.
 - Oordeel niet (bijv. niet: "De klas snapt er niks van", maar: "30% van de signalen wijst op verwarring rond concept X").
 - Wees handelingsgericht: sluit altijd af met een suggestie voor de docent.
+- Gebruik GEEN emoji's of emoticons in de gegenereerde tekst. Houd de toon professioneel en zakelijk.
 
 Maak een zeer korte, bondige samenvatting voor de docent.
 Geef me een JSON object terug met de volgende structuur:
@@ -516,9 +542,14 @@ Zorg dat de output uitsluitend geldige JSON is, zonder markdown formatting.
     const id = uuidv4();
 
     try {
+      const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(sessionId) as any;
+      const ssotContext = session ? getSsotContextForPrompt(session) : '';
+
       // Get definition from LLM
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = `Geef een korte, kindvriendelijke en duidelijke betekenis voor het Nederlandse woord "${word}". Maximaal 2 zinnen.`;
+      const prompt = `Geef een korte, kindvriendelijke en duidelijke betekenis voor het Nederlandse woord "${word}". Maximaal 2 zinnen.
+${ssotContext}
+Gebruik GEEN emoji's of emoticons. Houd de toon professioneel en zakelijk. Zorg dat de uitleg past bij de context van de les.`;
       
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',

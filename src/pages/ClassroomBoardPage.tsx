@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ClassroomSession, ClassroomPrompt, ClassroomSignal } from '../types';
 import { CheckCircle2, HelpCircle, MessageSquare, Sparkles, Clock } from 'lucide-react';
+import { WidgetRenderer } from '../components/widgets/WidgetRenderer';
+import { WidgetInstance } from '../components/widgets/WidgetRegistry';
 
 function TimerDisplay({ session }: { session: ClassroomSession }) {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -204,7 +206,19 @@ export default function ClassroomBoardPage() {
       </header>
 
       {/* Main Content Area: Goal & Context */}
-      <main className="flex-1 flex flex-col items-center justify-center p-12 text-center max-w-5xl mx-auto w-full">
+      <main className="flex-1 flex flex-col items-center justify-center p-12 text-center max-w-5xl mx-auto w-full relative">
+        {/* Widgets Overlay (Board View) */}
+        <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden">
+          {JSON.parse(session.widgets_json || '[]').map((widget: WidgetInstance) => (
+            <div key={widget.id} className="pointer-events-auto absolute" style={{ width: '100%', height: '100%' }}>
+              <WidgetRenderer 
+                widget={widget} 
+                isTeacher={false} 
+              />
+            </div>
+          ))}
+        </div>
+
         {activePrompt ? (
           <div className="bg-white/90 backdrop-blur-sm p-12 rounded-[3rem] shadow-xl border border-black/5 w-full max-w-4xl animate-in zoom-in-95 duration-500">
             <div className="flex items-center justify-center gap-4 mb-8 text-indigo-600">

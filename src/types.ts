@@ -1,3 +1,33 @@
+export interface LessonPreparation {
+  title: string;
+  subject: string;
+  className: string;
+  level: string;
+  learningGoal: string;
+  successCriteria: string[];
+  priorKnowledgeQuestions: string[];
+  checkQuestions: string[];
+  misconceptions: string[];
+  interventions: string[];
+  exitTicketQuestions: string[];
+  teacherNotes: string;
+}
+
+export const emptyLessonPreparation: LessonPreparation = {
+  title: "",
+  subject: "",
+  className: "",
+  level: "",
+  learningGoal: "",
+  successCriteria: [""],
+  priorKnowledgeQuestions: [""],
+  checkQuestions: [""],
+  misconceptions: [""],
+  interventions: [""],
+  exitTicketQuestions: [""],
+  teacherNotes: ""
+};
+
 export interface ClassroomSession {
   id: string;
   teacher_user_id: string;
@@ -16,6 +46,7 @@ export interface ClassroomSession {
   is_locked: number;
   shared_signal_id: string | null;
   widgets_json: string | null;
+  prep_json: string | null;
   started_at: string | null;
   ended_at: string | null;
   created_at: string;

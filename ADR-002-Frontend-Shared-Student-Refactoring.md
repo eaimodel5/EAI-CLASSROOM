@@ -49,22 +49,22 @@ De Domain-Driven Design (DDD) structuur doortrekken naar de resterende rollen (\
 
 ## 6. Uitvoeringsplan & Checklist (Door AI uit te voeren)
 
-- [ ] **Stap 1: Shared Componenten**
+- [x] **Stap 1: Shared Componenten**
   - Maak \`src/components/shared\` aan.
   - Extraheer de \`TimerDisplay\` naar een centraal component en ruim de imports/duplicaten op.
-- [ ] **Stap 2: Mappenstructuur aanmaken**
+- [x] **Stap 2: Mappenstructuur aanmaken**
   - Creëer \`src/domains/student\` en \`src/domains/board\` met interne mappen voor \`components\`, \`hooks\` en \`pages\`.
-- [ ] **Stap 3: Student Domein Refactor**
+- [x] **Stap 3: Student Domein Refactor**
   - Extract de logica naar \`useStudentSession.ts\`.
   - Extract de UI naar de 4 bovengenoemde componenten.
   - Herschrijf \`StudentClassroomPage.tsx\` en zet deze in het \`student\` domein. 
   - Update proxy in root \`src/pages/\` map.
-- [ ] **Stap 4: Board Domein Refactor**
+- [x] **Stap 4: Board Domein Refactor**
   - Extract de logica naar \`useBoardSession.ts\`.
   - Extract de UI naar de 3 bovengenoemde componenten.
   - Herschrijf \`ClassroomBoardPage.tsx\` en zet deze in het \`board\` domein.
   - Update proxy in root \`src/pages/\` map.
-- [ ] **Stap 5: Verificatie**
+- [x] **Stap 5: Verificatie**
   - Compileer de applicatie (\`npm run build\`).
   - Zorg dat de routing in \`App.tsx\` blijft functioneren.
   

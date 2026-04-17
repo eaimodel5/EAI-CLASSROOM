@@ -1,5 +1,5 @@
 import React from 'react';
-import { HelpCircle, MessageSquare, CheckCircle, Clock, MonitorPlay } from 'lucide-react';
+import { HelpCircle, MessageSquare, CheckCircle, Clock, MonitorPlay, PenTool } from 'lucide-react';
 import { ClassroomSignal, ClassroomParticipant } from '../../../types';
 
 interface LiveFeedProps {
@@ -51,6 +51,10 @@ export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal 
                 Icon = MessageSquare;
                 colorClass = 'text-indigo-600 bg-indigo-100';
                 label = 'Heeft gereageerd op een vraag';
+              } else if (signal.signal_type === 'DRAWING') {
+                Icon = PenTool;
+                colorClass = 'text-green-600 bg-green-100';
+                label = 'Heeft een tekening verstuurd';
               }
 
               return (
@@ -69,7 +73,24 @@ export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal 
                     <p className="text-sm text-gray-600 mt-0.5">{label}</p>
                     {signal.text_value && (
                       <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 text-sm text-gray-800 shadow-sm break-words">
-                        <span className="font-semibold">"{signal.text_value}"</span>
+                        {signal.signal_type === 'DRAWING' ? (
+                          <div className="w-full bg-gray-50 p-2 rounded-lg border-2 border-dashed border-gray-200">
+                            <img src={signal.text_value} alt="Tekening van leerling" className="w-full h-auto rounded shadow-sm bg-white" />
+                            <button
+                              onClick={() => onShareSignal(sharedSignalId === signal.id ? null : signal.id)}
+                              className={`mt-3 px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
+                                sharedSignalId === signal.id
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              <MonitorPlay className="w-3 h-3" />
+                              {sharedSignalId === signal.id ? 'Gedeeld op bord' : 'Deel op bord'}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="font-semibold">"{signal.text_value}"</span>
+                        )}
                         {signal.signal_type === 'WORD' && signal.payload_json && (
                           <div className="mt-2 pt-2 border-t border-gray-100 text-gray-600">
                             {(() => {

@@ -78,7 +78,7 @@ export function TeacherClassroomPage() {
 
   if (session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-[100dvh] bg-gray-50 flex flex-col">
         <SessionHeader 
           session={session} 
           onOpenWidgets={() => setShowWidgetSelector(true)} 
@@ -152,6 +152,8 @@ export function TeacherClassroomPage() {
             <ActiveStudentsList 
               participants={participants}
               onRemoveParticipant={actions.removeParticipant}
+              onUpdateParticipant={actions.updateParticipant}
+              onSendPrivateMessage={actions.sendPrivateMessage}
             />
 
             <button 
@@ -216,7 +218,7 @@ export function TeacherClassroomPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
+    <div className="min-h-[100dvh] bg-gray-50 flex flex-col items-center p-4">
       <div className="w-full max-w-4xl mb-4 mt-8">
         <button 
           onClick={() => navigate('/')} 

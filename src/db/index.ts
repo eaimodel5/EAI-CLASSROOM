@@ -46,6 +46,9 @@ db.exec(`
     participant_key TEXT NOT NULL,
     join_status TEXT NOT NULL,
     device_type TEXT,
+    timeout_until DATETIME,
+    can_draw INTEGER DEFAULT 0,
+    team_name TEXT,
     joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -63,6 +66,7 @@ db.exec(`
     prompt_text TEXT,
     response_mode TEXT NOT NULL,
     config_json TEXT,
+    target_participant_id TEXT,
     status TEXT NOT NULL,
     opened_at DATETIME,
     closed_at DATETIME,
@@ -156,5 +160,21 @@ try {
 } catch (e) {
   // Ignore error if column already exists
 }
+
+// Add timeout_until column if it doesn't exist
+try {
+  db.exec("ALTER TABLE classroom_participants ADD COLUMN timeout_until DATETIME");
+} catch (e) {}
+
+// Add can_draw and team_name columns
+try {
+  db.exec("ALTER TABLE classroom_participants ADD COLUMN can_draw INTEGER DEFAULT 0");
+  db.exec("ALTER TABLE classroom_participants ADD COLUMN team_name TEXT");
+} catch (e) {}
+
+// Add target_participant_id to prompts
+try {
+  db.exec("ALTER TABLE classroom_prompts ADD COLUMN target_participant_id TEXT");
+} catch (e) {}
 
 export default db;

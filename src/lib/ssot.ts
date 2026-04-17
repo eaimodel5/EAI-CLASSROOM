@@ -67,6 +67,7 @@ export const getSsotContextForPrompt = (session: any) => {
 Lesvoorbereiding Context:
 - Vak: ${prep.subject || 'Niet gespecificeerd'}
 - Klas: ${prep.className || 'Niet gespecificeerd'}
+- Leerjaar: ${prep.gradeYear || 'Niet gespecificeerd'}
 - Niveau: ${prep.level || 'Niet gespecificeerd'}
 - Leerdoel: ${prep.learningGoal || 'Niet gespecificeerd'}
 `;

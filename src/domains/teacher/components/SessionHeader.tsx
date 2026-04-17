@@ -1,46 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, LayoutGrid, Presentation } from 'lucide-react';
+import React from 'react';
+import { LayoutGrid, Presentation } from 'lucide-react';
 import { ClassroomSession } from '../../../types';
-
-function TimerDisplay({ session }: { session: ClassroomSession }) {
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!session.timer_started_at || !session.timer_duration_seconds) {
-      setTimeLeft(null);
-      return;
-    }
-
-    const endTime = new Date(session.timer_started_at).getTime() + session.timer_duration_seconds * 1000;
-    
-    const updateTimer = () => {
-      const remaining = Math.max(0, endTime - Date.now());
-      setTimeLeft(remaining);
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [session.timer_started_at, session.timer_duration_seconds]);
-
-  if (timeLeft === null) return null;
-
-  const minutes = Math.floor(timeLeft / 60000);
-  const seconds = Math.floor((timeLeft % 60000) / 1000);
-  const isWarning = timeLeft > 0 && timeLeft <= 60000;
-  const isEnded = timeLeft === 0;
-
-  return (
-    <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-mono font-bold text-lg shadow-sm border ${
-      isEnded ? 'bg-red-100 text-red-700 border-red-200' :
-      isWarning ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
-      'bg-white text-gray-800 border-gray-200'
-    }`}>
-      <Clock className={`w-5 h-5 ${isEnded ? 'text-red-500' : isWarning ? 'text-amber-500' : 'text-blue-500'}`} />
-      {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
-    </div>
-  );
-}
+import { TimerDisplay } from '../../../../src/components/shared/TimerDisplay';
 
 interface SessionHeaderProps {
   session: ClassroomSession;

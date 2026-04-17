@@ -2,6 +2,7 @@ export interface LessonPreparation {
   title: string;
   subject: string;
   className: string;
+  gradeYear: string;
   level: string;
   learningGoal: string;
   successCriteria: string[];
@@ -17,6 +18,7 @@ export const emptyLessonPreparation: LessonPreparation = {
   title: "",
   subject: "",
   className: "",
+  gradeYear: "",
   level: "",
   learningGoal: "",
   successCriteria: [""],
@@ -61,6 +63,9 @@ export interface ClassroomParticipant {
   participant_key: string;
   join_status: 'JOINED' | 'ACTIVE' | 'IDLE' | 'LEFT';
   device_type: string | null;
+  timeout_until?: string | null;
+  can_draw?: number;
+  team_name?: string | null;
   joined_at: string;
   last_seen_at: string;
 }
@@ -71,7 +76,7 @@ export interface ClassroomSignal {
   participant_id: string;
   prompt_id: string | null;
   phase: string;
-  signal_type: 'HELP' | 'WORD' | 'CHECK' | 'EXIT' | 'RESPONSE';
+  signal_type: 'HELP' | 'WORD' | 'CHECK' | 'EXIT' | 'RESPONSE' | 'DRAWING';
   subtype: string | null;
   urgency: 'LOW' | 'MEDIUM' | 'HIGH';
   status: 'NEW' | 'ACKNOWLEDGED' | 'RESOLVED';
@@ -79,6 +84,7 @@ export interface ClassroomSignal {
   short_code_value: string | null;
   numeric_value: number | null;
   choice_value: string | null;
+  payload_json?: string | null;
   created_at: string;
 }
 
@@ -106,6 +112,7 @@ export interface ClassroomPrompt {
   title: string;
   prompt_text: string;
   response_mode: string;
+  target_participant_id?: string | null;
   status: string;
   opened_at: string;
   closed_at: string | null;

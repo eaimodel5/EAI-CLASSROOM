@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ClassroomSession, ClassroomParticipant, LessonPreparation } from '../../../types';
 import { WidgetType, WidgetInstance } from '../../../components/widgets/WidgetRegistry';
 import { PromptType, PROMPT_CONFIG } from '../types';
@@ -183,6 +183,42 @@ export function useTeacherActions({
     }
   };
 
+  const updateParticipant = async (participantId: string, updates: { display_name?: string, timeout_until?: string | null, can_draw?: boolean, team_name?: string | null }) => {
+    if (!session) return;
+    try {
+      const res = await fetch(`/api/sessions/${session.id}/participants/${participantId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setParticipants(prev => prev.map(p => p.id === participantId ? updated : p));
+      }
+    } catch (err) {
+      console.error('Failed to update participant', err);
+    }
+  };
+
+  const sendPrivateMessage = async (participantId: string, message: string) => {
+    if (!session) return;
+    try {
+      await fetch(`/api/sessions/${session.id}/prompts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Direct Message',
+          prompt_text: message,
+          prompt_type: 'HINT',
+          response_mode: 'ACKNOWLEDGE',
+          target_participant_id: participantId
+        })
+      });
+    } catch (err) {
+      console.error('Failed to send private message', err);
+    }
+  };
+
   const pickRandomName = async () => {
     if (!session || participants.length === 0) {
       alert('Er zijn geen leerlingen om uit te kiezen.');
@@ -300,6 +336,8 @@ export function useTeacherActions({
     toggleLock,
     setTimer,
     removeParticipant,
+    updateParticipant,
+    sendPrivateMessage,
     pickRandomName,
     shareSignal,
     handleAddWidget,

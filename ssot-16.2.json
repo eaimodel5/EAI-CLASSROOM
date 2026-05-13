@@ -4,7 +4,129 @@
   "metadata": {
     "system": "EAI Master Architecture (NL)",
     "description": "v16.2.0 Governed Semantic-Bandwidth Foundation: non-destructive upgrade op v16.1 met expliciete command profiles, meta-flag definities en AI-bandwidth-contracten, behoud van canonieke owner control.",
-    "integrity": "CANONICAL_OWNER_CONTROLLED_SSOT"
+    "integrity": "CANONICAL_OWNER_CONTROLLED_SSOT",
+    "cycle": {
+      "order": [
+        "K_KennisType",
+        "P_Procesfase",
+        "TD_Taakdichtheid",
+        "C_CoRegulatie",
+        "V_Vaardigheidspotentieel",
+        "T_TechnologischeIntegratieVisibility",
+        "E_EpistemischeBetrouwbaarheid",
+        "L_LeercontinuiteitTransfer",
+        "S_SocialeInteractie",
+        "B_BiasCorrectie"
+      ]
+    },
+    "migration_from": "16.1.0-governed",
+    "foundation_targets": [
+      "EAHUB",
+      "EAI_promptchecker",
+      "EAI_feedbackvalidator",
+      "EAI_biaschecker",
+      "dashboarding",
+      "future_products"
+    ],
+    "interval_semantics": "left_closed_right_open_except_last",
+    "notes": [
+      "Backwards-compatible draft: legacy velden blijven bestaan waar mogelijk.",
+      "Nieuwe typed lagen zijn additief toegevoegd om rubric drift te verminderen.",
+      "Deze artifact is de canonieke didactische kern voor alle EAI-producten en mag niet runtime-side worden gemuteerd.",
+      "Productspecifieke variatie hoort buiten de didactische kern te blijven, via adapters of content packs.",
+      "Wijziging van de canonieke kern vereist versiebeheer, changelog en expliciete autorisatie van de primary owner.",
+      "v16.2 is non-destructive: alle canonieke v16.1-inhoud blijft behouden; uitbreidingen zijn additief.",
+      "Nieuwe semantische lagen verduidelijken hoe microdescriptors als AI-bandbreedtes gelezen moeten worden: nooit los, maar samen met flags, interventions, logic gates en trace.",
+      "Nieuwe command profiles en meta-flag definities verhogen semantische uitlegbaarheid zonder bestaande command keys of rubric-betekenissen te wijzigen."
+    ],
+    "validation": {
+      "validated_on": "2026-03-21",
+      "validation_type": "targeted_scientific_check_2024_2026_plus_semantic_hardening",
+      "focus": [
+        "feedback_literacy_and_evaluative_judgment",
+        "socially_shared_regulation_of_learning",
+        "safeguards_against_performance_without_learning",
+        "microdescriptor_semantic_density_and_ai_bandwidth_guards",
+        "command_and_flag_semantic_clarity",
+        "content_preservation_against_16_1"
+      ],
+      "decision": "minor_semantic_release_16_2",
+      "note": "Deze validatie behoudt alle canonieke v16.1-inhoud en voegt additief semantiek toe voor command profiles, meta-flags en AI-bandbreedtes."
+    },
+    "supersedes": [
+      "15.0.0",
+      "16.1.0-governed"
+    ]
+  },
+  "scientific_validation": {
+    "status": "applied",
+    "validated_on": "2026-03-21",
+    "scope": [
+      "feedback literacy and evaluative judgment",
+      "socially shared regulation of learning",
+      "safeguards against performance without learning / overreliance",
+      "microdescriptor semantic density and AI bandwidth clarity",
+      "command and meta-flag interpretability",
+      "content-preserving additive upgrade over v16.1"
+    ],
+    "applied_changes": [
+      "new commands for feedback choice, source weighing, SSRL checks, no-AI retry, delayed recall and authorship marking",
+      "new logic gates for verification, shared regulation, no-AI retry and durable-learning claims",
+      "expanded diagnostics and trace fields",
+      "refined semantic descriptions and intervention routes in C, S, E, TD and L rubrics",
+      "added semantic command profiles for critical intervention commands",
+      "added explicit meta-flag definitions with routing implications",
+      "added AI-bandwidth contracts for semantically critical bands",
+      "added boundary-focused microdescriptors in TD, C, E, L, S and T rubrics",
+      "executed non-destructive regression check against v16.1 to confirm no content loss"
+    ],
+    "governance_note": "Dit blok is beschrijvend. Canonieke werking blijft bepaald door rubrics, logic gates, trace_schema, governance en product_adapter_contract."
+  },
+  "interaction_protocol": {
+    "logic_gates": [
+      {
+        "trigger_band": "K1",
+        "condition": "Feitenkennis",
+        "enforcement": "MAX_TD = TD2. Doel: ophalen en automatiseren. Geen conceptuele uitleg; alleen bevragen, corrigeren, herhalen.",
+        "priority": "CRITICAL"
+      },
+      {
+        "trigger_band": "K2",
+        "condition": "Procedurele kennis",
+        "enforcement": "ALLOW_TD = TD4. Modeling toegestaan: voordoen (hardop), samen oefenen, daarna laten nadoen.",
+        "priority": "HIGH"
+      },
+      {
+        "trigger_band": "K3",
+        "condition": "Metacognitie",
+        "enforcement": "MAX_TD = TD2. Reflectie en regulatie centraal. AI geeft geen oplossing of eindconclusie.",
+        "priority": "CRITICAL"
+      },
+      {
+        "trigger_band": "TD5",
+        "condition": "AI-dominantie in leergevoelige fasen (vooral P4/P5 of lage leercontinuïteit)",
+        "enforcement": "BLOCK_FULL_SOLUTION = true. REQUIRE_INTERVENTION = /zonder_ai. REQUIRE_TRACE = independent_retry + authorship_marking.",
+        "priority": "CRITICAL"
+      },
+      {
+        "trigger_band": "E1|E2",
+        "condition": "Ongeverifieerde claims of feedback zonder expliciete bronweging",
+        "enforcement": "REQUIRE_VERIFICATION = true. REQUIRE_INTERVENTION = /verify + /bronweging of /feedback_keuze vóór synthese.",
+        "priority": "HIGH"
+      },
+      {
+        "trigger_band": "S4|S5",
+        "condition": "Groeps- of samenwerkende context met AI",
+        "enforcement": "REQUIRE_GROUP_REGULATION_TRACE = true. REQUIRE_INTERVENTION = /ssrl_check op planning, monitoring en evaluatie.",
+        "priority": "HIGH"
+      },
+      {
+        "trigger_band": "L4|L5",
+        "condition": "Transfer of duurzaam leren wordt geclaimd",
+        "enforcement": "REQUIRE_NO_AI_RETRY_OR_DELAYED_RECALL = true. Een claim op transfer of duurzaamheid is onvolledig zonder zelfstandige herneming.",
+        "priority": "HIGH"
+      }
+    ]
   },
   "command_library": {
     "commands": {
@@ -66,7 +188,651 @@
       "/vertraging": "Vertraagde herneming: 'Kom hier later zonder hulp op terug: wat weet je nog en wanneer gebruik je dit?'",
       "/auteurschap": "Auteurschap: 'Markeer wat van jou is, wat van AI komt en waarom je dat hebt gebruikt.'",
       "/evidence_chain": "Bewijsketen: 'Maak expliciet hoe je van bron of feedback naar claim en conclusie gaat.'"
+    },
+    "governance": {
+      "command_keys_locked": true,
+      "command_semantics_locked": true,
+      "local_rewording_allowed": false,
+      "owner_may_extend_via_versioned_release": true
+    },
+    "command_profiles": {
+      "/feedback_keuze": {
+        "intent": "feedback_literacy",
+        "summary": "Maak expliciet welke feedback wordt overgenomen, welke niet, en op basis van welke criteria.",
+        "use_when": [
+          "feedback tegenstrijdig is",
+          "een leerling advies overneemt zonder rationale",
+          "kwaliteit van feedback expliciet gewogen moet worden"
+        ],
+        "avoid_when": [
+          "er nog geen feedback of kwaliteitscriterium beschikbaar is"
+        ],
+        "ai_constraint": "AI vat feedback niet normatief samen als definitief oordeel vóór de leerling motiveert wat wel of niet bruikbaar is.",
+        "learner_evidence": "expliciete uptake-rationale per feedbackpunt",
+        "trace_events": [
+          "FEEDBACK_DECISION",
+          "SOURCE_CREDIBILITY_JUDGMENT"
+        ]
+      },
+      "/bronweging": {
+        "intent": "source_weighing",
+        "summary": "Weeg bronnen of feedbackgevers op geloofwaardigheid, relevantie, datum, expertise en context.",
+        "use_when": [
+          "meerdere bronnen of feedbackgevers concurreren",
+          "een bron niet automatisch betrouwbaar is",
+          "de bronkeuze verantwoord moet worden"
+        ],
+        "avoid_when": [
+          "er slechts één ongecontroleerde claim is en verificatie nog eerst nodig is"
+        ],
+        "ai_constraint": "AI behandelt bronnen niet als gelijkwaardig zonder expliciete weging.",
+        "learner_evidence": "verantwoording waarom een bron/feedbackgever sterker of zwakker is",
+        "trace_events": [
+          "VERIFICATION_ACTION",
+          "SOURCE_CREDIBILITY_JUDGMENT"
+        ]
+      },
+      "/ssrl_check": {
+        "intent": "shared_regulation",
+        "summary": "Maak gedeeld doel, rolverdeling, monitoring, kwaliteitsbewaking en evaluatiemoment expliciet.",
+        "use_when": [
+          "AI in groepswerk of samenwerkende context meespeelt",
+          "rollen onduidelijk zijn",
+          "de groep moet afstemmen op kwaliteit en voortgang"
+        ],
+        "avoid_when": [
+          "de taak expliciet individueel is en geen gedeelde regulatie nodig heeft"
+        ],
+        "ai_constraint": "AI neemt groepsregie of besluitvorming niet impliciet over; het structureert alleen de gezamenlijke regulatie.",
+        "learner_evidence": "gedeeld doel, rolverdeling en monitorings-/evaluatieafspraak",
+        "trace_events": [
+          "GROUP_REGULATION",
+          "SHARED_GOAL_SET",
+          "SHARED_MONITORING",
+          "SHARED_EVALUATION"
+        ]
+      },
+      "/zonder_ai": {
+        "intent": "independent_retry",
+        "summary": "Laat dezelfde of een verwante stap zelfstandig uitvoeren en de keuze in eigen woorden verantwoorden.",
+        "use_when": [
+          "AI-dominantie dreigt",
+          "transfer of duurzaamheid wordt geclaimd",
+          "begrip na scaffolding moet worden getoetst"
+        ],
+        "avoid_when": [
+          "de leerling nog geen minimale steunstructuur of begrip heeft om zinvol te kunnen hernemen"
+        ],
+        "ai_constraint": "AI geeft geen volledige uitwerking; hoogstens een skeleton, afbakening of controlecriterium.",
+        "learner_evidence": "zelfstandige herneming plus eigen verantwoording",
+        "trace_events": [
+          "INDEPENDENT_RETRY",
+          "AUTHORSHIP_MARKING"
+        ]
+      },
+      "/vertraging": {
+        "intent": "delayed_recall",
+        "summary": "Plan of simuleer vertraagde herneming om duurzame beschikbaarheid zichtbaar te maken.",
+        "use_when": [
+          "duurzaam leren of transfer wordt geclaimd",
+          "afsluiting te snel komt na ondersteuning",
+          "je wilt testen wat later beschikbaar blijft"
+        ],
+        "avoid_when": [
+          "de eerste begripstoets nog niet gehaald is"
+        ],
+        "ai_constraint": "AI sluit niet af met een duurzaamheidsclaim zonder delayed recall of aantoonbare no-AI herneming.",
+        "learner_evidence": "latere reproductie, herkenning van toepassingsmoment en uitleg in eigen woorden",
+        "trace_events": [
+          "DELAYED_RECALL",
+          "INDEPENDENT_RETRY"
+        ]
+      },
+      "/auteurschap": {
+        "intent": "authorship_marking",
+        "summary": "Markeer wat van de leerling is, wat van AI komt en waarom die AI-inzet gekozen is.",
+        "use_when": [
+          "AI zichtbaar heeft meegeschreven of meegedacht",
+          "eigendoms- of integriteitsvraag speelt",
+          "transfer of beoordeling zelfstandigheid relevant is"
+        ],
+        "avoid_when": [
+          "AI geen betekenisvolle inhoudelijke bijdrage heeft geleverd"
+        ],
+        "ai_constraint": "AI vervaagt de herkomst van ideeën of tekst niet.",
+        "learner_evidence": "heldere scheiding tussen eigen bijdrage en AI-bijdrage",
+        "trace_events": [
+          "AUTHORSHIP_MARKING"
+        ]
+      },
+      "/evidence_chain": {
+        "intent": "evidence_chain",
+        "summary": "Maak expliciet hoe bron of feedback naar claim en conclusie leidt, inclusief voorwaarden en resttwijfel.",
+        "use_when": [
+          "een gewogen eindconclusie nodig is",
+          "bron-claim-conclusie anders te impliciet blijft",
+          "feedback meeweegt in synthese"
+        ],
+        "avoid_when": [
+          "basisverificatie nog niet heeft plaatsgevonden"
+        ],
+        "ai_constraint": "AI presenteert geen finale conclusie zonder expliciete bron-claim-conclusie-keten.",
+        "learner_evidence": "navolgbare bewijsketen in eigen woorden",
+        "trace_events": [
+          "VERIFICATION_ACTION",
+          "FEEDBACK_DECISION"
+        ]
+      },
+      "/verify": {
+        "intent": "verification",
+        "summary": "Benoem een concrete controleactie die de claim, feedback of veronderstelling kan bevestigen of ontkrachten.",
+        "use_when": [
+          "een claim ongeverifieerd is",
+          "zekerheidstaal zonder basis verschijnt",
+          "feedback direct wordt overgenomen"
+        ],
+        "avoid_when": [
+          "bronweging pas zinvol is nadat een eerste controleactie is benoemd"
+        ],
+        "ai_constraint": "AI vertraagt conclusie en geeft geen waarheidsclaim vóór verificatiestap.",
+        "learner_evidence": "concrete checkactie of controlebron",
+        "trace_events": [
+          "VERIFICATION_ACTION"
+        ]
+      },
+      "/triangulatie": {
+        "intent": "triangulation",
+        "summary": "Vergelijk minstens twee onafhankelijke bronnen of controlelijnen en verantwoord hun verhouding.",
+        "use_when": [
+          "een claim al eenmaal gecontroleerd is maar steviger onderbouwd moet worden",
+          "bronkwaliteit onderling afgewogen moet worden"
+        ],
+        "avoid_when": [
+          "er nog niet één concrete verificatiestap is benoemd"
+        ],
+        "ai_constraint": "AI behandelt een tweede bron niet als decoratie maar als onafhankelijke controlelijn.",
+        "learner_evidence": "uitleg waarom de tweede bron versterkt, nuanceert of corrigeert",
+        "trace_events": [
+          "VERIFICATION_ACTION",
+          "SOURCE_CREDIBILITY_JUDGMENT"
+        ]
+      },
+      "/ref": {
+        "intent": "rationale_explication",
+        "summary": "Laat de leerling expliciteren waarom een keuze, aanname of route passend is.",
+        "use_when": [
+          "een keuze snel gemaakt wordt",
+          "feedbackbesluiten verantwoord moeten worden",
+          "co-regulatie expliciete rationale vraagt"
+        ],
+        "avoid_when": [
+          "de kennissoort nog onduidelijk is en eerst diagnose nodig is"
+        ],
+        "ai_constraint": "AI neemt rationale niet over maar vraagt ernaar en spiegelt die terug.",
+        "learner_evidence": "expliciete keuze- of feedbackrationale",
+        "trace_events": [
+          "TURN"
+        ]
+      },
+      "/devil": {
+        "intent": "stress_test",
+        "summary": "Beproef de stevigheid van regie, plan of conclusie met een tegenwerping of alternatief.",
+        "use_when": [
+          "eigenaarschap of redenering te snel vastklikt",
+          "een route te fragiel lijkt",
+          "overname van feedback te makkelijk gaat"
+        ],
+        "avoid_when": [
+          "basisbegrip of veiligheid nog te laag is voor productieve challenge"
+        ],
+        "ai_constraint": "AI daagt uit zonder de uiteindelijke keuze over te nemen.",
+        "learner_evidence": "weerwoord, aangescherpte keuze of grensstelling",
+        "trace_events": [
+          "TURN"
+        ]
+      },
+      "/transfeer": {
+        "intent": "transfer",
+        "summary": "Laat toepassing in een andere context expliciet maken, inclusief overeenkomst en verschil met de bronsituatie.",
+        "use_when": [
+          "transfer wordt nagestreefd of geclaimd",
+          "een concept buiten de taak getest moet worden"
+        ],
+        "avoid_when": [
+          "de basisstap nog niet zelfstandig beheerst wordt"
+        ],
+        "ai_constraint": "AI accepteert transfer niet als label zonder nieuwe context en zelfstandige toepassing.",
+        "learner_evidence": "toepassing in nieuwe context plus verschil/overeenkomst",
+        "trace_events": [
+          "TRANSFER_ATTEMPT",
+          "INDEPENDENT_RETRY"
+        ]
+      },
+      "/collectief": {
+        "intent": "collective_synthesis",
+        "summary": "Maak perspectieven, open punten, akkoord en resterende twijfel collectief expliciet.",
+        "use_when": [
+          "meerdere stemmen of posities moeten landen in een groep",
+          "er spanning is tussen consensus en nuance"
+        ],
+        "avoid_when": [
+          "de taak individueel is of de groep nog geen gedeelde input heeft geleverd"
+        ],
+        "ai_constraint": "AI forceert geen consensus en spreekt niet namens de groep zonder expliciete bevestiging.",
+        "learner_evidence": "groepssynthese met open punten en vervolgafspraak",
+        "trace_events": [
+          "GROUP_REGULATION",
+          "SHARED_EVALUATION"
+        ]
+      },
+      "/co-teach": {
+        "intent": "shared_construction",
+        "summary": "Verdeel bijdragen expliciet: AI verzamelt of spiegelt, leerling/groep kiest en presenteert.",
+        "use_when": [
+          "samen construeren nuttig is zonder eigenaarschap te verliezen"
+        ],
+        "avoid_when": [
+          "AI al te dominant aanwezig is in de taakuitvoering"
+        ],
+        "ai_constraint": "AI blijft ondersteunend en laat keuze en presentatie bij leerling/groep.",
+        "learner_evidence": "zichtbare keuze en presentatie door leerling/groep",
+        "trace_events": [
+          "GROUP_REGULATION"
+        ]
+      },
+      "/teach": {
+        "intent": "teach_back",
+        "summary": "Laat de leerling iets uitleggen aan een ander om begrip en structurele beheersing zichtbaar te maken.",
+        "use_when": [
+          "duurzame beschikbaarheid of begrip gecheckt moet worden",
+          "een synthese eigen gemaakt moet worden"
+        ],
+        "avoid_when": [
+          "de basiskennis nog te fragiel is voor uitleg aan een ander"
+        ],
+        "ai_constraint": "AI levert niet de teach-back zelf; de leerling formuleert.",
+        "learner_evidence": "uitleg in eigen woorden aan een veronderstelde ander",
+        "trace_events": [
+          "INDEPENDENT_RETRY"
+        ]
+      },
+      "/synthese": {
+        "intent": "synthesis",
+        "summary": "Breng informatie of perspectieven samen tot een gewogen conclusie met voorwaarden.",
+        "use_when": [
+          "verificatie of bronweging al is gebeurd",
+          "er meerdere elementen samen moeten komen"
+        ],
+        "avoid_when": [
+          "verificatie of feedbackweging nog ontbreekt"
+        ],
+        "ai_constraint": "AI synthetiseert niet voorbij de bewijsbasis en houdt voorwaarden zichtbaar.",
+        "learner_evidence": "gewogen conclusie met voorwaarden",
+        "trace_events": [
+          "TURN"
+        ]
+      },
+      "/prompt_steer": {
+        "intent": "interaction_steering",
+        "summary": "Maak expliciet welke vorm van output of ondersteuning de leerling nu nodig heeft.",
+        "use_when": [
+          "AI functioneel op deeltaken wordt ingezet",
+          "vorm/precisie belangrijker is dan inhoudelijke overname"
+        ],
+        "avoid_when": [
+          "de eigenlijke didactische vraag regie, verificatie of transfer betreft"
+        ],
+        "ai_constraint": "AI blijft binnen afgesproken subtaak en neemt geen bredere inhoudelijke regie over.",
+        "learner_evidence": "specifieke vraag naar formaat, diepte of richting",
+        "trace_events": [
+          "TURN"
+        ]
+      },
+      "/chain": {
+        "intent": "process_transparency",
+        "summary": "Maak de gevolgde stappen in gewone taal expliciet en toets of die navolgbaar zijn.",
+        "use_when": [
+          "werkwijze bespreekbaar en controleerbaar moet worden",
+          "glass-box gedrag gewenst is"
+        ],
+        "avoid_when": [
+          "het risico primair ligt bij epistemische onbetrouwbaarheid in plaats van transparantie"
+        ],
+        "ai_constraint": "AI beschrijft stappen zonder verborgen beslissprongen en laat correctie toe.",
+        "learner_evidence": "bevestiging of correctie van stappenplan",
+        "trace_events": [
+          "TURN"
+        ]
+      }
+    },
+    "profile_note": "Command profiles in v16.2 verrijken kritieke fixes additief met intent, AI-constraint, learner evidence en trace hints. Commands zonder profile vallen terug op de canonieke command description."
+  },
+  "global_logic": {
+    "cycle_priority": [
+      "P_Procesfase",
+      "TD_Taakdichtheid",
+      "C_CoRegulatie"
+    ],
+    "secondary_check": [
+      "V_Vaardigheidspotentieel",
+      "T_TechnologischeIntegratieVisibility",
+      "L_LeercontinuiteitTransfer"
+    ],
+    "interrupt_check": [
+      "S_SocialeInteractie",
+      "B_BiasCorrectie",
+      "E_EpistemischeBetrouwbaarheid"
+    ],
+    "validation_priority": [
+      "E_EpistemischeBetrouwbaarheid",
+      "L_LeercontinuiteitTransfer",
+      "S_SocialeInteractie"
+    ]
+  },
+  "didactic_diagnostics": {
+    "status": "validated_16_1",
+    "required_views": [
+      "primary_state",
+      "risk_stack",
+      "intervention_route",
+      "trace_completeness",
+      "independent_retry",
+      "verification_actions",
+      "feedback_literacy",
+      "shared_regulation",
+      "performance_without_learning"
+    ],
+    "rubric_checks": {
+      "K_KennisType": {
+        "question": "Welk kennis- of regulatietype staat centraal en welke AI-grenzen volgen daaruit?",
+        "evidence_fields": [
+          "primary_bands",
+          "logic_gates",
+          "trace_tags"
+        ]
+      },
+      "P_Procesfase": {
+        "question": "In welke leerfase zit de interactie nu?",
+        "evidence_fields": [
+          "phase",
+          "primary_bands",
+          "intervention_ids"
+        ]
+      },
+      "TD_Taakdichtheid": {
+        "question": "Wie verricht het denkwerk en wie houdt de uitvoering vast?",
+        "evidence_fields": [
+          "primary_bands",
+          "learner_choice",
+          "lock_state",
+          "authorship_marking",
+          "independent_retry"
+        ]
+      },
+      "C_CoRegulatie": {
+        "question": "Hoe wordt de regie verdeeld tussen leerling, AI en eventueel docent/groep?",
+        "evidence_fields": [
+          "primary_bands",
+          "learner_choice",
+          "group_regulation",
+          "shared_goal_state",
+          "shared_monitoring",
+          "shared_evaluation"
+        ]
+      },
+      "V_Vaardigheidspotentieel": {
+        "question": "Welke denkhandeling wordt zichtbaar geoefend?",
+        "evidence_fields": [
+          "primary_bands",
+          "independent_retry",
+          "learner_choice"
+        ]
+      },
+      "E_EpistemischeBetrouwbaarheid": {
+        "question": "Hoe wordt kennis geverifieerd, gewogen en verantwoord?",
+        "evidence_fields": [
+          "verification_actions",
+          "sources_used",
+          "flags",
+          "feedback_uptake_rationale",
+          "source_credibility_judgment",
+          "authorship_marking"
+        ]
+      },
+      "T_TechnologischeIntegratieVisibility": {
+        "question": "Is de rol van de tool zichtbaar en bespreekbaar?",
+        "evidence_fields": [
+          "tool_role",
+          "tool_trace",
+          "flags"
+        ]
+      },
+      "S_SocialeInteractie": {
+        "question": "Hoe beïnvloedt AI sociale regulatie en participatie?",
+        "evidence_fields": [
+          "group_regulation",
+          "peer_events",
+          "flags",
+          "shared_goal_state",
+          "shared_monitoring",
+          "shared_evaluation"
+        ]
+      },
+      "L_LeercontinuiteitTransfer": {
+        "question": "Wordt leren hernomen zonder AI en buiten de huidige taak?",
+        "evidence_fields": [
+          "independent_retry",
+          "delayed_recall",
+          "transfer_attempts",
+          "authorship_marking"
+        ]
+      },
+      "B_BiasCorrectie": {
+        "question": "Worden bias en inclusie expliciet herkend en gecorrigeerd?",
+        "evidence_fields": [
+          "fairness_checks",
+          "perspective_shift",
+          "flags"
+        ]
+      }
+    },
+    "recommended_views_16_2": [
+      "bandwidth_contract_compliance",
+      "prohibited_action_breaches",
+      "feedback_weighting_visibility",
+      "no_ai_retry_readiness"
+    ]
+  },
+  "srl_model": {
+    "states": [
+      {
+        "id": "PLAN",
+        "label": "Planning",
+        "goal": "Doel verduidelijken."
+      },
+      {
+        "id": "MONITOR",
+        "label": "Monitoring",
+        "goal": "Check voortgang."
+      },
+      {
+        "id": "REFLECT",
+        "label": "Reflectie",
+        "goal": "Evaluatie aanpak."
+      },
+      {
+        "id": "ADJUST",
+        "label": "Bijsturen",
+        "goal": "Aanpassing strategie."
+      }
+    ]
+  },
+  "trace_schema": {
+    "event_types": [
+      "TURN",
+      "PHASE_TRANSITION",
+      "FLAG_RAISED",
+      "LOCK_CHANGED",
+      "WEBSEARCH_USED",
+      "FEEDBACK_DECISION",
+      "VERIFICATION_ACTION",
+      "INDEPENDENT_RETRY",
+      "GROUP_REGULATION",
+      "TRANSFER_ATTEMPT",
+      "FAIRNESS_CHECK",
+      "SOURCE_CREDIBILITY_JUDGMENT",
+      "AUTHORSHIP_MARKING",
+      "DELAYED_RECALL",
+      "SHARED_GOAL_SET",
+      "SHARED_MONITORING",
+      "SHARED_EVALUATION"
+    ],
+    "minimum_fields": [
+      "session_id",
+      "turn_id",
+      "timestamp_iso",
+      "mode",
+      "phase",
+      "srl_state",
+      "primary_bands",
+      "secondary_dimensions",
+      "flags",
+      "lock_state",
+      "intervention_ids",
+      "learner_choice",
+      "ssot_version",
+      "schema_version",
+      "feedback_decision",
+      "verification_actions",
+      "sources_used",
+      "independent_retry",
+      "group_regulation",
+      "tool_role",
+      "tool_trace",
+      "transfer_attempts",
+      "fairness_checks",
+      "teacher_presence"
+    ],
+    "note": "Uitgebreid v16-draft trace-model voor feedbackbesluiten, verificatie, onafhankelijke heruitvoering, groepsregulatie, transfer en fairness-checks. v16.1 voegt aanbevolen velden toe voor feedbackgeletterdheid, bronweging, gedeelde regulatie en vertraagde herneming.",
+    "governance": {
+      "trace_keys_locked": true,
+      "products_must_emit_canonical_ids": true,
+      "local_products_may_add_product_events_without_redefining_core_events": true
+    },
+    "recommended_fields": [
+      "feedback_uptake_rationale",
+      "source_credibility_judgment",
+      "authorship_marking",
+      "shared_goal_state",
+      "shared_monitoring",
+      "shared_evaluation",
+      "delayed_recall"
+    ]
+  },
+  "context_model": {
+    "description": "Model voor minimale context die de runtime en kernel nodig hebben om SLO-alignment en didactische beslissingen te ondersteunen.",
+    "required_fields": [
+      "subject",
+      "grade",
+      "level"
+    ],
+    "optional_fields": [
+      "assignment_type",
+      "slo_goal",
+      "slo_id",
+      "domain_id",
+      "subdomain_id",
+      "teacher_presence",
+      "group_size",
+      "assessment_mode"
+    ],
+    "notes": [
+      "subject: bijv. 'geschiedenis', 'wiskunde B', 'biologie'.",
+      "grade: leerjaar of klas, bijv. '3 havo', '5 vwo'.",
+      "level: globaal niveau, bijv. 'vmbo-t', 'havo', 'vwo'.",
+      "assignment_type: bijv. 'samenvatting', 'verslag', 'werkstuk', 'presentatie'.",
+      "slo_goal: vrij tekstveld voor het gekozen leerdoel; kan worden verrijkt met externe curriculum_api tooling."
+    ]
+  },
+  "external_tools": {
+    "curriculum_api": {
+      "enabled": true,
+      "provider": "slo_open_data",
+      "preferred_usage_state": "S2",
+      "description": "Externe service voor officiële curriculumdoelen (SLO / curriculum-doelen / -inhouden).",
+      "query_contract": {
+        "requires": [
+          "subject",
+          "grade",
+          "level"
+        ],
+        "optional": [
+          "assignment_type",
+          "slo_goal"
+        ],
+        "returns": [
+          "goals",
+          "domains",
+          "subdomains",
+          "legacy_mapping"
+        ]
+      },
+      "recommended_domains": [
+        "slonl.github.io",
+        "curriculum-doelen",
+        "curriculum-inhouden",
+        "opendata.slo.nl",
+        "data.overheid.nl"
+      ],
+      "auth": {
+        "type": "env",
+        "env_var": "SLO_API_KEY",
+        "note": "De daadwerkelijke sleutel hoort in de runtime-omgeving, niet in dit JSON-bestand."
+      },
+      "fallback_provider": "local_mirror",
+      "fallback_notes": [
+        "Een lokale mirror van de SLO-datasets (bijv. uit de GitHub-repos) kan als vervangende bron dienen.",
+        "De tool-laag kan beslissen of zij eerst de lokale mirror of de officiële API aanspreekt."
+      ]
+    },
+    "generic_web_search": {
+      "enabled": true,
+      "purpose": "SLO_alignment_fallback",
+      "preferred_usage_state": "S2",
+      "description": "Fallback als curriculum_api niet beschikbaar is; gefilterd op curriculum-domeinen.",
+      "guardrails": [
+        "Gebruik alleen voor het oriënteren op leerdoelen en niet voor het genereren van kant-en-klare antwoorden.",
+        "Beperk zoekopdrachten tot de aanbevolen curriculum-domeinen waar mogelijk."
+      ]
+    },
+    "runtime_note": "Externe tools mogen alleen context verrijken; rubric-semantiek en bandselectie blijven in SSOT.",
+    "governance": {
+      "tool_bindings_may_vary_by_product": true,
+      "didactic_meaning_of_tool_use_may_not_override_ssot": true
     }
+  },
+  "web_search_policy": {
+    "allowed_states": [
+      "S2",
+      "S6"
+    ],
+    "forbidden_states": [
+      "S3",
+      "S4",
+      "S5"
+    ],
+    "notes": [
+      "In S2: websearch/curriculum_api mag uitsluitend gebruikt worden voor het vinden of verifiëren van leerdoelen.",
+      "In S6: websearch mag gebruikt worden om verdiepende, reflectieve bronnen of perspectieven te zoeken.",
+      "Tijdens S3–S5: geen websearch; de didactische koers wordt dan bepaald door de rubrics en kernel, niet door externe zoekresultaten."
+    ],
+    "max_sources": 5,
+    "domain_filters": [
+      ".edu",
+      ".gov",
+      ".org",
+      "journals"
+    ]
   },
   "rubrics": [
     {
@@ -110,5 +876,102 @@
         }
       ]
     }
-  ]
+  ],
+  "relation_model": {
+    "allowed_relation_types": [
+      "constrains",
+      "contextualizes",
+      "supports",
+      "depends_on",
+      "moderates",
+      "extends",
+      "mirrors"
+    ],
+    "note": "V16 centraliseert rubric-relaties in typed edges. Legacy links blijven tijdelijk behouden voor backward compatibility.",
+    "edges": []
+  },
+  "flag_model": {
+    "legacy_field": "flag",
+    "new_fields": [
+      "rubric_flag",
+      "meta_flags"
+    ],
+    "meta_flag_catalog": [
+      "AGENCY_RISK",
+      "BALANCED_INTERACTION",
+      "COGNITIVE_LOAD_RISK",
+      "DATA_QUALITY",
+      "EPISTEMIC_RISK",
+      "EPISTEMIC_STRENGTH",
+      "ETHICAL_STRENGTH",
+      "ETHICS_RISK",
+      "KNOWLEDGE_TYPE",
+      "POSITIVE_AGENCY",
+      "SOCIAL_RISK",
+      "SOCIAL_STRENGTH",
+      "TECHNOLOGY_RISK",
+      "TRANSFER_RISK",
+      "TRANSFER_STRENGTH",
+      "UNDERUSE_OR_MISFIT",
+      "FEEDBACK_LITERACY_RISK",
+      "EVALUATIVE_JUDGMENT_STRENGTH",
+      "OVERRELIANCE_RISK",
+      "SHARED_REGULATION_STRENGTH"
+    ],
+    "note": "legacy flag blijft voorlopig bestaan voor backwards compatibility; nieuwe tools horen rubric_flag + meta_flags te gebruiken.",
+    "meta_flag_definitions": {
+      "AGENCY_RISK": {
+        "polarity": "risk",
+        "meaning": "Risico dat de leerling te weinig eigenaar blijft van denkwerk of besluitvorming.",
+        "routing_implication": "Verlaag taakdichtheid, voorkom volledige overname en routeer naar /zonder_ai of andere fading/interactieherstel."
+      },
+      "OVERRELIANCE_RISK": {
+        "polarity": "risk",
+        "meaning": "Er zijn signalen van afhankelijkheid van AI voor kernhandeling of eindconclusie.",
+        "routing_implication": "Stop full-solution gedrag en herstel zelfstandige herneming en auteurschap."
+      }
+    }
+  },
+  "intervention_model": {
+    "fields": [
+      "legacy_fix_ref",
+      "fix_ref",
+      "interventions"
+    ],
+    "allowed_modes": [
+      "activate",
+      "challenge",
+      "collaborate",
+      "compare",
+      "diagnose",
+      "evaluate",
+      "fade",
+      "practice",
+      "reflect",
+      "repair",
+      "scaffold",
+      "steer",
+      "synthesize",
+      "transfer",
+      "verify"
+    ]
+  },
+  "governance": {
+    "role": "golden_nugget_master",
+    "canonical_status": "authoritative_foundation",
+    "owner_control": {
+      "write_access": "primary_owner_only",
+      "owner_role": "PRIMARY_OWNER",
+      "runtime_mutation_allowed": false,
+      "version_bump_required_for_core_change": true,
+      "changelog_required": true,
+      "review_mode": "authoritative_edit_then_release"
+    }
+  },
+  "product_adapter_contract": {
+    "purpose": "laat producten verschillen in UX, content en deployment zonder de canonieke didactische kern te veranderen"
+  },
+  "bandwidth_model": {
+    "purpose": "Maakt expliciet hoe bands als AI-bandbreedtes gelezen en gehandhaafd moeten worden zonder microdescriptors te overschatten."
+  }
 }

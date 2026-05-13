@@ -64,8 +64,6 @@ sessionsRouter.delete('/:id/participants/:participantId', (req: Request, res: Re
     const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id) as any;
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
-    // Actually just mark as KICKED so frontend can read it and log out the user, but for now we also delete them.
-    // Alternatively just delete and broadcast
     db.prepare('DELETE FROM classroom_participants WHERE id = ? AND classroom_session_id = ?').run(participantId, id);
     
     broadcast({ type: 'PARTICIPANT_REMOVED', session_id: id, participant_id: participantId });
@@ -127,7 +125,7 @@ sessionsRouter.put('/:id/lock', (req: Request, res: Response) => {
     db.prepare('UPDATE classroom_sessions SET is_locked = ? WHERE id = ?').run(is_locked ? 1 : 0, id);
     const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
 
-    broadcast({ type: 'SESSION_UPDATED', session: updatedSession });
+    broadcast({ type: 'SESSION_UPDATED', session_id: id, session: updatedSession });
     res.json(updatedSession);
   } catch (error) {
     console.error('Error locking session:', error);
@@ -145,7 +143,7 @@ sessionsRouter.put('/:id/widgets', (req: Request, res: Response) => {
     db.prepare('UPDATE classroom_sessions SET widgets_json = ? WHERE id = ?').run(widgets_json, id);
     const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
 
-    broadcast({ type: 'SESSION_UPDATED', session: updatedSession });
+    broadcast({ type: 'SESSION_UPDATED', session_id: id, session: updatedSession });
     res.json(updatedSession);
   } catch (error) {
     console.error('Error updating widgets:', error);
@@ -163,7 +161,7 @@ sessionsRouter.put('/:id/prep', (req: Request, res: Response) => {
     db.prepare('UPDATE classroom_sessions SET prep_json = ? WHERE id = ?').run(prep_json, id);
     const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
 
-    broadcast({ type: 'SESSION_UPDATED', session: updatedSession });
+    broadcast({ type: 'SESSION_UPDATED', session_id: id, session: updatedSession });
     res.json(updatedSession);
   } catch (error) {
     console.error('Error updating prep:', error);
@@ -186,7 +184,7 @@ sessionsRouter.put('/:id/timer', (req: Request, res: Response) => {
     
     const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
 
-    broadcast({ type: 'SESSION_UPDATED', session: updatedSession });
+    broadcast({ type: 'SESSION_UPDATED', session_id: id, session: updatedSession });
     res.json(updatedSession);
   } catch (error) {
     console.error('Error setting timer:', error);
@@ -297,7 +295,7 @@ sessionsRouter.put('/:id/share-signal', (req: Request, res: Response) => {
       .run(shared_signal_id, req.params.id);
     const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(req.params.id);
     
-    broadcast({ type: 'SESSION_UPDATED', session });
+    broadcast({ type: 'SESSION_UPDATED', session_id: req.params.id, session });
     res.json(session);
   } catch (error) {
     res.status(500).json({ error: 'Failed to share signal' });

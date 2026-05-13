@@ -105,18 +105,20 @@ export function StudentDrawingPad({ onSend, onClose }: StudentDrawingPadProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-900/90 backdrop-blur-sm flex flex-col p-4">
-      <div className="flex justify-between items-center bg-white rounded-t-2xl p-4 shadow-sm">
-        <div className="flex items-center gap-2">
-          <PenTool className="w-5 h-5 text-blue-600" />
-          <h2 className="font-bold text-gray-900">Tekenen voor het bord</h2>
+    <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex flex-col p-4 sm:p-8 animate-in fade-in duration-300">
+      <div className="flex justify-between items-center bg-white/90 backdrop-blur-xl rounded-t-3xl p-6 shadow-sm border-b border-slate-200/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 shadow-inner">
+            <PenTool className="w-5 h-5" />
+          </div>
+          <h2 className="font-bold text-slate-800 tracking-tight text-xl">Tekenen voor het bord</h2>
         </div>
-        <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
+        <button onClick={onClose} className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors active:scale-95">
           <X className="w-6 h-6" />
         </button>
       </div>
       
-      <div className="flex-1 bg-gray-100 relative w-full h-full flex items-center justify-center p-2">
+      <div className="flex-1 bg-slate-50/90 backdrop-blur-sm relative w-full h-full flex items-center justify-center p-4">
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
@@ -126,26 +128,26 @@ export function StudentDrawingPad({ onSend, onClose }: StudentDrawingPadProps) {
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
-          className="bg-white shadow-md rounded-lg max-w-full max-h-full w-auto h-auto touch-none"
+          className="bg-white shadow-xl rounded-2xl max-w-full max-h-full w-auto h-auto touch-none border border-slate-200/50"
           style={{ aspectRatio: '600/400' }}
         />
       </div>
       
-      <div className="bg-white p-4 rounded-b-2xl shadow-lg border-t flex justify-between gap-4">
+      <div className="bg-white/90 backdrop-blur-xl p-6 rounded-b-3xl shadow-lg border-t border-slate-200/50 flex justify-between gap-4">
         <button 
           onClick={undo}
           disabled={lines.length <= 1}
-          className="flex flex-col items-center justify-center py-2 px-4 text-gray-600 disabled:opacity-50 hover:bg-gray-100 rounded-xl"
+          className="flex flex-col items-center justify-center py-3 px-6 text-slate-500 disabled:opacity-50 hover:bg-slate-100 hover:text-slate-800 rounded-2xl transition-colors"
         >
-          <Undo className="w-5 h-5 mb-1" />
-          <span className="text-xs font-semibold">Wis laatste</span>
+          <Undo className="w-6 h-6 mb-1" />
+          <span className="text-xs font-bold uppercase tracking-widest">Wissen</span>
         </button>
         
         <button 
           onClick={submit}
-          className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 px-4 font-bold transition-all shadow-md active:scale-95"
+          className="flex-1 flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl py-4 px-6 font-bold transition-all shadow-md shadow-indigo-500/20 active:translate-y-0.5 hover:-translate-y-0.5 text-lg"
         >
-          <Send className="w-5 h-5" />
+          <Send className="w-6 h-6" />
           Naar digibord
         </button>
       </div>

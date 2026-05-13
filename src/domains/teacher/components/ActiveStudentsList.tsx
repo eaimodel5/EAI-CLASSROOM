@@ -59,25 +59,30 @@ export function ActiveStudentsList({ participants, onRemoveParticipant, onUpdate
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border p-5">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Users className="w-5 h-5 text-gray-400" />
+    <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-sm border-2 border-slate-200/60 p-8 h-full flex flex-col">
+      <h2 className="text-2xl font-black mb-6 flex items-center gap-3 text-slate-800">
+        <span className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border-2 border-slate-200 shrink-0">
+          <Users className="w-5 h-5 text-slate-600" />
+        </span>
         Aanwezige Leerlingen ({participants.length})
       </h2>
-      <div className="max-h-60 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar hide-scrollbar">
         {participants.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">Nog geen leerlingen ingelogd.</p>
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
+            <Users className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+            <p className="text-base font-bold text-slate-500">Nog geen leerlingen ingelogd.</p>
+          </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {participants.map(p => {
               const isTimedOut = p.timeout_until && new Date(p.timeout_until) > new Date();
               const canDraw = p.can_draw === 1;
               
               return (
-              <li key={p.id} className={`flex flex-col text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded-lg relative ${isTimedOut ? 'opacity-50 grayscale' : ''}`}>
+              <li key={p.id} className={`flex flex-col text-sm text-gray-700 bg-white border-2 border-slate-100 px-5 py-4 rounded-2xl shadow-sm relative group hover:border-slate-300 transition-colors ${isTimedOut ? 'opacity-50 grayscale' : ''}`}>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 flex-1">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${isTimedOut ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${isTimedOut ? 'bg-red-100 text-red-700 border-2 border-red-200' : 'bg-blue-100 text-blue-700 border-2 border-blue-200'}`}>
                       {p.display_name.charAt(0).toUpperCase()}
                     </div>
                     {editingId === p.id ? (

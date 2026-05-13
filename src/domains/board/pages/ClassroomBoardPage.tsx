@@ -6,12 +6,14 @@ import { BoardActivePrompt } from '../components/BoardActivePrompt';
 import { BoardSharedSignal } from '../components/BoardSharedSignal';
 import { WidgetRenderer } from '../../../components/widgets/WidgetRenderer';
 import { WidgetInstance } from '../../../components/widgets/WidgetRegistry';
+import GridBackground from '../../../components/GridBackground';
 
 export function ClassroomBoardPage() {
   const { sessionCode } = useParams<{ sessionCode: string }>();
   
   const {
     session,
+    participants,
     activePrompt,
     signals,
     allSignals,
@@ -47,36 +49,48 @@ export function ClassroomBoardPage() {
   };
 
   return (
-    <div className={`min-h-[100dvh] flex flex-col transition-colors duration-500 ${getPhaseStyles()}`}>
+    <div className={`min-h-[100dvh] flex flex-col transition-colors duration-500 bg-transparent relative`}>
+      <div className="fixed inset-0 z-[-1] pointer-events-none">
+        <GridBackground />
+        <div className={`absolute inset-0 transition-colors duration-500 ${getPhaseStyles()} opacity-80 backdrop-blur-[2px]`}></div>
+      </div>
+
       <BoardHeader session={session} />
 
-      <main className="flex-1 flex flex-col items-center justify-center p-12 text-center max-w-5xl mx-auto w-full relative">
-        {/* Widgets Overlay (Board View) */}
-        <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden">
-          {JSON.parse(session.widgets_json || '[]').map((widget: WidgetInstance) => (
-            <div key={widget.id} className="pointer-events-auto absolute" style={{ width: '100%', height: '100%' }}>
-              <WidgetRenderer 
-                widget={widget} 
-                isTeacher={false} 
+      <main className="flex-1 flex flex-col items-center justify-center p-8 max-w-7xl mx-auto w-full relative">
+        <div className="grid grid-cols-12 gap-8 w-full h-full items-center">
+          <div className={`col-span-12 ${JSON.parse(session.widgets_json || '[]').length > 0 ? 'lg:col-span-8 lg:pr-8' : ''} flex flex-col items-center justify-center w-full h-full`}>
+            {activePrompt ? (
+              <BoardActivePrompt
+                activePrompt={activePrompt}
+                signals={signals}
+                sharedSignalId={session.shared_signal_id}
+                allSignals={allSignals}
               />
-            </div>
-          ))}
-        </div>
+            ) : (
+              <BoardSharedSignal
+                session={session}
+                signals={signals}
+                allSignals={allSignals}
+              />
+            )}
+          </div>
 
-        {activePrompt ? (
-          <BoardActivePrompt
-            activePrompt={activePrompt}
-            signals={signals}
-            sharedSignalId={session.shared_signal_id}
-            allSignals={allSignals}
-          />
-        ) : (
-          <BoardSharedSignal
-            session={session}
-            signals={signals}
-            allSignals={allSignals}
-          />
-        )}
+          {JSON.parse(session.widgets_json || '[]').length > 0 && (
+            <div className="col-span-12 lg:col-span-4 flex flex-col gap-6 w-full max-h-full">
+              {JSON.parse(session.widgets_json || '[]').map((widget: WidgetInstance) => (
+                <WidgetRenderer 
+                  key={widget.id}
+                  widget={widget} 
+                  participants={participants}
+                  isTeacher={false} 
+                  inlineMode={true}
+                  className="w-full shadow-xl shadow-slate-200/50 bg-white/80 backdrop-blur-md min-h-[300px] border border-white"
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

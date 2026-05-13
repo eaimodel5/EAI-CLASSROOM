@@ -11,28 +11,30 @@ interface LiveFeedProps {
 
 export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal }: LiveFeedProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-      <div className="px-5 py-4 border-b bg-gray-50 flex justify-between items-center">
-        <h3 className="font-semibold text-gray-800">Live Signalen</h3>
-        <span className="flex items-center gap-2 text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-          Live
+    <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-sm border-2 border-slate-200/60 overflow-hidden relative flex flex-col h-full">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-bl-[4rem] -mr-32 -mt-32 z-0 mix-blend-multiply opacity-50"></div>
+      
+      <div className="px-8 py-6 border-b-2 border-slate-100 bg-white/50 backdrop-blur-sm flex justify-between items-center relative z-10">
+        <h3 className="text-2xl font-black text-slate-800">Live Signalen</h3>
+        <span className="flex items-center gap-3 text-[11px] uppercase tracking-widest font-black text-emerald-700 bg-emerald-100 px-4 py-2 rounded-full shadow-sm border-2 border-emerald-200/50">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Live Feed
         </span>
       </div>
       
-      <div className="p-0 max-h-[400px] overflow-y-auto">
+      <div className="p-0 flex-1 overflow-y-auto relative z-10 custom-scrollbar hide-scrollbar h-full">
         {signals.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
-            <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p>Nog geen signalen ontvangen in deze les.</p>
+          <div className="p-12 text-center text-slate-400">
+            <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <p className="font-medium text-slate-500">Nog geen signalen ontvangen in deze les.</p>
           </div>
         ) : (
-          <ul className="divide-y">
+          <ul className="divide-y divide-slate-100">
             {signals.map(signal => {
               const student = participants.find(p => p.id === signal.participant_id);
               
               let Icon = HelpCircle;
-              let colorClass = 'text-gray-500 bg-gray-100';
+              let colorClass = 'text-slate-500 bg-slate-100';
               let label = 'Onbekend signaal';
               
               if (signal.signal_type === 'HELP') {
@@ -45,7 +47,7 @@ export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal 
                 label = 'Vraagt om een woordverklaring';
               } else if (signal.signal_type === 'CHECK') {
                 Icon = CheckCircle;
-                colorClass = 'text-green-600 bg-green-100';
+                colorClass = 'text-emerald-600 bg-emerald-100';
                 label = 'Is klaar met de taak';
               } else if (signal.signal_type === 'RESPONSE') {
                 Icon = MessageSquare;
@@ -53,46 +55,46 @@ export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal 
                 label = 'Heeft gereageerd op een vraag';
               } else if (signal.signal_type === 'DRAWING') {
                 Icon = PenTool;
-                colorClass = 'text-green-600 bg-green-100';
+                colorClass = 'text-emerald-600 bg-emerald-100';
                 label = 'Heeft een tekening verstuurd';
               }
 
               return (
-                <li key={signal.id} className="p-4 hover:bg-gray-50 transition-colors flex items-start gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
-                    <Icon className="w-5 h-5" />
+                <li key={signal.id} className="p-6 hover:bg-slate-50/50 transition-colors flex items-start gap-5">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-black/5 ${colorClass}`}>
+                    <Icon className="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0 break-words">
-                    <div className="flex justify-between items-start">
-                      <span className="font-bold text-gray-900 truncate pr-2">{student?.display_name || 'Onbekende leerling'}</span>
-                      <span className="text-xs text-gray-400 flex items-center gap-1 shrink-0">
-                        <Clock className="w-3 h-3" />
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-bold text-slate-900 truncate pr-4 text-base">{student?.display_name || 'Onbekende leerling'}</span>
+                      <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5 shrink-0 bg-slate-100 px-2 py-1 rounded-md">
+                        <Clock className="w-3.5 h-3.5" />
                         {new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-0.5">{label}</p>
+                    <p className="text-sm font-medium text-slate-500">{label}</p>
                     {signal.text_value && (
-                      <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 text-sm text-gray-800 shadow-sm break-words">
+                      <div className="mt-3 p-4 bg-white rounded-2xl border border-slate-200/60 shadow-sm break-words relative">
                         {signal.signal_type === 'DRAWING' ? (
-                          <div className="w-full bg-gray-50 p-2 rounded-lg border-2 border-dashed border-gray-200">
-                            <img src={signal.text_value} alt="Tekening van leerling" className="w-full h-auto rounded shadow-sm bg-white" />
+                          <div className="w-full bg-slate-50 p-2 rounded-xl border border-dashed border-slate-300">
+                            <img src={signal.text_value} alt="Tekening van leerling" className="w-full h-auto rounded-lg shadow-sm bg-white" />
                             <button
                               onClick={() => onShareSignal(sharedSignalId === signal.id ? null : signal.id)}
-                              className={`mt-3 px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
+                              className={`mt-4 px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-2 active:scale-95 ${
                                 sharedSignalId === signal.id
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  ? 'bg-indigo-600 text-white shadow-indigo-500/20'
+                                  : 'bg-white text-indigo-700 hover:bg-indigo-50 border border-indigo-200/50'
                               }`}
                             >
-                              <MonitorPlay className="w-3 h-3" />
-                              {sharedSignalId === signal.id ? 'Gedeeld op bord' : 'Deel op bord'}
+                              <MonitorPlay className="w-4 h-4" />
+                              {sharedSignalId === signal.id ? 'Gedeeld op bord' : 'Deel op digibord'}
                             </button>
                           </div>
                         ) : (
-                          <span className="font-semibold">"{signal.text_value}"</span>
+                          <span className="font-semibold text-slate-800 text-base leading-relaxed">"{signal.text_value}"</span>
                         )}
                         {signal.signal_type === 'WORD' && signal.payload_json && (
-                          <div className="mt-2 pt-2 border-t border-gray-100 text-gray-600">
+                          <div className="mt-3 pt-3 border-t border-slate-100 text-slate-600 text-sm font-medium">
                             {(() => {
                               try {
                                 const payload = JSON.parse(signal.payload_json);
@@ -101,22 +103,24 @@ export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal 
                                 return null;
                               }
                             })()}
-                            <button
-                              onClick={() => onShareSignal(sharedSignalId === signal.id ? null : signal.id)}
-                              className={`mt-3 px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
-                                sharedSignalId === signal.id
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              <MonitorPlay className="w-3 h-3" />
-                              {sharedSignalId === signal.id ? 'Gedeeld op bord' : 'Deel op bord'}
-                            </button>
+                            <div className="mt-4 flex justify-end">
+                              <button
+                                onClick={() => onShareSignal(sharedSignalId === signal.id ? null : signal.id)}
+                                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-2 active:scale-95 ${
+                                  sharedSignalId === signal.id
+                                    ? 'bg-indigo-600 text-white shadow-indigo-500/20'
+                                    : 'bg-white text-indigo-700 hover:bg-indigo-50 border border-indigo-200/50'
+                                }`}
+                              >
+                                <MonitorPlay className="w-4 h-4" />
+                                {sharedSignalId === signal.id ? 'Gedeeld op bord' : 'Deel op digibord'}
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
                     )}
-                    <div className="mt-2 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <div className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 inline-block px-2 py-0.5 rounded-md">
                       Fase: {signal.phase}
                     </div>
                   </div>

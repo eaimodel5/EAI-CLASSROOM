@@ -143,7 +143,7 @@ export function useStudentSession() {
 
     try {
       if (signalType === 'WORD') {
-        await fetch(`/api/sessions/${session.id}/difficult-words`, {
+        await fetch(`/api/sessions/${session.id}/word`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -27,19 +27,19 @@ export function QuickActions({
   if (!hasPrior && !hasCheck && !hasExit) return null;
 
   return (
-    <div className="mb-6 space-y-2 border-b pb-4">
-      <h3 className="text-sm font-semibold text-indigo-900 mb-3">Snelle Acties (Voorbereiding)</h3>
-      
+    <div className="mb-6 space-y-3 border-b-2 border-slate-100 pb-8">
       {parsedPrep.priorKnowledgeQuestions?.map((q: string, idx: number) => (
         (showAllTools || activePhase === 'START') && q && (
           <button
             key={`prior-${idx}`}
             onClick={() => onOpenPrompt('PRIOR_KNOWLEDGE', q)}
             disabled={hasActivePrompt}
-            className="w-full py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 transition-colors flex items-center justify-between disabled:opacity-50 text-left"
+            className="w-full p-4 bg-white hover:bg-slate-50 text-indigo-800 text-base font-bold rounded-2xl border-4 border-indigo-50 shadow-sm transition-all flex items-center justify-between disabled:opacity-50 text-left hover:-translate-y-1 hover:border-indigo-200 group"
           >
-            <span className="truncate pr-2">{q}</span>
-            <Play className="w-4 h-4 shrink-0" />
+            <span className="flex-1 whitespace-pre-wrap leading-relaxed">{q}</span>
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 ml-4 group-hover:bg-indigo-100 transition-colors">
+               <Play className="w-5 h-5 text-indigo-500 ml-1" />
+            </div>
           </button>
         )
       ))}
@@ -50,10 +50,12 @@ export function QuickActions({
             key={`check-${idx}`}
             onClick={() => onOpenPrompt('CHECK_QUESTION', q)}
             disabled={hasActivePrompt}
-            className="w-full py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 transition-colors flex items-center justify-between disabled:opacity-50 text-left"
+            className="w-full p-4 bg-white hover:bg-slate-50 text-indigo-800 text-base font-bold rounded-2xl border-4 border-indigo-50 shadow-sm transition-all flex items-center justify-between disabled:opacity-50 text-left hover:-translate-y-1 hover:border-indigo-200 group"
           >
-            <span className="truncate pr-2">{q}</span>
-            <Play className="w-4 h-4 shrink-0" />
+            <span className="flex-1 whitespace-pre-wrap leading-relaxed">{q}</span>
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 ml-4 group-hover:bg-indigo-100 transition-colors">
+               <Play className="w-5 h-5 text-indigo-500 ml-1" />
+            </div>
           </button>
         )
       ))}
@@ -64,10 +66,12 @@ export function QuickActions({
             key={`exit-${idx}`}
             onClick={() => onOpenPrompt('EXIT_TICKET', q)}
             disabled={hasActivePrompt}
-            className="w-full py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 transition-colors flex items-center justify-between disabled:opacity-50 text-left"
+            className="w-full p-4 bg-white hover:bg-slate-50 text-indigo-800 text-base font-bold rounded-2xl border-4 border-indigo-50 shadow-sm transition-all flex items-center justify-between disabled:opacity-50 text-left hover:-translate-y-1 hover:border-indigo-200 group"
           >
-            <span className="truncate pr-2">{q}</span>
-            <Play className="w-4 h-4 shrink-0" />
+            <span className="flex-1 whitespace-pre-wrap leading-relaxed">{q}</span>
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 ml-4 group-hover:bg-indigo-100 transition-colors">
+               <Play className="w-5 h-5 text-indigo-500 ml-1" />
+            </div>
           </button>
         )
       ))}

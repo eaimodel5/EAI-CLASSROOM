@@ -6,6 +6,7 @@ import { StudentSignalControls } from '../components/StudentSignalControls';
 import { ActivePromptOverlay } from '../components/ActivePromptOverlay';
 import { StudentDrawingPad } from '../components/StudentDrawingPad';
 import { CheckCircle, PenTool } from 'lucide-react';
+import GridBackground from '../../../components/GridBackground';
 
 export function StudentClassroomPage() {
   const {
@@ -52,16 +53,18 @@ export function StudentClassroomPage() {
 
   if (session.status === 'ENDED') {
     return (
-      <div className="min-h-[100dvh] bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl border p-8 max-w-sm w-full text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-gray-400" />
+      <div className="min-h-[100dvh] bg-slate-50/50 flex flex-col items-center justify-center p-4 relative">
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-sm z-0"></div>
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 p-10 max-w-sm w-full text-center relative z-10 animate-in zoom-in-95 duration-500 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-slate-300"></div>
+          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <CheckCircle className="w-10 h-10 text-slate-400" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Les is afgelopen</h1>
-          <p className="text-gray-600 mb-6">De docent heeft deze sessie beëindigd.</p>
+          <h1 className="text-3xl font-extrabold text-slate-800 mb-3 tracking-tight">Les is afgelopen</h1>
+          <p className="text-slate-600 font-medium leading-relaxed mb-8">De docent heeft deze sessie beëindigd. Bedankt voor het meedoen!</p>
           <button 
             onClick={() => window.location.reload()}
-            className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg transition-colors"
+            className="w-full py-4 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl transition-all shadow-sm hover:shadow active:scale-[0.98]"
           >
             Terug naar start
           </button>
@@ -74,13 +77,15 @@ export function StudentClassroomPage() {
 
   if (isTimedOut) {
     return (
-      <div className="min-h-[100dvh] bg-orange-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl border border-orange-200 p-8 max-w-sm w-full text-center">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">⏳</span>
+      <div className="min-h-[100dvh] bg-orange-50/50 flex flex-col items-center justify-center p-4 relative">
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-sm z-0"></div>
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-orange-200/60 p-10 max-w-sm w-full text-center relative z-10 animate-in zoom-in-95 duration-500 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-orange-400"></div>
+          <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <span className="text-4xl animate-bounce">⏳</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Even pauze</h1>
-          <p className="text-gray-600 mb-6">Je hebt een time-out gekregen van de docent. Je kunt even niet actief deelnemen.</p>
+          <h1 className="text-3xl font-extrabold text-slate-800 mb-3 tracking-tight">Even pauze</h1>
+          <p className="text-slate-600 font-medium leading-relaxed">Je hebt een time-out gekregen van de docent. Je kunt even niet actief deelnemen.</p>
         </div>
       </div>
     );
@@ -88,17 +93,23 @@ export function StudentClassroomPage() {
 
   if (session.is_locked === 1) {
     return (
-      <div className="min-h-[100dvh] bg-gray-900 flex flex-col items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-widest">Kijk naar de docent</h1>
-          <p className="text-gray-400 text-lg">Je scherm is tijdelijk vergrendeld.</p>
+      <div className="min-h-[100dvh] bg-slate-900 flex flex-col items-center justify-center p-4">
+        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900/20 to-slate-900 pointer-events-none"></div>
+        <div className="text-center relative z-10 animate-in fade-in zoom-in-95 duration-500">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-widest uppercase opacity-90 drop-shadow-sm">Kijk naar de docent</h1>
+          <p className="text-slate-400 text-xl font-medium">Je scherm is tijdelijk vergrendeld.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-[100dvh] flex flex-col transition-colors duration-500 ${getPhaseStyles()}`}>
+    <div className={`min-h-[100dvh] flex flex-col transition-colors duration-500 bg-transparent relative`}>
+      <div className="fixed inset-0 z-[-1] pointer-events-none">
+        <GridBackground />
+        <div className={`absolute inset-0 transition-colors duration-500 ${getPhaseStyles()} opacity-90 backdrop-blur-[2px]`}></div>
+      </div>
+
       <StudentHeader session={session} participant={participant} />
 
       <main className="flex-1 p-4 flex flex-col items-center justify-center max-w-md mx-auto w-full space-y-4 relative">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { ClassroomSummary } from '../../../types';
 
 interface AiSummaryCardProps {
@@ -9,35 +9,83 @@ interface AiSummaryCardProps {
 }
 
 export function AiSummaryCard({ activePhaseSummary, generatingSummary, onGenerateSummary }: AiSummaryCardProps) {
+  
+  let suggestedActivity = null;
+  let activityRationale = null;
+
+  if (activePhaseSummary?.summary_json) {
+    try {
+      const parsed = JSON.parse(activePhaseSummary.summary_json);
+      suggestedActivity = parsed.suggested_activity;
+      activityRationale = parsed.activity_rationale;
+    } catch (e) {}
+  }
+
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl shadow-sm border border-indigo-100 p-5">
-      <div className="flex justify-between items-start mb-4">
-        <h2 className="text-lg font-semibold text-indigo-900 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-indigo-500" />
-          AI Klasduiding
-        </h2>
+    <div className="bg-gradient-to-br from-indigo-50/90 to-purple-50/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-indigo-200/40 border-4 border-indigo-100 p-10 lg:p-12 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-80 h-80 bg-white/40 rounded-bl-full -mr-32 -mt-32 z-0 pointer-events-none mix-blend-overlay"></div>
+      
+      <div className="relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 gap-4 border-b-2 border-indigo-100/50 pb-6">
+        <div>
+          <h2 className="text-2xl font-black text-indigo-900 flex items-center gap-3">
+            <span className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center border-2 border-indigo-200">
+               <Activity className="w-6 h-6 text-indigo-600" />
+            </span>
+            AI-Klasduiding
+          </h2>
+          <p className="text-indigo-600/80 font-medium mt-2 max-w-lg">
+             Krijg live inzicht in wat de klas nu nodig heeft, op basis van binnengekomen signalen.
+          </p>
+        </div>
         <button 
           onClick={onGenerateSummary}
           disabled={generatingSummary}
-          className="text-sm px-3 py-1.5 bg-white border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-50 transition-colors disabled:opacity-50"
+          className="text-base px-6 py-3 bg-white border-2 border-indigo-200 shadow-md text-indigo-700 font-bold rounded-2xl hover:bg-indigo-50 hover:border-indigo-300 transition-all active:scale-95 disabled:opacity-50 flex-shrink-0"
         >
-          {generatingSummary ? 'Bezig...' : 'Genereer nu'}
+          {generatingSummary ? 'Bezig met duiden...' : 'Duid deze fase'}
         </button>
       </div>
       
-      {activePhaseSummary ? (
-        <div className="space-y-2">
-          <h3 className="text-xl font-bold text-gray-900">{activePhaseSummary.headline}</h3>
-          <p className="text-gray-700">{activePhaseSummary.body}</p>
-          <div className="text-xs text-indigo-400 font-medium mt-2">
-            Gebaseerd op {activePhaseSummary.evidence_count} signalen • Laatste update: {new Date(activePhaseSummary.generated_at).toLocaleTimeString()}
+      <div className="relative z-10">
+        {activePhaseSummary ? (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+            <div className="bg-white/60 p-8 rounded-3xl border-2 border-indigo-100 shadow-sm">
+              <h3 className="text-3xl font-black tracking-tight text-slate-800 mb-4">{activePhaseSummary.headline}</h3>
+              <p className="text-slate-700 text-lg font-medium leading-relaxed whitespace-pre-wrap">{activePhaseSummary.body}</p>
+            </div>
+            
+            {suggestedActivity && (
+              <div className="bg-white rounded-3xl border-4 border-indigo-100 p-8 group hover:border-indigo-300 transition-colors shadow-xl shadow-indigo-100/50">
+                <h4 className="text-xl font-black text-indigo-900 flex items-center gap-3 mb-4">
+                  <span className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center border-2 border-indigo-200">
+                    <Activity className="w-5 h-5 text-indigo-600" />
+                  </span>
+                  Voorgestelde Werkvorm: {suggestedActivity}
+                </h4>
+                <p className="text-base font-medium text-slate-600 leading-relaxed whitespace-pre-wrap">{activityRationale}</p>
+                
+                <div className="mt-8 pt-6 border-t-2 border-indigo-50 flex justify-end">
+                  <button className="text-base font-bold px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 active:translate-y-1">
+                    Start {suggestedActivity}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="text-xs text-indigo-500 font-black uppercase tracking-widest pt-6 border-t-2 border-indigo-100/50 flex justify-between items-center">
+              <span className="bg-indigo-100 px-3 py-1 rounded-lg">Gebaseerd op {activePhaseSummary.evidence_count} signalen</span>
+              <span>Update: {new Date(activePhaseSummary.generated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="text-indigo-400/80 italic">
-          Nog geen samenvatting voor deze fase. Klik op 'Genereer nu' om signalen te clusteren.
-        </div>
-      )}
+        ) : (
+          <div className="p-8 bg-white/40 rounded-2xl border border-dashed border-indigo-200/70 text-center animate-in fade-in">
+            <Activity className="w-8 h-8 text-indigo-300 mx-auto mb-3" />
+            <p className="text-sm text-indigo-700 font-medium">
+              Nog geen AI-analyse voor deze fase. Klik op 'Duid deze fase' om signalen te clusteren en een passende werkvorm voorgesteld te krijgen.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

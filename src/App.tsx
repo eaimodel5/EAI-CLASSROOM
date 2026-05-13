@@ -25,7 +25,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 relative flex flex-col">
+    <div className="min-h-[100dvh] bg-gray-50 relative flex flex-col font-sans">
       <div className="fixed inset-0 z-0">
         <GridBackground />
       </div>
@@ -41,7 +41,7 @@ const LandingPage = () => {
       {showAdminLogin && (
         <div className="fixed inset-0 z-[100] bg-gray-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full animate-in fade-in zoom-in-95">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-900"><Lock className="w-5 h-5 text-gray-400" /> Superuser Toegang</h2>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-900"><Lock className="w-5 h-5 text-gray-400" /> Superuser toegang</h2>
             {error && <p className="text-red-600 bg-red-50 p-2 text-sm mb-4 rounded-md font-medium border border-red-100">{error}</p>}
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div>
@@ -76,24 +76,25 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section className="min-h-[100dvh] flex flex-col items-center justify-center px-4 relative z-10 pt-16 pb-32">
-        <div className="bg-white/60 backdrop-blur-xl p-12 rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col items-center text-center max-w-2xl w-full mx-auto relative overflow-hidden">
-          <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500"></div>
+        <div className="bg-white/60 backdrop-blur-xl p-12 rounded-[3rem] shadow-2xl border border-white/60 flex flex-col items-center text-center max-w-2xl w-full mx-auto relative overflow-hidden">
+          <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500"></div>
           
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl shadow-lg flex items-center justify-center mb-6 transform rotate-3">
-            <span className="text-white font-bold text-2xl">EAI</span>
+          <div className="w-20 h-20 bg-indigo-600 rounded-[1.5rem] shadow-xl flex items-center justify-center mb-8 transform rotate-3 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent"></div>
+            <span className="text-white font-black text-3xl tracking-tighter">EAI</span>
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight text-gray-900 cursor-default select-none">
-            EAI <span className="text-blue-600">CLASSROOM</span>
+          <h1 className="text-5xl md:text-6xl font-black mb-6 tracking-tight text-slate-900 cursor-default select-none">
+            EAI <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">CLASSROOM</span>
           </h1>
           
-          <p className="text-gray-500 mb-10 text-lg max-w-lg font-medium leading-relaxed">
+          <p className="text-slate-500 mb-10 text-lg max-w-lg font-medium leading-relaxed">
             De volgende generatie in interactief lesgeven. Real-time inzicht, AI-gestuurde feedback en direct contact met elke leerling.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 w-full px-4">
-            <button onClick={() => navigate('/teacher/classroom')} className="flex-1 px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-1 text-center">Docent</button>
-            <button onClick={() => navigate('/student/classroom')} className="flex-1 px-8 py-4 bg-white border-2 border-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm hover:shadow-md transform hover:-translate-y-1 text-center">Leerling</button>
+          <div className="flex flex-col sm:flex-row gap-4 w-full px-4 max-w-md mx-auto">
+            <button onClick={() => navigate('/teacher/classroom')} className="flex-1 px-8 py-5 bg-indigo-600 text-white font-bold text-lg rounded-2xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-1 active:translate-y-0 text-center">Docent</button>
+            <button onClick={() => navigate('/student/classroom')} className="flex-1 px-8 py-5 bg-white border-2 border-slate-200 text-slate-800 font-bold text-lg rounded-2xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm hover:shadow-md transform hover:-translate-y-1 active:translate-y-0 text-center">Leerling</button>
           </div>
         </div>
 
@@ -110,7 +111,7 @@ const LandingPage = () => {
           {/* Feature 1 */}
           <div className="flex flex-col md:flex-row items-center gap-16">
             <div className="flex-1 space-y-6">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">AI-Ondersteunde Inzichten</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">AI-ondersteunde inzichten</h2>
               <p className="text-lg text-gray-600 leading-relaxed">
                 Terwijl jouw leerlingen op hun eigen device werken, analyseert de EAI engine real-time waar leerlingen vastlopen. Met één druk op de knop genereert de AI een samenvatting van veelgemaakte fouten of moeilijke concepten.
               </p>
@@ -138,7 +139,7 @@ const LandingPage = () => {
           {/* Feature 2 */}
           <div className="flex flex-col md:flex-row-reverse items-center gap-16">
             <div className="flex-1 space-y-6">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Klassikale Regie</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Klassikale regie</h2>
               <p className="text-lg text-gray-600 leading-relaxed">
                 Behoud de volledige controle over de les. Zet schermen van leerlingen met één klik op zwart als je de aandacht nodig hebt, of geef specifieke leerlingen een time-out als ze zijn afgeleid.
               </p>
@@ -161,7 +162,7 @@ const LandingPage = () => {
           {/* Feature 3 */}
           <div className="flex flex-col md:flex-row items-center gap-16">
             <div className="flex-1 space-y-6">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Het Interactieve Digibord</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Het interactieve digibord</h2>
               <p className="text-lg text-gray-600 leading-relaxed">
                 Gebruik het "Shared Signal" bord om leerlingenacties te projecteren. Geef leerlingen toestemming om te tekenen of te schrijven en laat hun werk direct na goedkeuring zien aan de rest van de klas.
               </p>
@@ -182,6 +183,36 @@ const LandingPage = () => {
                     <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
                   </div>
                   <button className="px-4 py-2 bg-blue-100 text-blue-700 font-semibold rounded-lg text-sm">Deel op bord</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 4 */}
+          <div className="flex flex-col md:flex-row-reverse items-center gap-16">
+            <div className="flex-1 space-y-6">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Slimme Lesuitdraai (Print)</h2>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Start je les digitaal of analoog! Na het invullen van je les-intake genereert EAI direct een compleet lesvoorbereidingssjabloon en uitknipbare leskaarten voor de docent.
+              </p>
+              <ul className="space-y-3 pt-4">
+                <li className="flex items-center gap-3 text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-indigo-500" /> Kant-en-klare PDF uitdraai</li>
+                <li className="flex items-center gap-3 text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-indigo-500" /> Handige leskaarten voor de lesfases</li>
+              </ul>
+            </div>
+            <div className="flex-1 w-full relative">
+              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-100 to-purple-50 transform -rotate-3 rounded-3xl"></div>
+              <div className="bg-white p-8 rounded-3xl shadow-xl relative border border-gray-100 transform rotate-1 hover:rotate-0 transition-transform duration-500 flex flex-col min-h-[250px]">
+                <div className="w-1/2 h-8 bg-indigo-50 rounded-lg mb-4"></div>
+                <div className="w-full h-4 bg-gray-100 rounded mb-2"></div>
+                <div className="w-5/6 h-4 bg-gray-100 rounded mb-6"></div>
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="h-24 border-2 border-indigo-100 rounded-xl bg-indigo-50/50 p-3">
+                     <div className="text-[10px] font-bold text-indigo-400 uppercase">Leskaart start</div>
+                   </div>
+                   <div className="h-24 border-2 border-amber-100 rounded-xl bg-amber-50/50 p-3">
+                     <div className="text-[10px] font-bold text-amber-500 uppercase">Leskaart check</div>
+                   </div>
                 </div>
               </div>
             </div>

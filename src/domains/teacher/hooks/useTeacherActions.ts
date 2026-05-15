@@ -50,6 +50,27 @@ export function useTeacherActions({
     }
   };
 
+  const updateSessionPrep = async (prep: LessonPreparation) => {
+    if (!session) return;
+    try {
+      const res = await fetch(`/api/sessions/${session.id}/prep`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: prep.subject,
+          grade: prep.className,
+          level: prep.level,
+          lesson_goal: prep.learningGoal,
+          prep_json: JSON.stringify(prep)
+        })
+      });
+      const data = await res.json();
+      setSession(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const changePhase = async (newPhase: string) => {
     if (!session) return;
     try {
@@ -328,6 +349,7 @@ export function useTeacherActions({
   return {
     generatingSummary,
     startSession,
+    updateSessionPrep,
     changePhase,
     generateSummary,
     endSession,

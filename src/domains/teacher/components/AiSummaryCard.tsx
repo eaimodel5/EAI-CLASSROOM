@@ -27,7 +27,7 @@ export function AiSummaryCard({ activePhaseSummary, generatingSummary, onGenerat
       
       <div className="relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 gap-4 border-b-2 border-indigo-100/50 pb-6">
         <div>
-          <h2 className="text-2xl font-black text-indigo-900 flex items-center gap-3">
+          <h2 className="text-lg font-bold text-indigo-900 flex items-center gap-3">
             <span className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center border-2 border-indigo-200">
                <Activity className="w-6 h-6 text-indigo-600" />
             </span>
@@ -50,7 +50,7 @@ export function AiSummaryCard({ activePhaseSummary, generatingSummary, onGenerat
         {activePhaseSummary ? (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
             <div className="bg-white/60 p-8 rounded-3xl border-2 border-indigo-100 shadow-sm">
-              <h3 className="text-3xl font-black tracking-tight text-slate-800 mb-4">{activePhaseSummary.headline}</h3>
+              <h3 className="text-xl font-bold tracking-tight text-slate-800 mb-4">{activePhaseSummary.headline}</h3>
               <p className="text-slate-700 text-lg font-medium leading-relaxed whitespace-pre-wrap">{activePhaseSummary.body}</p>
             </div>
             

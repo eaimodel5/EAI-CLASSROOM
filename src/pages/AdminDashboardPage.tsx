@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Settings, Activity, Users, MessageSquare, Save, Eye, XCircle, Trash2, ShieldAlert, BarChart } from 'lucide-react';
+import { ArrowLeft, Settings, Activity, Users, MessageSquare, Save, Eye, XCircle, Trash2, ShieldAlert, BarChart, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { db, auth } from '../lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -193,6 +195,61 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {session.prep_json && (
+                                <>
+                                  <button 
+                                    onClick={async () => {
+                                      if (!window.confirm('Wil je deze les publiceren naar de centrale bibliotheek?')) return;
+                                      try {
+                                        const prep_json = session.prep_json; // validate it's correct
+                                        const prep = JSON.parse(prep_json);
+                                        const title = prep.title || 'Onbekend Lesdoel';
+                                        const subject = prep.subject || 'Algemeen';
+                                        
+                                        if (!auth.currentUser) throw new Error("Niet ingelogd");
+
+                                        const tId = Math.random().toString(36).substring(2, 9);
+                                        await setDoc(doc(db, 'lesson_templates', tId), {
+                                          title,
+                                          subject,
+                                          grade_level: prep.gradeYear || 'Niet gespecificeerd',
+                                          prep_json,
+                                          created_by: auth.currentUser.uid,
+                                          created_at: serverTimestamp(),
+                                          downloads_count: 0
+                                        });
+
+                                        alert('Succesvol aan bibliotheek toegevoegd!');
+                                      } catch(e) { 
+                                        console.error(e);
+                                        alert('Fout bij toevoegen'); 
+                                      }
+                                    }}
+                                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-100"
+                                    title="Publiceer naar bibliotheek"
+                                  >
+                                    <BookOpen className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => {
+                                      try {
+                                        const prep = JSON.parse(session.prep_json);
+                                        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prep, null, 2));
+                                        const downloadAnchorNode = document.createElement('a');
+                                        downloadAnchorNode.setAttribute("href",     dataStr);
+                                        downloadAnchorNode.setAttribute("download", `intake_${session.session_code}.json`);
+                                        document.body.appendChild(downloadAnchorNode); // required for firefox
+                                        downloadAnchorNode.click();
+                                        downloadAnchorNode.remove();
+                                      } catch(e) { alert('Kan intake niet parsen'); }
+                                    }}
+                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                    title="Download Intake (JSON)"
+                                  >
+                                    <Save className="w-4 h-4" />
+                                  </button>
+                                </>
+                            )}
                             <button 
                               onClick={() => window.open(`/board/${session.session_code}`, '_blank')}
                               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100"

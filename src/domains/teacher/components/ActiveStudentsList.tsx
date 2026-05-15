@@ -60,7 +60,7 @@ export function ActiveStudentsList({ participants, onRemoveParticipant, onUpdate
 
   return (
     <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-sm border-2 border-slate-200/60 p-8 h-full flex flex-col">
-      <h2 className="text-2xl font-black mb-6 flex items-center gap-3 text-slate-800">
+      <h2 className="text-lg font-bold mb-4 flex items-center gap-3 text-slate-800">
         <span className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border-2 border-slate-200 shrink-0">
           <Users className="w-5 h-5 text-slate-600" />
         </span>

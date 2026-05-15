@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClassroomSession, ClassroomParticipant, ClassroomPrompt } from '../../../types';
+import { db, auth } from '../../../lib/firebase';
+import { doc, collection, onSnapshot, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../../../lib/firebase-error';
 
 export function useStudentSession() {
   const navigate = useNavigate();
   
-  // Join Flow State
   const [sessionCode, setSessionCode] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Active Session State
   const [session, setSession] = useState<ClassroomSession | null>(null);
   const [participant, setParticipant] = useState<ClassroomParticipant | null>(null);
   const [activeSignal, setActiveSignal] = useState<string | null>(null);
@@ -22,53 +23,48 @@ export function useStudentSession() {
   const [promptSubmitted, setPromptSubmitted] = useState(false);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.id || !participant?.id) return;
 
-    // Setup WebSocket for real-time updates
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'PHASE_CHANGED' && data.session_id === session.id) {
-          setSession(prev => prev ? { ...prev, active_phase: data.active_phase } : prev);
-          setActiveSignal(null); // Reset signal on phase change
-        } else if (data.type === 'SESSION_ENDED' && data.session_id === session.id) {
-          setSession(prev => prev ? { ...prev, status: 'ENDED' } : prev);
-        } else if (data.type === 'PROMPT_CREATED' && data.session_id === session.id) {
-          if (!data.prompt.target_participant_id || data.prompt.target_participant_id === participant?.id) {
-            setActivePrompt(data.prompt);
-            setPromptResponse('');
-            setPromptSubmitted(false);
-          }
-        } else if (data.type === 'PROMPT_CLOSED' && data.session_id === session.id) {
-          setActivePrompt(null);
-        } else if (data.type === 'PARTICIPANT_REMOVED' && data.session_id === session.id) {
-          if (participant && data.participant_id === participant.id) {
-            alert('Je bent uit de sessie verwijderd door de docent.');
-            navigate('/');
-          }
-        } else if (data.type === 'SESSION_UPDATED' && data.session.id === session.id) {
-          setSession(data.session);
+    const unsubSession = onSnapshot(doc(db, 'classroom_sessions', session.id), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as ClassroomSession;
+        if (session && data.active_phase !== session.active_phase) {
+          setActiveSignal(null);
         }
-      } catch (e) {
-        console.error('WebSocket message error:', e);
+        if (data.status === 'ENDED') {
+          navigate('/');
+        }
+        setSession({ ...data, id: docSnap.id });
+      } else {
+        navigate('/');
       }
-    };
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'classroom_sessions'));
 
-    return () => {
-      ws.close();
-    };
+    const unsubParticipant = onSnapshot(doc(db, `classroom_sessions/${session.id}/participants`, participant.id), (docSnap) => {
+      if (!docSnap.exists()) {
+        alert('Je bent uit de sessie verwijderd door de docent.');
+        navigate('/');
+      }
+    });
+
+    const unsubPrompts = onSnapshot(collection(db, `classroom_sessions/${session.id}/prompts`), (snap) => {
+      let active: ClassroomPrompt | null = null;
+      snap.forEach(d => {
+        const p = { ...d.data(), id: d.id } as ClassroomPrompt;
+        if (p.status === 'OPEN' && (!p.target_participant_id || p.target_participant_id === participant.id)) {
+          active = p;
+        }
+      });
+      if (active && (!activePrompt || activePrompt.id !== active.id)) {
+         setActivePrompt(active);
+         setPromptResponse('');
+         setPromptSubmitted(false);
+      } else if (!active) {
+         setActivePrompt(null);
+      }
+    });
+
+    return () => { unsubSession(); unsubParticipant(); unsubPrompts(); };
   }, [session?.id, participant?.id, navigate]);
 
   const joinSession = async (e: React.FormEvent) => {
@@ -76,52 +72,36 @@ export function useStudentSession() {
     setLoading(true);
     setError(null);
 
-    // Bepaal het type apparaat (iPad, Mobile, of Desktop/Browser)
     let deviceType = 'browser';
     const ua = navigator.userAgent;
-    if (/iPad|Macintosh/.test(ua) && 'ontouchend' in document) {
-      deviceType = 'iPad';
-    } else if (/Mobi|Android|iPhone/.test(ua)) {
-      deviceType = 'Mobile';
-    }
+    if (/iPad|Macintosh/.test(ua) && 'ontouchend' in document) deviceType = 'iPad';
+    else if (/Mobi|Android|iPhone/.test(ua)) deviceType = 'Mobile';
 
     try {
-      const storedParticipantKey = localStorage.getItem(`participant_key_${sessionCode.toUpperCase()}`);
-
-      const res = await fetch('/api/participants/join', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_code: sessionCode,
-          display_name: displayName,
-          device_type: deviceType,
-          participant_key: storedParticipantKey // Optionally pass this to the backend so we can reconnect
-        })
-      });
+      if (!auth.currentUser) throw new Error("Authentication failed");
+      const localCode = sessionCode.toUpperCase();
       
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Kan niet deelnemen aan sessie');
-      }
+      const res = await fetch(`/api/sessions/code/${localCode}`);
+      if (!res.ok) throw new Error('Sessie niet gevonden');
+      const sessionData = await res.json();
       
-      const data = await res.json();
-      setSession(data.session);
-      setParticipant(data.participant);
+      const pId = Math.random().toString(36).substring(2, 9);
+      const participantRef = doc(db, `classroom_sessions/${sessionData.id}/participants`, pId);
       
-      // Store the participant key
-      if (data.participant && data.participant.participant_key) {
-        localStorage.setItem(`participant_key_${sessionCode.toUpperCase()}`, data.participant.participant_key);
-      }
-
-      if (data.session.active_prompt_id) {
-        const promptRes = await fetch(`/api/sessions/${data.session.id}/prompts/${data.session.active_prompt_id}`);
-        if (promptRes.ok) {
-          const promptData = await promptRes.json();
-          if (!promptData.target_participant_id || promptData.target_participant_id === data.participant.id) {
-            setActivePrompt(promptData);
-          }
-        }
-      }
+      const newParticipant = {
+        classroom_session_id: sessionData.id,
+        student_user_id: auth.currentUser.uid,
+        display_name: displayName,
+        participant_key: pId,
+        join_status: 'JOINED',
+        device_type: deviceType,
+        joined_at: serverTimestamp()
+      };
+      
+      await setDoc(participantRef, newParticipant);
+      
+      setSession(sessionData);
+      setParticipant({ ...newParticipant, id: pId } as ClassroomParticipant);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Er is een fout opgetreden');
     } finally {
@@ -132,48 +112,34 @@ export function useStudentSession() {
   const sendSignal = async (signalType: 'HELP' | 'WORD' | 'CHECK' | 'EXIT' | 'RESPONSE' | 'DRAWING', textValue?: string) => {
     if (!session || !participant) return;
     
-    // Optimistic UI update
-    if (signalType === 'RESPONSE') {
-      setPromptSubmitted(true);
-    } else if (signalType !== 'DRAWING') {
-      setActiveSignal(signalType);
-      setComposingSignal(null);
-      setSignalText('');
-    }
+    if (signalType === 'RESPONSE') setPromptSubmitted(true);
+    else if (signalType !== 'DRAWING') { setActiveSignal(signalType); setComposingSignal(null); setSignalText(''); }
 
     try {
+      const sigId = Math.random().toString(36).substring(2, 9);
+      await setDoc(doc(db, `classroom_sessions/${session.id}/signals`, sigId), {
+        classroom_session_id: session.id,
+        participant_id: participant.id,
+        phase: session.active_phase,
+        signal_type: signalType,
+        text_value: textValue || null,
+        prompt_id: signalType === 'RESPONSE' ? activePrompt?.id : null,
+        urgency: signalType === 'HELP' ? 'HIGH' : 'LOW',
+        status: 'NEW',
+        created_at: serverTimestamp()
+      });
+      // also ping the backend just in case for older parts
       if (signalType === 'WORD') {
-        await fetch(`/api/sessions/${session.id}/word`, {
+         fetch(`/api/sessions/${session.id}/word`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            participant_id: participant.id,
-            phase: session.active_phase,
-            word: textValue
-          })
-        });
-      } else {
-        await fetch('/api/signals', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            classroom_session_id: session.id,
-            participant_id: participant.id,
-            phase: session.active_phase,
-            signal_type: signalType,
-            text_value: textValue,
-            prompt_id: signalType === 'RESPONSE' ? activePrompt?.id : undefined,
-            urgency: signalType === 'HELP' ? 'HIGH' : 'LOW'
-          })
-        });
+          body: JSON.stringify({ participant_id: participant.id, phase: session.active_phase, word: textValue })
+        }).catch(e => console.error(e));
       }
     } catch (err) {
       console.error('Failed to send signal:', err);
-      if (signalType === 'RESPONSE') {
-        setPromptSubmitted(false);
-      } else {
-        setActiveSignal(null); // Revert on failure
-      }
+      if (signalType === 'RESPONSE') setPromptSubmitted(false);
+      else setActiveSignal(null);
     }
   };
 

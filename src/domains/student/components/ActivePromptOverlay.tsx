@@ -37,7 +37,7 @@ export function ActivePromptOverlay({
            'Vraag van de docent'}
         </span>
       </div>
-      <h2 className="text-2xl font-black mb-6 text-slate-800 tracking-tight leading-snug">
+      <h2 className="text-xl font-bold mb-4 text-slate-800 tracking-tight leading-snug">
         {activePrompt.prompt_text}
       </h2>
       

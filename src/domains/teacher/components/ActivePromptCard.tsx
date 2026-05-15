@@ -78,7 +78,7 @@ export function ActivePromptCard({
           Sluit {activePrompt.title}
         </button>
       </div>
-      <p className="text-2xl font-bold mb-6 leading-tight max-w-2xl">{activePrompt.prompt_text}</p>
+      <p className="text-lg font-bold mb-4 leading-tight max-w-2xl">{activePrompt.prompt_text}</p>
       
       <div className={`rounded-2xl p-6 ${innerBgClass} backdrop-blur-sm border border-white/10 shadow-inner relative z-10`}>
         <h3 className={`text-xs font-bold mb-4 uppercase tracking-widest ${textClass}`}>

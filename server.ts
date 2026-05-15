@@ -40,7 +40,7 @@ async function startServer() {
   // Vite middleware for development (skip if dist folder exists from a build)
   const distPath = path.join(process.cwd(), 'dist');
   
-  if (process.env.NODE_ENV !== 'production' && !fs.existsSync(distPath)) {
+  if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

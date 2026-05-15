@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Lock, Presentation, Users, Brain, Shield, ChevronDown, CheckCircle } from 'lucide-react';
+import { Lock, Presentation, Users, Brain, Shield, ChevronDown, CheckCircle, LogIn } from 'lucide-react';
 import TeacherClassroomPage from './pages/TeacherClassroomPage';
 import ClassroomBoardPage from './pages/ClassroomBoardPage';
 import StudentClassroomPage from './pages/StudentClassroomPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import GridBackground from './components/GridBackground';
+import { auth } from './lib/firebase';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -229,6 +231,17 @@ const LandingPage = () => {
 };
 
 export default function App() {
+  const [authReady, setAuthReady] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthReady(true);
+    });
+    return () => unsub();
+  }, []);
+
   useEffect(() => {
     // Fetch and apply global settings
     fetch('/api/admin/settings')
@@ -247,6 +260,43 @@ export default function App() {
       })
       .catch(err => console.error('Failed to load settings', err));
   }, []);
+
+  if (!authReady) {
+    return <div className="flex h-screen w-screen items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-[100dvh] w-screen flex-col items-center justify-center bg-gray-50 relative font-sans">
+        <div className="fixed inset-0 z-0">
+          <GridBackground />
+        </div>
+        <div className="bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-xl z-10 max-w-sm w-full mx-4 border border-white flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-indigo-600 rounded-2xl shadow-lg flex items-center justify-center mb-6 transform rotate-3">
+            <span className="text-white font-black text-2xl tracking-tighter">EAI</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Inloggen vereist</h2>
+          <p className="text-gray-500 mb-8 font-medium">Log in met je Google-account om de omgeving te betreden.</p>
+          <button 
+            onClick={() => {
+              const provider = new GoogleAuthProvider();
+              provider.setCustomParameters({ prompt: 'select_account' });
+              signInWithPopup(auth, provider).catch(err => {
+                if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                  console.error('Google login failed:', err);
+                  alert('Inloggen is mislukt. Zorg dat pop-ups zijn toegestaan en probeer het opnieuw.');
+                }
+              });
+            }}
+            className="w-full py-3 px-4 bg-white border-2 border-gray-200 text-gray-800 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-3 shadow-sm hover:shadow-md"
+          >
+            <LogIn className="w-5 h-5 text-indigo-600" />
+            Inloggen met Google
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>

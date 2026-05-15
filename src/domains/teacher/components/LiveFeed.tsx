@@ -15,7 +15,7 @@ export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal 
       <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-bl-[4rem] -mr-32 -mt-32 z-0 mix-blend-multiply opacity-50"></div>
       
       <div className="px-8 py-6 border-b-2 border-slate-100 bg-white/50 backdrop-blur-sm flex justify-between items-center relative z-10">
-        <h3 className="text-2xl font-black text-slate-800">Live Signalen</h3>
+        <h3 className="text-lg font-bold text-slate-800">Live Signalen</h3>
         <span className="flex items-center gap-3 text-[11px] uppercase tracking-widest font-black text-emerald-700 bg-emerald-100 px-4 py-2 rounded-full shadow-sm border-2 border-emerald-200/50">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
           Live Feed

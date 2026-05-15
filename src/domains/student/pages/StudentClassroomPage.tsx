@@ -60,7 +60,7 @@ export function StudentClassroomPage() {
           <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
             <CheckCircle className="w-10 h-10 text-slate-400" />
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-800 mb-3 tracking-tight">Les is afgelopen</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800 mb-3 tracking-tight">Les is afgelopen</h1>
           <p className="text-slate-600 font-medium leading-relaxed mb-8">De docent heeft deze sessie beëindigd. Bedankt voor het meedoen!</p>
           <button 
             onClick={() => window.location.reload()}
@@ -84,7 +84,7 @@ export function StudentClassroomPage() {
           <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
             <span className="text-4xl animate-bounce">⏳</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-800 mb-3 tracking-tight">Even pauze</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800 mb-3 tracking-tight">Kijk naar de docent</h1>
           <p className="text-slate-600 font-medium leading-relaxed">Je hebt een time-out gekregen van de docent. Je kunt even niet actief deelnemen.</p>
         </div>
       </div>
@@ -96,7 +96,7 @@ export function StudentClassroomPage() {
       <div className="min-h-[100dvh] bg-slate-900 flex flex-col items-center justify-center p-4">
         <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900/20 to-slate-900 pointer-events-none"></div>
         <div className="text-center relative z-10 animate-in fade-in zoom-in-95 duration-500">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-widest uppercase opacity-90 drop-shadow-sm">Kijk naar de docent</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-widest uppercase opacity-90 drop-shadow-sm">Kijk naar de docent</h1>
           <p className="text-slate-400 text-xl font-medium">Je scherm is tijdelijk vergrendeld.</p>
         </div>
       </div>

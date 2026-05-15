@@ -44,7 +44,7 @@ export function TimerDisplay({ session, variant = 'default' }: TimerDisplayProps
       : 'bg-white text-gray-800 border-gray-200';
     
     const size = variant === 'board'
-      ? 'gap-4 px-8 py-4 rounded-3xl text-6xl shadow-lg border-4'
+      ? 'gap-3 px-6 py-3 rounded-2xl text-4xl shadow-md border-2'
       : 'gap-2 px-4 py-2 rounded-full text-lg shadow-sm border';
 
     return `${base} ${state} ${size}`;
@@ -52,7 +52,7 @@ export function TimerDisplay({ session, variant = 'default' }: TimerDisplayProps
 
   const getIconStyles = () => {
     const state = isEnded ? 'text-red-500' : isWarning ? 'text-amber-500' : 'text-blue-500';
-    const size = variant === 'board' ? 'w-12 h-12' : 'w-5 h-5';
+    const size = variant === 'board' ? 'w-8 h-8' : 'w-5 h-5';
     return `${state} ${size}`;
   };
 

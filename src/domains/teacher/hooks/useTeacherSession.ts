@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ClassroomSession, ClassroomParticipant, ClassroomSignal, ClassroomSummary, ClassroomPrompt } from '../../../types';
+import { db, auth } from '../../../lib/firebase';
+import { doc, collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../../../lib/firebase-error';
 
 export function useTeacherSession() {
   const [session, setSession] = useState<ClassroomSession | null>(null);
@@ -10,60 +13,50 @@ export function useTeacherSession() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.id) return;
 
-    const fetchData = async () => {
-      try {
-        const [pRes, sRes, sumRes] = await Promise.all([
-          fetch(`/api/sessions/${session.id}/participants`),
-          fetch(`/api/sessions/${session.id}/signals`),
-          fetch(`/api/sessions/${session.id}/summaries`)
-        ]);
-        if (pRes.ok) setParticipants(await pRes.json());
-        if (sRes.ok) setSignals(await sRes.json());
-        if (sumRes.ok) setSummaries(await sumRes.json());
-      } catch (err) {
-        console.error('Failed to fetch initial data', err);
+    const unsubSession = onSnapshot(doc(db, 'classroom_sessions', session.id), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as ClassroomSession;
+        setSession({ ...data, id: docSnap.id });
       }
+    }, (error) => handleFirestoreError(error, OperationType.GET, `classroom_sessions/${session.id}`));
+
+    const unsubParticipants = onSnapshot(collection(db, `classroom_sessions/${session.id}/participants`), (snap) => {
+      const parts: ClassroomParticipant[] = [];
+      snap.forEach(d => parts.push({ ...d.data(), id: d.id } as ClassroomParticipant));
+      setParticipants(parts);
+    }, (error) => handleFirestoreError(error, OperationType.GET, `classroom_sessions/${session.id}/participants`));
+
+    const qSignals = query(collection(db, `classroom_sessions/${session.id}/signals`), orderBy('created_at', 'desc'));
+    const unsubSignals = onSnapshot(qSignals, (snap) => {
+      const sigs: ClassroomSignal[] = [];
+      snap.forEach(d => sigs.push({ ...d.data(), id: d.id } as ClassroomSignal));
+      setSignals(sigs);
+    }, (error) => handleFirestoreError(error, OperationType.GET, `classroom_sessions/${session.id}/signals`));
+
+    const qSummaries = query(collection(db, `classroom_sessions/${session.id}/summaries`), orderBy('created_at', 'desc'));
+    const unsubSummaries = onSnapshot(qSummaries, (snap) => {
+      const sums: ClassroomSummary[] = [];
+      snap.forEach(d => sums.push({ ...d.data(), id: d.id } as ClassroomSummary));
+      setSummaries(sums);
+    }, (error) => handleFirestoreError(error, OperationType.GET, `classroom_sessions/${session.id}/summaries`));
+
+    const qPrompts = query(collection(db, `classroom_sessions/${session.id}/prompts`));
+    const unsubPrompts = onSnapshot(qPrompts, (snap) => {
+      const prompts: ClassroomPrompt[] = [];
+      snap.forEach(d => prompts.push({ ...d.data(), id: d.id } as ClassroomPrompt));
+      const active = prompts.find(p => p.status === 'OPEN');
+      setActivePrompt(active || null);
+    }, (error) => handleFirestoreError(error, OperationType.GET, `classroom_sessions/${session.id}/prompts`));
+
+    return () => {
+      unsubSession();
+      unsubParticipants();
+      unsubSignals();
+      unsubSummaries();
+      unsubPrompts();
     };
-    fetchData();
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('WS message received:', data);
-        if (data.session_id !== session.id) return;
-
-        if (data.type === 'PARTICIPANT_JOINED') {
-          setParticipants(prev => {
-            if (prev.find(p => p.id === data.participant.id)) return prev;
-            return [...prev, data.participant];
-          });
-        } else if (data.type === 'SIGNAL_RECEIVED') {
-          setSignals(prev => [data.signal, ...prev]);
-        } else if (data.type === 'SUMMARY_GENERATED') {
-          setSummaries(prev => [data.summary, ...prev]);
-        } else if (data.type === 'PROMPT_CREATED') {
-          setActivePrompt(data.prompt);
-          setSession(data.session);
-        } else if (data.type === 'PROMPT_CLOSED') {
-          setActivePrompt(null);
-          setSession(data.session);
-        } else if (data.type === 'SESSION_UPDATED' && data.session.id === session.id) {
-          setSession(data.session);
-        } else if (data.type === 'PARTICIPANT_REMOVED' && data.session_id === session.id) {
-          setParticipants(prev => prev.filter(p => p.id !== data.participant_id));
-        }
-      } catch (e) {
-        console.error('WebSocket message error:', e);
-      }
-    };
-
-    return () => ws.close();
   }, [session?.id]);
 
   return {

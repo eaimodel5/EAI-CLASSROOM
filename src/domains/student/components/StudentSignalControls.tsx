@@ -29,7 +29,7 @@ export function StudentSignalControls({
       <div className="bg-white/90 backdrop-blur-2xl p-10 rounded-[2.5rem] shadow-2xl border border-white/60 w-full animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-indigo-100/50 to-purple-100/50 rounded-bl-full -mr-24 -mt-24 z-0 mix-blend-multiply opacity-50"></div>
         <div className="relative z-10">
-          <h2 className="text-2xl font-black mb-6 text-slate-800 tracking-tight">
+          <h2 className="text-xl font-bold mb-4 text-slate-800 tracking-tight">
             {composingSignal === 'WORD' ? 'Welk woord begrijp je niet?' : 'Waar loop je precies vast?'}
           </h2>
           <textarea
@@ -68,7 +68,7 @@ export function StudentSignalControls({
         <div className="w-24 h-24 bg-emerald-100/80 text-emerald-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner rotate-3">
           <CheckCircle className="w-12 h-12" />
         </div>
-        <h2 className="text-3xl font-black mb-4 text-slate-800 tracking-tight">Verzonden!</h2>
+        <h2 className="text-2xl font-bold mb-4 text-slate-800 tracking-tight">Verzonden!</h2>
         <p className="text-slate-600 mb-10 font-medium text-lg">De docent heeft je bericht ontvangen.</p>
         <button
           onClick={() => setActiveSignal(null)}
@@ -90,7 +90,7 @@ export function StudentSignalControls({
           <div className="w-20 h-20 bg-red-50 group-hover:bg-red-100 rounded-[1.5rem] flex items-center justify-center transition-colors">
              <HelpCircle className="w-10 h-10 text-red-400 group-hover:text-red-600 transition-colors" />
           </div>
-          <span className="font-black text-2xl tracking-tight">Ik snap het niet</span>
+          <span className="font-bold text-lg tracking-tight">Ik snap het niet</span>
         </button>
       )}
 
@@ -127,7 +127,7 @@ export function StudentSignalControls({
             <div className="w-16 h-16 bg-red-50 group-hover:bg-red-100 rounded-2xl flex items-center justify-center transition-colors shrink-0">
                <HelpCircle className="w-8 h-8 text-red-400 group-hover:text-red-500 transition-colors" />
             </div>
-            <span className="font-black text-2xl tracking-tight">Ik loop vast</span>
+            <span className="font-bold text-lg tracking-tight">Ik loop vast</span>
           </button>
 
           <button 
@@ -137,7 +137,7 @@ export function StudentSignalControls({
             <div className="w-16 h-16 bg-emerald-50 group-hover:bg-emerald-100 rounded-2xl flex items-center justify-center transition-colors shrink-0">
                <CheckCircle className="w-8 h-8 text-emerald-400 group-hover:text-emerald-500 transition-colors" />
             </div>
-            <span className="font-black text-2xl tracking-tight">Ik ben klaar</span>
+            <span className="font-bold text-lg tracking-tight">Ik ben klaar</span>
           </button>
         </div>
       )}

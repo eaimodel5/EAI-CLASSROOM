@@ -128,8 +128,26 @@ export function PrintableLessonPlan({ prep, onBack }: { prep: LessonPreparation,
                     {/* Check Questions Cards */}
                     {prep.checkQuestions && prep.checkQuestions.length > 0 && prep.checkQuestions[0] !== '' && prep.checkQuestions.map((q, i) => (
                         <div key={`check-${i}`} className="print:mb-8 print:break-inside-avoid bg-white border-4 border-amber-100 rounded-[2.5rem] p-8 shadow-sm flex flex-col min-h-[250px] relative overflow-hidden">
-                            <div className="absolute top-0 right-0 bg-amber-500 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-bl-2xl">Instructiefase</div>
+                            <div className="absolute top-0 right-0 bg-amber-500 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-bl-2xl">Check</div>
                             <h3 className="text-slate-400 uppercase tracking-widest font-black text-xs mb-6 mt-4">Formatieve Check</h3>
+                            <p className="text-xl font-bold text-slate-800 leading-relaxed flex-1 whitespace-pre-wrap">{q}</p>
+                        </div>
+                    ))}
+                    
+                    {/* Instruction Activities */}
+                    {prep.instructionActivities && prep.instructionActivities.length > 0 && prep.instructionActivities[0] !== '' && prep.instructionActivities.map((q, i) => (
+                        <div key={`instr-${i}`} className="print:mb-8 print:break-inside-avoid bg-white border-4 border-blue-100 rounded-[2.5rem] p-8 shadow-sm flex flex-col min-h-[250px] relative overflow-hidden">
+                            <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-bl-2xl">Instructiefase</div>
+                            <h3 className="text-slate-400 uppercase tracking-widest font-black text-xs mb-6 mt-4">Activerende Instructie</h3>
+                            <p className="text-xl font-bold text-slate-800 leading-relaxed flex-1 whitespace-pre-wrap">{q}</p>
+                        </div>
+                    ))}
+                    
+                    {/* Processing Activities */}
+                    {prep.processingActivities && prep.processingActivities.length > 0 && prep.processingActivities[0] !== '' && prep.processingActivities.map((q, i) => (
+                        <div key={`proc-${i}`} className="print:mb-8 print:break-inside-avoid bg-white border-4 border-purple-100 rounded-[2.5rem] p-8 shadow-sm flex flex-col min-h-[250px] relative overflow-hidden">
+                            <div className="absolute top-0 right-0 bg-purple-500 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-bl-2xl">Verwerkingsfase</div>
+                            <h3 className="text-slate-400 uppercase tracking-widest font-black text-xs mb-6 mt-4">Verwerkingstaken</h3>
                             <p className="text-xl font-bold text-slate-800 leading-relaxed flex-1 whitespace-pre-wrap">{q}</p>
                         </div>
                     ))}

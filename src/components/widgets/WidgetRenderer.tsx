@@ -258,7 +258,7 @@ const ClockWidget = () => {
   }, []);
   return (
     <div className="flex items-center justify-center h-full bg-slate-50 rounded-xl m-2">
-      <div className="text-5xl font-mono font-bold text-slate-800 tracking-tighter">
+      <div className="text-4xl md:text-5xl font-mono font-bold text-slate-800 tracking-tighter">
         {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
       </div>
     </div>
@@ -342,7 +342,7 @@ const TimerWidget = ({ data, onUpdate, isTeacher, inlineMode }: any) => {
   return (
     <div className="flex flex-col items-center justify-center h-full bg-slate-50 rounded-xl m-2 overflow-hidden relative">
       <div className="absolute bottom-0 left-0 right-0 bg-indigo-100 transition-all duration-100 ease-linear" style={{ height: `${progress}%` }} />
-      <div className="text-7xl md:text-8xl font-mono font-bold text-slate-800 tracking-tighter z-10 drop-shadow-sm">
+      <div className="text-5xl md:text-6xl lg:text-7xl font-mono font-bold text-slate-800 tracking-tighter z-10 drop-shadow-sm">
         {m.toString().padStart(2, '0')}:{s.toString().padStart(2, '0')}
       </div>
     </div>
@@ -360,11 +360,11 @@ const TrafficLightWidget = ({ data, onUpdate, isTeacher, inlineMode }: any) => {
     <button 
       onClick={() => setColor(c)}
       disabled={!isTeacher}
-      className={`w-12 h-12 md:w-16 md:h-16 rounded-full border-4 transition-all duration-300 ${
+      className={`w-10 h-10 md:w-14 md:h-14 rounded-full border-[3px] transition-all duration-300 ${
         active 
-          ? c === 'RED' ? 'bg-red-500 border-red-200 shadow-[0_0_30px_rgba(239,68,68,0.6)]' 
-          : c === 'YELLOW' ? 'bg-amber-400 border-amber-100 shadow-[0_0_30px_rgba(251,191,36,0.6)]'
-          : 'bg-green-500 border-green-200 shadow-[0_0_30px_rgba(34,197,94,0.6)]'
+          ? c === 'RED' ? 'bg-red-500 border-red-200 shadow-[0_0_20px_rgba(239,68,68,0.6)]' 
+          : c === 'YELLOW' ? 'bg-amber-400 border-amber-100 shadow-[0_0_20px_rgba(251,191,36,0.6)]'
+          : 'bg-green-500 border-green-200 shadow-[0_0_20px_rgba(34,197,94,0.6)]'
           : 'bg-slate-800 border-slate-700 opacity-30 shadow-inner'
       }`}
     />
@@ -438,7 +438,7 @@ const RandomNameWidget = ({ data, onUpdate, isTeacher, inlineMode, participants 
   return (
     <div className="flex items-center justify-center h-full bg-slate-50 m-2 rounded-2xl relative overflow-hidden">
       <div className="absolute blur-3xl opacity-20 bg-indigo-500 w-64 h-64 rounded-full"></div>
-      <div className={`text-4xl md:text-5xl font-extrabold text-slate-800 text-center z-10 px-8 py-12 ${isSpinning ? 'opacity-70 blur-[1px]' : 'scale-110 drop-shadow-md text-indigo-700'} transition-all duration-300`}>
+      <div className={`text-3xl md:text-4xl font-extrabold text-slate-800 text-center z-10 px-8 py-12 ${isSpinning ? 'opacity-70 blur-[1px]' : 'scale-110 drop-shadow-md text-indigo-700'} transition-all duration-300`}>
         {displayName}
       </div>
     </div>

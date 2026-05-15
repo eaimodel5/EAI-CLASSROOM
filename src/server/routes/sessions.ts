@@ -154,11 +154,11 @@ sessionsRouter.put('/:id/widgets', (req: Request, res: Response) => {
 sessionsRouter.put('/:id/prep', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { prep_json } = req.body;
+    const { prep_json, subject, grade, level, lesson_goal } = req.body;
     const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id) as any;
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
-    db.prepare('UPDATE classroom_sessions SET prep_json = ? WHERE id = ?').run(prep_json, id);
+    db.prepare('UPDATE classroom_sessions SET prep_json = ?, subject = ?, grade = ?, level = ?, lesson_goal = ? WHERE id = ?').run(prep_json, subject, grade, level, lesson_goal, id);
     const updatedSession = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(id);
 
     broadcast({ type: 'SESSION_UPDATED', session_id: id, session: updatedSession });
@@ -168,6 +168,8 @@ sessionsRouter.put('/:id/prep', (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to update prep' });
   }
 });
+
+
 
 sessionsRouter.put('/:id/timer', (req: Request, res: Response) => {
   try {

@@ -1,0 +1,132 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Globally accessible validations
+    function isValidId(id) { 
+        return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    
+    match /lesson_templates/{templateId} {
+      function isValidTemplate(data) {
+        return data.keys().hasAll(['title', 'subject', 'prep_json', 'created_by', 'created_at']) &&
+               data.title is string && data.title.size() <= 200 &&
+               data.subject is string && data.subject.size() <= 100 &&
+               data.prep_json is string &&
+               data.created_by is string && data.created_by.size() > 0 &&
+               data.created_at == request.time;
+      }
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(templateId) && isValidTemplate(incoming());
+      allow update: if isSignedIn() && isValidId(templateId) && existing().created_by == request.auth.uid && incoming().created_by == existing().created_by;
+      allow delete: if isSignedIn() && isValidId(templateId) && existing().created_by == request.auth.uid;
+    }
+
+    match /classroom_sessions/{sessionId} {
+      // Create session validation
+      function isValidSession(data) {
+        return data.keys().hasAll(['teacher_user_id', 'session_code', 'subject', 'active_phase', 'status', 'created_at', 'updated_at']) &&
+               data.keys().size() <= 21 &&
+               data.teacher_user_id is string && data.teacher_user_id.size() > 0 && data.teacher_user_id == request.auth.uid &&
+               data.session_code is string && data.session_code.size() == 6 &&
+               data.subject is string && data.subject.size() <= 100 &&
+               data.active_phase is string && data.active_phase in ["START", "INSTRUCTIE", "CHECK", "VERWERKEN", "AFSLUITING"] &&
+               data.status is string && data.status in ["PLANNED", "ACTIVE", "PAUSED", "ENDED"] &&
+               data.created_at == request.time &&
+               data.updated_at == request.time;
+      }
+      
+      // Update session validation
+      function isValidSessionUpdate(data) {
+        return data.teacher_user_id == existing().teacher_user_id && // Immutable
+               data.session_code == existing().session_code &&       // Immutable
+               data.created_at == existing().created_at &&           // Immutable
+               data.updated_at == request.time;
+      }
+
+      // Teachers can list their sessions. Students fetch by ID after querying by code securely? 
+      // We can't query by code securely without exposing all. So students use a cloud function or we allow read if they know the ID.
+      allow get: if isValidId(sessionId);
+      allow list: if isSignedIn() && existing().teacher_user_id == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(sessionId) && isValidSession(incoming());
+      
+      allow update: if isSignedIn() && isValidId(sessionId) && isValidSessionUpdate(incoming()) && (
+        // Teacher actions override
+        (incoming().diff(existing()).affectedKeys().hasAny(['active_phase', 'status', 'board_message', 'active_prompt_id', 'timer_started_at', 'timer_duration_seconds', 'is_locked', 'shared_signal_id', 'widgets_json', 'prep_json', 'updated_at']) && existing().teacher_user_id == request.auth.uid)
+      );
+      
+      allow delete: if isSignedIn() && existing().teacher_user_id == request.auth.uid;
+      
+      
+      match /participants/{participantId} {
+        function isValidParticipant(data) {
+          return data.keys().hasAll(['classroom_session_id', 'display_name', 'join_status', 'joined_at']) &&
+                 data.classroom_session_id == sessionId &&
+                 data.display_name is string && data.display_name.size() > 0 && data.display_name.size() <= 50 &&
+                 data.join_status is string && data.join_status in ["JOINED", "ACTIVE", "IDLE", "LEFT"] &&
+                 data.joined_at == request.time &&
+                 // The participant record might be created by an anonymous student
+                 // so we link their UID to student_user_id
+                 (!data.keys().hasAny(['student_user_id']) || (data.student_user_id is string && data.student_user_id == request.auth.uid));
+        }
+        
+        function isValidParticipantUpdate(data) {
+          return data.classroom_session_id == existing().classroom_session_id && // Immutable
+                 data.joined_at == existing().joined_at; // Immutable
+        }
+
+        // Anyone in the session can read participants
+        allow read: if isValidId(sessionId) && isValidId(participantId);
+        
+        // Let students join (create)
+        allow create: if isSignedIn() && isValidId(sessionId) && isValidId(participantId) && isValidParticipant(incoming()) && exists(/databases/$(database)/documents/classroom_sessions/$(sessionId));
+        
+        allow update: if isSignedIn() && isValidId(sessionId) && isValidId(participantId) && isValidParticipantUpdate(incoming()) && (
+           // A student updates themselves
+           (existing().student_user_id == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['join_status', 'last_seen_at'])) ||
+           // Teacher updates them
+           (get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid)
+        );
+        // Teacher can remove them
+        allow delete: if isSignedIn() && isValidId(sessionId) && isValidId(participantId) && get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid;
+      }
+      
+      match /signals/{signalId} {
+        function isValidSignal(data) {
+           return data.keys().hasAll(['classroom_session_id', 'participant_id', 'phase', 'signal_type', 'status', 'created_at']) &&
+                  data.classroom_session_id == sessionId &&
+                  data.participant_id is string && data.participant_id.size() > 0 && data.participant_id.size() <= 128 &&
+                  data.phase is string && data.phase in ["START", "INSTRUCTIE", "CHECK", "VERWERKEN", "AFSLUITING"] &&
+                  data.signal_type is string && data.signal_type in ["HELP", "WORD", "CHECK", "EXIT", "RESPONSE", "DRAWING"] &&
+                  data.status is string && data.status in ["NEW", "ACKNOWLEDGED", "RESOLVED"] &&
+                  data.created_at == request.time;
+        }
+        
+        allow read: if isValidId(sessionId) && isValidId(signalId);
+        allow create: if isSignedIn() && isValidId(sessionId) && isValidId(signalId) && isValidSignal(incoming());
+        allow update: if isSignedIn() && isValidId(sessionId) && isValidId(signalId) && (
+           // Teacher acknowledging/resolving
+           get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status'])
+        );
+      }
+      
+      match /prompts/{promptId} {
+         allow read: if isValidId(sessionId) && isValidId(promptId);
+         // Prompts can only be managed by teachers
+         allow create, update, delete: if isSignedIn() && isValidId(sessionId) && isValidId(promptId) && get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid;
+      }
+      
+      match /summaries/{summaryId} {
+         allow read: if isValidId(sessionId) && isValidId(summaryId);
+         allow create, update, delete: if isSignedIn() && isValidId(sessionId) && isValidId(summaryId) && get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid;
+      }
+    }
+  }
+}

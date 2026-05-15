@@ -7,7 +7,9 @@ export interface LessonPreparation {
   learningGoal: string;
   successCriteria: string[];
   priorKnowledgeQuestions: string[];
+  instructionActivities: string[];
   checkQuestions: string[];
+  processingActivities: string[];
   misconceptions: string[];
   interventions: string[];
   exitTicketQuestions: string[];
@@ -23,7 +25,9 @@ export const emptyLessonPreparation: LessonPreparation = {
   learningGoal: "",
   successCriteria: [""],
   priorKnowledgeQuestions: [""],
+  instructionActivities: [""],
   checkQuestions: [""],
+  processingActivities: [""],
   misconceptions: [""],
   interventions: [""],
   exitTicketQuestions: [""],

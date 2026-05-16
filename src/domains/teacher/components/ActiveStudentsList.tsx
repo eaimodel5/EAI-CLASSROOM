@@ -59,7 +59,7 @@ export function ActiveStudentsList({ participants, onRemoveParticipant, onUpdate
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-sm border-2 border-slate-200/60 p-8 h-full flex flex-col">
+    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-sm border-2 border-slate-200/60 p-6 h-full flex flex-col">
       <h2 className="text-lg font-bold mb-4 flex items-center gap-3 text-slate-800">
         <span className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border-2 border-slate-200 shrink-0">
           <Users className="w-5 h-5 text-slate-600" />
@@ -68,8 +68,8 @@ export function ActiveStudentsList({ participants, onRemoveParticipant, onUpdate
       </h2>
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar hide-scrollbar">
         {participants.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
-            <Users className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200">
+            <Users className="w-10 h-10 mx-auto mb-3 text-slate-300" />
             <p className="text-base font-bold text-slate-500">Nog geen leerlingen ingelogd.</p>
           </div>
         ) : (
@@ -79,7 +79,7 @@ export function ActiveStudentsList({ participants, onRemoveParticipant, onUpdate
               const canDraw = p.can_draw === 1;
               
               return (
-              <li key={p.id} className={`flex flex-col text-sm text-gray-700 bg-white border-2 border-slate-100 px-5 py-4 rounded-2xl shadow-sm relative group hover:border-slate-300 transition-colors ${isTimedOut ? 'opacity-50 grayscale' : ''}`}>
+              <li key={p.id} className={`flex flex-col text-sm text-gray-700 bg-white border-2 border-slate-100 px-4 py-3 rounded-xl shadow-sm relative group hover:border-slate-300 transition-colors ${isTimedOut ? 'opacity-50 grayscale' : ''}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${isTimedOut ? 'bg-red-100 text-red-700 border-2 border-red-200' : 'bg-blue-100 text-blue-700 border-2 border-blue-200'}`}>

@@ -38,9 +38,9 @@ export function JoinSessionForm({
           <ArrowLeft className="w-4 h-4" /> Terug naar start
         </button>
       </div>
-      <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/60 p-10 max-w-sm w-full relative overflow-hidden z-10 animate-in zoom-in-95 duration-500">
+      <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-8 max-w-sm w-full relative overflow-hidden z-10 animate-in zoom-in-95 duration-500">
         <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-indigo-100/50 to-purple-100/50 rounded-bl-full -mr-24 -mt-24 z-0 mix-blend-multiply opacity-50"></div>
-        <h1 className="text-3xl font-black text-slate-900 mb-8 text-center tracking-tight relative z-10">Deelnemen</h1>
+        <h1 className="text-2xl font-black text-slate-900 mb-6 text-center tracking-tight relative z-10">Deelnemen</h1>
         
         {error && (
           <div className="mb-6 p-4 bg-red-50/80 backdrop-blur-sm text-red-700 rounded-2xl text-sm font-bold border border-red-200/60 shadow-sm animate-in fade-in slide-in-from-top-2">
@@ -57,7 +57,7 @@ export function JoinSessionForm({
               value={sessionCode}
               onChange={e => setSessionCode(e.target.value.toUpperCase())}
               placeholder="bijv. X7K9M2"
-              className="w-full px-4 py-4 bg-white/50 border-2 border-slate-200/60 rounded-2xl text-center text-4xl tracking-widest font-mono font-black text-indigo-600 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none uppercase transition-all placeholder:text-slate-300 placeholder:font-medium placeholder:tracking-normal placeholder:text-lg shadow-inner"
+              className="w-full px-4 py-4 bg-white/50 border-2 border-slate-200/60 rounded-2xl text-center text-3xl tracking-widest font-mono font-black text-indigo-600 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none uppercase transition-all placeholder:text-slate-300 placeholder:font-medium placeholder:tracking-normal placeholder:text-base shadow-inner"
               maxLength={6}
             />
           </div>

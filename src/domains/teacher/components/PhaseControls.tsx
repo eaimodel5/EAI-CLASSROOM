@@ -18,16 +18,16 @@ export function PhaseControls({ activePhase, onChangePhase }: PhaseControlsProps
   const activeIndex = phases.findIndex(p => p.id === activePhase);
 
   return (
-    <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/60 p-6 relative overflow-hidden">
+    <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/60 p-4 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-16 -mt-16 z-0 mix-blend-multiply opacity-50"></div>
       
       <div className="relative z-10">
-        <h2 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2">
+        <h2 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
           <Settings className="w-5 h-5 text-indigo-500" />
           Lesfasering (Leerproces)
         </h2>
         
-    <div className="relative border-l-4 border-slate-100 ml-4 space-y-6">
+    <div className="relative border-l-4 border-slate-100 ml-4 space-y-3">
       {phases.map((phase, index) => {
         const isActive = activePhase === phase.id;
         const isPast = index < activeIndex;
@@ -39,7 +39,7 @@ export function PhaseControls({ activePhase, onChangePhase }: PhaseControlsProps
             className={`w-full group text-left relative pl-8 flex flex-col transition-all`}
           >
             {/* Timeline Dot Indicator */}
-            <span className={`absolute -left-[10px] top-3 px-1 bg-white flex items-center justify-center transition-colors ${isActive ? 'text-indigo-600' : isPast ? 'text-indigo-400' : 'text-slate-300 group-hover:text-slate-400'}`}>
+            <span className={`absolute -left-[10px] top-2 px-1 bg-white flex items-center justify-center transition-colors ${isActive ? 'text-indigo-600' : isPast ? 'text-indigo-400' : 'text-slate-300 group-hover:text-slate-400'}`}>
               {isActive ? (
                  <span className="relative flex h-4 w-4">
                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -53,7 +53,7 @@ export function PhaseControls({ activePhase, onChangePhase }: PhaseControlsProps
             </span>
             
             {/* Content */}
-            <div className={`transition-all rounded-2xl p-4 -mt-2 -ml-2 border-2 ${isActive ? 'bg-indigo-50/80 border-indigo-200 shadow-sm' : 'border-transparent hover:bg-slate-50 hover:border-slate-200'}`}>
+            <div className={`transition-all rounded-2xl p-3 -mt-1 -ml-2 border-2 ${isActive ? 'bg-indigo-50/80 border-indigo-200 shadow-sm' : 'border-transparent hover:bg-slate-50 hover:border-slate-200'}`}>
               <div className={`font-black text-base ${isActive ? 'text-indigo-900' : isPast ? 'text-slate-700' : 'text-slate-500'}`}>
                 {index + 1}. {phase.label}
               </div>

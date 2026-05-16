@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Settings, Activity, Users, MessageSquare, Save, Eye, XCircle, Trash2, ShieldAlert, BarChart, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -47,6 +47,12 @@ export default function AdminDashboardPage() {
     if (!window.confirm('Weet je zeker dat je deze sessie geforceerd wilt beëindigen?')) return;
     try {
       await fetch(`/api/admin/sessions/${id}/end`, { method: 'POST' });
+      const sessionRef = doc(db, 'classroom_sessions', id);
+      try {
+        await updateDoc(sessionRef, { status: 'ENDED' });
+      } catch (e) {
+        console.warn('Firebase session could not be updated:', e);
+      }
       fetchData();
     } catch (err) {
       alert('Fout bij beëindigen sessie');
@@ -57,6 +63,12 @@ export default function AdminDashboardPage() {
     if (!window.confirm('Weet je zeker dat je deze sessie en alle bijbehorende data (deelnemers, signalen) permanent wilt verwijderen?')) return;
     try {
       await fetch(`/api/admin/sessions/${id}`, { method: 'DELETE' });
+      const sessionRef = doc(db, 'classroom_sessions', id);
+      try {
+        await updateDoc(sessionRef, { status: 'ENDED' }); // Trigger client disconnect before delete
+      } catch (e) {
+        console.warn('Firebase session could not be updated:', e);
+      }
       fetchData();
     } catch (err) {
       alert('Fout bij verwijderen sessie');

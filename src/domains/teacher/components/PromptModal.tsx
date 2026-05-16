@@ -28,7 +28,7 @@ export function PromptModal({ isOpen, type, initialText, onClose, onSubmit }: Pr
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200/60 animate-in zoom-in-95">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200/60 animate-in zoom-in-95">
         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h2 className="text-xl font-bold text-slate-800">
             {config.title}
@@ -37,7 +37,7 @@ export function PromptModal({ isOpen, type, initialText, onClose, onSubmit }: Pr
             <XCircle className="w-6 h-6 text-slate-500" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-8">
+        <form onSubmit={handleSubmit} className="p-6">
           <div className="mb-6">
             <label className="block text-sm font-bold text-slate-700 mb-2">
               {config.label}
@@ -46,7 +46,7 @@ export function PromptModal({ isOpen, type, initialText, onClose, onSubmit }: Pr
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={config.placeholder}
-              className="w-full px-4 py-3 border-2 border-slate-200/60 bg-slate-50/50 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 font-medium text-slate-800 transition-all outline-none min-h-[120px] resize-none"
+              className="w-full px-4 py-3 border-2 border-slate-200/60 bg-slate-50/50 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 font-medium text-slate-800 transition-all outline-none min-h-[100px] resize-none"
               autoFocus
               required
             />

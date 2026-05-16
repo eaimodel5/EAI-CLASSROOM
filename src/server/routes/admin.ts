@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import db from '../../db/index.ts';
+import { broadcast } from '../websocket.ts';
 
 export const adminRouter = Router();
 
@@ -52,6 +53,7 @@ adminRouter.get('/sessions', (req: Request, res: Response) => {
 adminRouter.post('/sessions/:id/end', (req: Request, res: Response) => {
   try {
     db.prepare('UPDATE classroom_sessions SET status = "ENDED", closed_at = CURRENT_TIMESTAMP WHERE id = ?').run(req.params.id);
+    broadcast({ type: 'SESSION_ENDED', session_id: req.params.id });
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to end session' });
@@ -62,6 +64,7 @@ adminRouter.delete('/sessions/:id', (req: Request, res: Response) => {
   try {
     // Delete cascades due to foreign key constraints
     db.prepare('DELETE FROM classroom_sessions WHERE id = ?').run(req.params.id);
+    broadcast({ type: 'SESSION_ENDED', session_id: req.params.id });
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete session' });

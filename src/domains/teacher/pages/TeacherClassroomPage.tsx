@@ -108,7 +108,7 @@ export function TeacherClassroomPage() {
 
         <div className="flex-1 w-full mx-auto flex flex-col lg:flex-row min-h-0">
           {/* Main Content Workspace */}
-          <main className="flex-1 p-4 lg:p-10 overflow-y-auto relative z-0 hide-scrollbar scroll-smooth w-full">
+          <main className="flex-1 p-4 lg:p-6 overflow-y-auto relative z-0 hide-scrollbar scroll-smooth w-full">
             
             {/* OVERVIEW MODULE */}
             {activeModule === 'OVERVIEW' && (
@@ -124,9 +124,9 @@ export function TeacherClassroomPage() {
                   activePhase={session.active_phase}
                 />
 
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                  <div className="xl:col-span-4 space-y-8">
-                    <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-slate-200/60">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                  <div className="xl:col-span-4 space-y-6">
+                    <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-slate-200/60">
                       <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                          <Activity className="w-4 h-4" /> Lesfase Controller
                       </h3>
@@ -145,8 +145,8 @@ export function TeacherClassroomPage() {
                        <button onClick={() => setShowWidgetSelector(true)} className="text-indigo-600 font-bold text-sm bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors">+ Toevoegen</button>
                     </div>
                     {activeWidgets.length > 0 ? (
-                      <div className="bg-white/60 backdrop-blur-md rounded-[2.5rem] shadow-sm border border-slate-200/60 p-6 flex-1 min-h-[300px]">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                      <div className="bg-white/60 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/60 p-5 flex-1 min-h-[220px]">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
                           {activeWidgets.map((widget: WidgetInstance) => (
                             <WidgetRenderer 
                               key={widget.id}
@@ -161,7 +161,7 @@ export function TeacherClassroomPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-white/40 backdrop-blur-md border-2 border-dashed border-slate-200/80 rounded-[2.5rem] p-8 text-center flex-1 flex flex-col justify-center items-center text-slate-500 min-h-[300px]">
+                      <div className="bg-white/40 backdrop-blur-md border-2 border-dashed border-slate-200/80 rounded-2xl p-6 text-center flex-1 flex flex-col justify-center items-center text-slate-500 min-h-[220px]">
                         <div className="w-20 h-20 bg-slate-100/50 rounded-3xl flex items-center justify-center mb-6 border border-slate-200/50 transform rotate-3">
                           <LayoutGrid className="w-8 h-8 text-slate-400" />
                         </div>
@@ -212,7 +212,7 @@ export function TeacherClassroomPage() {
                       />
                   </div>
                 
-                  <div className="xl:col-span-12 bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 p-5 md:p-8 lg:p-12 relative overflow-hidden">
+                  <div className="xl:col-span-12 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl shadow-slate-200/40 border border-slate-200/60 p-4 md:p-6 lg:p-8 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/50 rounded-bl-full -mr-32 -mt-32 z-0 mix-blend-multiply opacity-50 pointer-events-none"></div>
                     
                     <div className="relative z-10">
@@ -242,8 +242,8 @@ export function TeacherClassroomPage() {
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
-                        <div className="bg-slate-50/50 rounded-3xl p-5 md:p-8 border-2 border-slate-100">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div className="bg-slate-50/50 rounded-2xl p-4 md:p-5 border-2 border-slate-100">
                           <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Werkvorm</h3>
                           <InterventionTools 
                             activePhase={session.active_phase}
@@ -274,13 +274,13 @@ export function TeacherClassroomPage() {
 
             {/* LIVE MONITOR MODULE */}
             {activeModule === 'MONITOR' && (
-              <div className="space-y-8 max-w-[1600px] w-full mx-auto h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
+              <div className="space-y-6 max-w-[1400px] w-full mx-auto h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
                 <div>
                   <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight mb-2">Live Monitor</h1>
                   <p className="text-slate-500 font-medium text-base">Een continue stroom van leerling-signalen direct vanaf hun schermen.</p>
                 </div>
 
-                <div className="flex-1 bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 p-2 overflow-hidden flex flex-col min-h-[500px]">
+                <div className="flex-1 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl shadow-slate-200/40 border border-slate-200/60 p-2 overflow-hidden flex flex-col min-h-[400px]">
                   <LiveFeed 
                     signals={signals}
                     participants={participants}
@@ -293,7 +293,7 @@ export function TeacherClassroomPage() {
 
             {/* STUDENTS & BEHEER MODULE */}
             {activeModule === 'STUDENTS' && (
-              <div className="space-y-8 max-w-[1600px] w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 mb-8">
+              <div className="space-y-6 max-w-[1400px] w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                   <div>
                     <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight mb-2">Klas & Beheer</h1>
@@ -305,9 +305,9 @@ export function TeacherClassroomPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                   <div className="col-span-12 md:col-span-8">
-                    <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-sm border border-slate-200/60 overflow-hidden h-full">
+                    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden h-full">
                       <ActiveStudentsList 
                         participants={participants}
                         onRemoveParticipant={actions.removeParticipant}
@@ -316,8 +316,8 @@ export function TeacherClassroomPage() {
                       />
                     </div>
                   </div>
-                  <div className="col-span-12 md:col-span-4 space-y-6">
-                    <div className="bg-slate-800/95 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group">
+                  <div className="col-span-12 md:col-span-4 space-y-4">
+                    <div className="bg-slate-800/95 backdrop-blur-xl rounded-2xl p-6 shadow-2xl relative overflow-hidden group">
                       <div className="absolute top-0 right-0 w-48 h-48 bg-slate-700/50 rounded-bl-full -mr-24 -mt-24 transition-transform group-hover:scale-110"></div>
                       <ClassManagement 
                         isLocked={session.is_locked}
@@ -333,10 +333,10 @@ export function TeacherClassroomPage() {
           </main>
 
           {/* Sidebar Navigation */}
-          <div className={`transition-all duration-300 ease-in-out shrink-0 bg-white/95 backdrop-blur-2xl border-t lg:border-t-0 lg:border-l border-slate-200/80 flex flex-col gap-4 md:gap-6 lg:h-full z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] ${
-            isSidebarOpen ? 'w-full lg:w-72 p-4 md:p-6' : 'w-full lg:w-20 p-3 md:p-4'
+          <div className={`transition-all duration-300 ease-in-out shrink-0 bg-white/95 backdrop-blur-2xl border-t lg:border-t-0 lg:border-l border-slate-200/80 flex flex-col gap-4 md:gap-5 lg:h-full z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] ${
+            isSidebarOpen ? 'w-full lg:w-60 p-4 md:p-5' : 'w-full lg:w-16 p-3 md:p-4'
           }`}>
-            <div className="flex-1 overflow-y-auto hide-scrollbar space-y-4 md:space-y-8 flex flex-col">
+            <div className="flex-1 overflow-y-auto hide-scrollbar space-y-4 md:space-6 flex flex-col">
               <div className="flex justify-between items-center hidden lg:flex">
                 {isSidebarOpen && <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 select-none">App Modules</span>}
                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors mx-auto">

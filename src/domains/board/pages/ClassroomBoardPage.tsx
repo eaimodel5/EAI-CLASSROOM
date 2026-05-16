@@ -29,8 +29,8 @@ export function ClassroomBoardPage() {
     return (
       <div className="min-h-[100dvh] bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Oeps!</h1>
-          <p className="text-xl text-gray-600">{error || 'Sessie niet gevonden'}</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">Oeps!</h1>
+          <p className="text-lg text-gray-600">{error || 'Sessie niet gevonden'}</p>
         </div>
       </div>
     );
@@ -57,9 +57,9 @@ export function ClassroomBoardPage() {
 
       <BoardHeader session={session} />
 
-      <main className="flex-1 flex flex-col items-center justify-center p-8 max-w-7xl mx-auto w-full relative">
-        <div className="grid grid-cols-12 gap-8 w-full h-full items-center">
-          <div className={`col-span-12 ${JSON.parse(session.widgets_json || '[]').length > 0 ? 'lg:col-span-8 lg:pr-8' : ''} flex flex-col items-center justify-center w-full h-full`}>
+      <main className="flex-1 flex flex-col p-6 max-w-[1400px] mx-auto w-full relative">
+        <div className="w-full h-full flex flex-col lg:flex-row gap-8 items-stretch pt-4">
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
             {activePrompt ? (
               <BoardActivePrompt
                 activePrompt={activePrompt}
@@ -77,7 +77,8 @@ export function ClassroomBoardPage() {
           </div>
 
           {JSON.parse(session.widgets_json || '[]').length > 0 && (
-            <div className="col-span-12 lg:col-span-4 flex flex-col gap-6 w-full max-h-full">
+            <div className="w-full lg:w-[420px] flex flex-col gap-5 max-h-[calc(100vh-140px)] overflow-y-auto hide-scrollbar shrink-0 px-2 lg:px-4 lg:border-l border-slate-300/30 pt-6 lg:pt-0">
+              <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center lg:text-left mb-2">Bord Hulpmiddelen</h3>
               {JSON.parse(session.widgets_json || '[]').map((widget: WidgetInstance) => (
                 <WidgetRenderer 
                   key={widget.id}
@@ -85,7 +86,7 @@ export function ClassroomBoardPage() {
                   participants={participants}
                   isTeacher={false} 
                   inlineMode={true}
-                  className="w-full shadow-xl shadow-slate-200/50 bg-white/80 backdrop-blur-md min-h-[300px] border border-white"
+                  className="w-full shadow-2xl shadow-slate-200/40 bg-white/95 backdrop-blur-md rounded-2xl border border-white/60 overflow-hidden transform transition-all hover:scale-[1.01]"
                 />
               ))}
             </div>

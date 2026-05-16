@@ -11,10 +11,10 @@ interface LiveFeedProps {
 
 export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal }: LiveFeedProps) {
   return (
-    <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-sm border-2 border-slate-200/60 overflow-hidden relative flex flex-col h-full">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-bl-[4rem] -mr-32 -mt-32 z-0 mix-blend-multiply opacity-50"></div>
+    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-sm border-2 border-slate-200/60 overflow-hidden relative flex flex-col h-full">
+      <div className="absolute top-0 right-0 w-48 h-48 bg-slate-50 rounded-bl-[4rem] -mr-24 -mt-24 z-0 mix-blend-multiply opacity-50"></div>
       
-      <div className="px-8 py-6 border-b-2 border-slate-100 bg-white/50 backdrop-blur-sm flex justify-between items-center relative z-10">
+      <div className="px-6 py-4 border-b-2 border-slate-100 bg-white/50 backdrop-blur-sm flex justify-between items-center relative z-10">
         <h3 className="text-lg font-bold text-slate-800">Live Signalen</h3>
         <span className="flex items-center gap-3 text-[11px] uppercase tracking-widest font-black text-emerald-700 bg-emerald-100 px-4 py-2 rounded-full shadow-sm border-2 border-emerald-200/50">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -24,8 +24,8 @@ export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal 
       
       <div className="p-0 flex-1 overflow-y-auto relative z-10 custom-scrollbar hide-scrollbar h-full">
         {signals.length === 0 ? (
-          <div className="p-12 text-center text-slate-400">
-            <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-20" />
+          <div className="p-8 text-center text-slate-400">
+            <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-20" />
             <p className="font-medium text-slate-500">Nog geen signalen ontvangen in deze les.</p>
           </div>
         ) : (
@@ -60,9 +60,9 @@ export function LiveFeed({ signals, participants, sharedSignalId, onShareSignal 
               }
 
               return (
-                <li key={signal.id} className="p-6 hover:bg-slate-50/50 transition-colors flex items-start gap-5">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-black/5 ${colorClass}`}>
-                    <Icon className="w-6 h-6" />
+                <li key={signal.id} className="p-4 hover:bg-slate-50/50 transition-colors flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-black/5 ${colorClass}`}>
+                    <Icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0 break-words">
                     <div className="flex justify-between items-start mb-1">

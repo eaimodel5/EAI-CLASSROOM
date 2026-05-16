@@ -9,17 +9,17 @@ interface ClassManagementProps {
 
 export function ClassManagement({ isLocked, onToggleLock, onSetTimer }: ClassManagementProps) {
   return (
-    <div className="bg-slate-800/95 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border-4 border-slate-700/50 p-8 relative overflow-hidden group">
+    <div className="w-full h-full relative overflow-hidden group">
       <div className="absolute top-0 right-0 w-48 h-48 bg-slate-700/50 rounded-bl-full -mr-24 -mt-24 z-0 transition-transform duration-700 group-hover:scale-110"></div>
       
       <div className="relative z-10">
-        <h2 className="text-xl font-black text-white mb-6 flex items-center gap-3">
+        <h2 className="text-lg font-black text-white mb-4 flex items-center gap-3">
           <Settings className="w-6 h-6 text-indigo-400" />
           Beheer
         </h2>
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Lock Session */}
-          <div className="flex items-center justify-between p-5 bg-slate-700/50 rounded-2xl border-2 border-slate-600/50 shadow-inner">
+          <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-xl border-2 border-slate-600/50 shadow-inner">
             <div>
               <h3 className="font-extrabold text-base text-white">Schermen op Zwart</h3>
               <p className="text-sm font-bold text-slate-400 mt-1">Blokkeer alle borden</p>
@@ -33,8 +33,8 @@ export function ClassManagement({ isLocked, onToggleLock, onSetTimer }: ClassMan
           </div>
 
           {/* Timer */}
-          <div className="p-5 bg-slate-700/50 rounded-2xl border-2 border-slate-600/50 shadow-inner">
-            <h3 className="font-extrabold text-base text-white mb-4 flex items-center gap-2">
+          <div className="p-4 bg-slate-700/50 rounded-xl border-2 border-slate-600/50 shadow-inner">
+            <h3 className="font-extrabold text-base text-white mb-3 flex items-center gap-2">
               <Clock className="w-5 h-5 text-indigo-400" />
               Sessie Timer
             </h3>

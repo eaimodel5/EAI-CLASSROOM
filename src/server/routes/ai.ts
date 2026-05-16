@@ -119,13 +119,13 @@ aiRouter.post('/differentiation', async (req: Request, res: Response) => {
       WHERE s.classroom_session_id = ? AND s.phase = ?
     `).all(session.id, session.active_phase) as any[];
 
-    const ssotContext = getSsotContextForPrompt(session);
+    const ssotContext = getSsotContextForPrompt(session, '/diff');
     
     const participantsList = participants.map(p => `- ${p.display_name} (ID: ${p.id})`).join('\n');
     const signalsList = signals.map(s => `- ${s.display_name} (ID: ${s.participant_id}): ${s.signal_type} ${s.text_value ? `("${s.text_value}")` : ''}`).join('\n');
 
     const prompt = `
-Je bent de EAI CLASSROOM Agent gebonden aan de didactiek van SSOT 16.2. Jouw huidige commando is /diff (Niveaus: 'Kies: basis / midden / diep').
+Je bent de EAI CLASSROOM Agent gebonden aan de didactiek van SSOT 16.2.
 De huidige lesfase is: ${session.active_phase}.
 Het lesdoel is: ${session.lesson_goal || 'Niet opgegeven'}.
 
@@ -171,7 +171,7 @@ aiRouter.post('/word', async (req: Request, res: Response) => {
 
   try {
     const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(sessionId) as any;
-    const ssotContext = session ? getSsotContextForPrompt(session) : '';
+    const ssotContext = session ? getSsotContextForPrompt(session, '/vocab') : '';
 
     const prompt = `Geef een korte, kindvriendelijke en duidelijke betekenis voor het Nederlandse woord "${word}". Maximaal 2 zinnen.
 ${ssotContext}
@@ -210,10 +210,10 @@ aiRouter.post('/explain', async (req: Request, res: Response) => {
     
     const { topic } = req.body;
     const targetTopic = topic || session.lesson_goal || 'het huidige lesonderwerp';
-    const ssotContext = getSsotContextForPrompt(session);
+    const ssotContext = getSsotContextForPrompt(session, '/beeld');
 
     const prompt = `
-Je bent de EAI CLASSROOM Agent. Jouw huidige commando is /metafoor of /uitleg.
+Je bent de EAI CLASSROOM Agent.
 De huidige lesfase is: ${session.active_phase}.
 
 ${ssotContext}

@@ -20,7 +20,7 @@ export function BoardSharedSignal({ session, allSignals, signals }: BoardSharedS
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">Start Vraag</h3>
             {prep.priorKnowledgeQuestions.filter(Boolean).map((q, i) => (
-              <p key={i} className="text-lg md:text-xl lg:text-2xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
+              <p key={i} className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
             ))}
           </div>
         );
@@ -38,7 +38,7 @@ export function BoardSharedSignal({ session, allSignals, signals }: BoardSharedS
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-orange-600 uppercase tracking-widest mb-3">Formatieve Check</h3>
             {prep.checkQuestions.filter(Boolean).map((q, i) => (
-              <p key={i} className="text-lg md:text-xl lg:text-2xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
+              <p key={i} className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
             ))}
           </div>
         );
@@ -56,7 +56,7 @@ export function BoardSharedSignal({ session, allSignals, signals }: BoardSharedS
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-3">Afsluiting</h3>
             {prep.exitTicketQuestions.filter(Boolean).map((q, i) => (
-              <p key={i} className="text-lg md:text-xl lg:text-2xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
+              <p key={i} className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
             ))}
           </div>
         );
@@ -65,13 +65,13 @@ export function BoardSharedSignal({ session, allSignals, signals }: BoardSharedS
 
     return (
       <>
-          <div className="space-y-4 mb-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl w-full mx-auto bg-white/60 backdrop-blur p-8 rounded-3xl border border-slate-200/50 shadow-md">
+          <div className="space-y-4 mb-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl w-full mx-auto bg-white/60 backdrop-blur p-6 rounded-2xl border border-slate-200/50 shadow-md">
             {phaseContent || (
               <>
                 {session.lesson_goal ? (
                   <>
                     <h3 className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">Het Lesdoel van Vandaag</h3>
-                    <p className="text-lg md:text-xl lg:text-2xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{session.lesson_goal}</p>
+                    <p className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{session.lesson_goal}</p>
                   </>
                 ) : (
                   <div className="text-lg md:text-xl font-bold text-slate-800/40 animate-pulse">
@@ -83,35 +83,35 @@ export function BoardSharedSignal({ session, allSignals, signals }: BoardSharedS
           </div>
 
         {session.active_phase === 'CHECK' && (
-          <div className="w-full max-w-2xl mt-8 grid grid-cols-2 gap-6 animate-in fade-in duration-500">
-            <div className="bg-white/90 backdrop-blur-xl p-8 rounded-[2rem] border border-emerald-100 shadow-lg shadow-emerald-500/5 text-center transform hover:scale-105 transition-transform">
-              <div className="text-5xl md:text-6xl font-black text-emerald-500 mb-3 drop-shadow-sm">
+          <div className="w-full max-w-2xl mt-6 grid grid-cols-2 gap-4 animate-in fade-in duration-500">
+            <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl border border-emerald-100 shadow-lg shadow-emerald-500/5 text-center transform hover:scale-105 transition-transform">
+              <div className="text-3xl md:text-5xl font-black text-emerald-500 mb-2 drop-shadow-sm">
                 {signals.filter(s => s.signal_type === 'CHECK').length}
               </div>
-              <div className="text-sm md:text-base font-bold uppercase tracking-widest text-emerald-800/70">Kunnen door</div>
+              <div className="text-sm font-bold uppercase tracking-widest text-emerald-800/70">Kunnen door</div>
             </div>
-            <div className="bg-white/90 backdrop-blur-xl p-8 rounded-[2rem] border border-amber-100 shadow-lg shadow-amber-500/5 text-center transform hover:scale-105 transition-transform">
-              <div className="text-5xl md:text-6xl font-black text-amber-500 mb-3 drop-shadow-sm">
+            <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl border border-amber-100 shadow-lg shadow-amber-500/5 text-center transform hover:scale-105 transition-transform">
+              <div className="text-3xl md:text-5xl font-black text-amber-500 mb-2 drop-shadow-sm">
                 {signals.filter(s => s.signal_type === 'HELP').length}
               </div>
-              <div className="text-sm md:text-base font-bold uppercase tracking-widest text-amber-800/70">Twijfelen nog</div>
+              <div className="text-sm font-bold uppercase tracking-widest text-amber-800/70">Twijfelen nog</div>
             </div>
           </div>
         )}
 
         {session.active_phase === 'VERWERKEN' && (
-          <div className="w-full max-w-2xl mt-8 grid grid-cols-2 gap-6 animate-in fade-in duration-500">
-            <div className="bg-white/90 backdrop-blur-xl p-8 rounded-[2rem] border border-emerald-100 shadow-lg shadow-emerald-500/5 text-center transform hover:scale-105 transition-transform">
-              <div className="text-5xl md:text-6xl font-black text-emerald-500 mb-3 drop-shadow-sm">
+          <div className="w-full max-w-2xl mt-6 grid grid-cols-2 gap-4 animate-in fade-in duration-500">
+            <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl border border-emerald-100 shadow-lg shadow-emerald-500/5 text-center transform hover:scale-105 transition-transform">
+              <div className="text-3xl md:text-5xl font-black text-emerald-500 mb-2 drop-shadow-sm">
                 {signals.filter(s => s.signal_type === 'CHECK').length}
               </div>
-              <div className="text-sm md:text-base font-bold uppercase tracking-widest text-emerald-800/70">Zijn klaar</div>
+              <div className="text-sm font-bold uppercase tracking-widest text-emerald-800/70">Zijn klaar</div>
             </div>
-            <div className="bg-white/90 backdrop-blur-xl p-8 rounded-[2rem] border border-red-100 shadow-lg shadow-red-500/5 text-center transform hover:scale-105 transition-transform">
-              <div className="text-5xl md:text-6xl font-black text-red-500 mb-3 drop-shadow-sm">
+            <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl border border-red-100 shadow-lg shadow-red-500/5 text-center transform hover:scale-105 transition-transform">
+              <div className="text-3xl md:text-5xl font-black text-red-500 mb-2 drop-shadow-sm">
                 {signals.filter(s => s.signal_type === 'HELP').length}
               </div>
-              <div className="text-sm md:text-base font-bold uppercase tracking-widest text-red-800/70">Lopen vast</div>
+              <div className="text-sm font-bold uppercase tracking-widest text-red-800/70">Lopen vast</div>
             </div>
           </div>
         )}
@@ -132,7 +132,7 @@ export function BoardSharedSignal({ session, allSignals, signals }: BoardSharedS
   }
 
   return (
-    <div className="w-full max-w-4xl mt-8 bg-white/95 backdrop-blur-xl p-8 md:p-12 rounded-[2rem] shadow-xl border border-indigo-50 animate-in zoom-in-95 duration-500 text-left relative overflow-hidden">
+    <div className="w-full max-w-3xl mt-6 bg-white/95 backdrop-blur-xl p-6 md:p-8 rounded-2xl shadow-xl border border-indigo-50 animate-in zoom-in-95 duration-500 text-left relative overflow-hidden">
       <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/40 rounded-bl-full -mr-32 -mt-32 z-0 mix-blend-multiply opacity-50"></div>
       <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]"></div>
       
@@ -146,7 +146,7 @@ export function BoardSharedSignal({ session, allSignals, signals }: BoardSharedS
           <img src={sharedSignal.text_value || ''} alt="Gedeelde tekening" className="max-w-full h-auto rounded-xl shadow-lg border border-white" />
         </div>
       ) : (
-        <p className="relative z-10 text-xl md:text-2xl text-slate-800 font-medium leading-relaxed mb-6 italic drop-shadow-sm">
+        <p className="relative z-10 text-lg md:text-xl text-slate-800 font-medium leading-relaxed mb-6 italic drop-shadow-sm">
           "{sharedSignal.text_value}"
         </p>
       )}

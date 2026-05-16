@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ClassroomSession, ClassroomParticipant, LessonPreparation } from '../../../types';
 import { WidgetType, WidgetInstance } from '../../../components/widgets/WidgetRegistry';
 import { PromptType, PROMPT_CONFIG } from '../types';
+import { doc, updateDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../../lib/firebase';
 
 interface UseTeacherActionsProps {
   session: ClassroomSession | null;
@@ -42,6 +44,11 @@ export function useTeacherActions({
         })
       });
       const data = await res.json();
+      try {
+        await setDoc(doc(db, 'classroom_sessions', data.id), data);
+      } catch (e) {
+        console.warn('Firebase session could not be created:', e);
+      }
       setSession(data);
     } catch (err) {
       console.error(err);
@@ -65,6 +72,15 @@ export function useTeacherActions({
         })
       });
       const data = await res.json();
+      try {
+        await updateDoc(doc(db, 'classroom_sessions', session.id), {
+          subject: data.subject,
+          grade: data.grade,
+          level: data.level,
+          lesson_goal: data.lesson_goal,
+          prep_json: data.prep_json
+        });
+      } catch (e) { console.warn(e); }
       setSession(data);
     } catch (err) {
       console.error(err);
@@ -80,6 +96,9 @@ export function useTeacherActions({
         body: JSON.stringify({ active_phase: newPhase })
       });
       const data = await res.json();
+      try {
+        await updateDoc(doc(db, 'classroom_sessions', session.id), { active_phase: newPhase });
+      } catch (e) { console.warn(e); }
       setSession(data);
     } catch (err) {
       console.error(err);
@@ -115,6 +134,11 @@ export function useTeacherActions({
     if (!session || !window.confirm('Weet je zeker dat je deze les wilt beëindigen?')) return false;
     try {
       await fetch(`/api/sessions/${session.id}/end`, { method: 'PUT' });
+      try {
+        await updateDoc(doc(db, 'classroom_sessions', session.id), { status: 'ENDED' });
+      } catch (e) {
+        console.warn('Firebase session could not be updated:', e);
+      }
       setSession(null);
       setParticipants([]);
       setSignals([]);
@@ -133,7 +157,7 @@ export function useTeacherActions({
     const config = PROMPT_CONFIG[promptType];
     
     try {
-      await fetch(`/api/sessions/${session.id}/prompts`, {
+      const res = await fetch(`/api/sessions/${session.id}/prompts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -143,6 +167,10 @@ export function useTeacherActions({
           response_mode: config.responseMode
         })
       });
+      const data = await res.json();
+      try {
+        await setDoc(doc(db, `classroom_sessions/${session.id}/prompts`, data.id), data);
+      } catch (e) { console.warn(e); }
       return true;
     } catch (err) {
       console.error(err);
@@ -155,6 +183,12 @@ export function useTeacherActions({
     if (!session || !activePromptId) return;
     try {
       await fetch(`/api/sessions/${session.id}/prompts/${activePromptId}/close`, { method: 'POST' });
+      try {
+        await updateDoc(doc(db, `classroom_sessions/${session.id}/prompts`, activePromptId), { status: 'CLOSED' });
+      } catch (e) {
+        // Fallback for phantom docs depending on UI flow
+        console.warn(e);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -169,7 +203,11 @@ export function useTeacherActions({
         body: JSON.stringify({ is_locked: !session.is_locked })
       });
       if (res.ok) {
-        setSession(await res.json());
+        const data = await res.json();
+        try {
+          await updateDoc(doc(db, 'classroom_sessions', session.id), { is_locked: data.is_locked });
+        } catch (e) { console.warn(e); }
+        setSession(data);
       }
     } catch (err) {
       console.error('Failed to toggle lock', err);
@@ -185,7 +223,11 @@ export function useTeacherActions({
         body: JSON.stringify({ duration_seconds: minutes === 0 ? null : minutes * 60 })
       });
       if (res.ok) {
-        setSession(await res.json());
+        const data = await res.json();
+        try {
+          await updateDoc(doc(db, 'classroom_sessions', session.id), { timer_ends_at: data.timer_ends_at });
+        } catch (e) { console.warn(e); }
+        setSession(data);
       }
     } catch (err) {
       console.error('Failed to set timer', err);
@@ -197,6 +239,9 @@ export function useTeacherActions({
     try {
       const res = await fetch(`/api/sessions/${session.id}/participants/${participantId}`, { method: 'DELETE' });
       if (res.ok) {
+        try {
+          await deleteDoc(doc(db, `classroom_sessions/${session.id}/participants`, participantId));
+        } catch (e) { console.warn(e); }
         setParticipants(prev => prev.filter(p => p.id !== participantId));
       }
     } catch (err) {
@@ -273,7 +318,11 @@ export function useTeacherActions({
         body: JSON.stringify({ shared_signal_id: signalId })
       });
       if (res.ok) {
-        setSession(await res.json());
+        const data = await res.json();
+        try {
+          await updateDoc(doc(db, 'classroom_sessions', session.id), { shared_signal_id: data.shared_signal_id });
+        } catch (e) { console.warn(e); }
+        setSession(data);
       }
     } catch (err) {
       console.error('Failed to share signal', err);

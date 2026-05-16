@@ -26,7 +26,7 @@ export function StudentSignalControls({
 
   if (composingSignal) {
     return (
-      <div className="bg-white/90 backdrop-blur-2xl p-10 rounded-[2.5rem] shadow-2xl border border-white/60 w-full animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden">
+      <div className="bg-white/90 backdrop-blur-2xl p-6 rounded-3xl shadow-2xl border border-white/60 w-full animate-in fade-in slide-in-from-bottom-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-indigo-100/50 to-purple-100/50 rounded-bl-full -mr-24 -mt-24 z-0 mix-blend-multiply opacity-50"></div>
         <div className="relative z-10">
           <h2 className="text-xl font-bold mb-4 text-slate-800 tracking-tight">
@@ -64,7 +64,7 @@ export function StudentSignalControls({
 
   if (activeSignal) {
     return (
-      <div className="bg-white/90 backdrop-blur-2xl p-12 rounded-[2.5rem] shadow-2xl border border-white/60 w-full text-center animate-in zoom-in-95 duration-500">
+      <div className="bg-white/90 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/60 w-full text-center animate-in zoom-in-95 duration-500">
         <div className="w-24 h-24 bg-emerald-100/80 text-emerald-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner rotate-3">
           <CheckCircle className="w-12 h-12" />
         </div>
@@ -85,7 +85,7 @@ export function StudentSignalControls({
       {session.active_phase === 'INSTRUCTIE' && (
         <button 
           onClick={() => setComposingSignal('HELP')}
-          className="w-full p-10 rounded-[2.5rem] border-2 transition-all flex flex-col items-center justify-center gap-5 bg-white/80 backdrop-blur-md border-red-100 text-red-600 hover:border-red-300 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/10 active:scale-95 group"
+          className="w-full p-6 rounded-3xl border-2 transition-all flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-md border-red-100 text-red-600 hover:border-red-300 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/10 active:scale-95 group"
         >
           <div className="w-20 h-20 bg-red-50 group-hover:bg-red-100 rounded-[1.5rem] flex items-center justify-center transition-colors">
              <HelpCircle className="w-10 h-10 text-red-400 group-hover:text-red-600 transition-colors" />
@@ -98,7 +98,7 @@ export function StudentSignalControls({
         <div className="grid grid-cols-2 gap-4 w-full">
           <button 
             onClick={() => sendSignal('CHECK')}
-            className="p-8 rounded-[2rem] border-2 transition-all flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-md border-emerald-100 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-xl hover:shadow-emerald-500/10 active:scale-95 group"
+            className="p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-md border-emerald-100 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-xl hover:shadow-emerald-500/10 active:scale-95 group"
           >
             <div className="w-16 h-16 bg-emerald-50 group-hover:bg-emerald-100 rounded-2xl flex items-center justify-center transition-colors">
               <CheckCircle className="w-8 h-8 text-emerald-400 group-hover:text-emerald-600 transition-colors" />
@@ -108,7 +108,7 @@ export function StudentSignalControls({
           
           <button 
             onClick={() => setComposingSignal('HELP')}
-            className="p-8 rounded-[2rem] border-2 transition-all flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-md border-amber-100 text-amber-600 hover:border-amber-300 hover:bg-amber-50 hover:shadow-xl hover:shadow-amber-500/10 active:scale-95 group"
+            className="p-6 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-md border-amber-100 text-amber-600 hover:border-amber-300 hover:bg-amber-50 hover:shadow-xl hover:shadow-amber-500/10 active:scale-95 group"
           >
             <div className="w-16 h-16 bg-amber-50 group-hover:bg-amber-100 rounded-2xl flex items-center justify-center transition-colors">
               <HelpCircle className="w-8 h-8 text-amber-400 group-hover:text-amber-600 transition-colors" />
@@ -122,7 +122,7 @@ export function StudentSignalControls({
         <div className="flex flex-col gap-4 w-full">
           <button 
             onClick={() => setComposingSignal('HELP')}
-            className="w-full p-8 rounded-[2rem] border-2 transition-all flex items-center gap-6 bg-white/80 backdrop-blur-md border-red-100 text-red-600 hover:border-red-300 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/10 active:scale-95 group"
+            className="w-full p-6 rounded-2xl border-2 transition-all flex items-center gap-4 bg-white/80 backdrop-blur-md border-red-100 text-red-600 hover:border-red-300 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/10 active:scale-95 group"
           >
             <div className="w-16 h-16 bg-red-50 group-hover:bg-red-100 rounded-2xl flex items-center justify-center transition-colors shrink-0">
                <HelpCircle className="w-8 h-8 text-red-400 group-hover:text-red-500 transition-colors" />
@@ -132,7 +132,7 @@ export function StudentSignalControls({
 
           <button 
             onClick={() => sendSignal('CHECK')}
-            className="w-full p-8 rounded-[2rem] border-2 transition-all flex items-center gap-6 bg-white/80 backdrop-blur-md border-emerald-100 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-xl hover:shadow-emerald-500/10 active:scale-95 group"
+            className="w-full p-6 rounded-2xl border-2 transition-all flex items-center gap-4 bg-white/80 backdrop-blur-md border-emerald-100 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-xl hover:shadow-emerald-500/10 active:scale-95 group"
           >
             <div className="w-16 h-16 bg-emerald-50 group-hover:bg-emerald-100 rounded-2xl flex items-center justify-center transition-colors shrink-0">
                <CheckCircle className="w-8 h-8 text-emerald-400 group-hover:text-emerald-500 transition-colors" />
@@ -145,7 +145,7 @@ export function StudentSignalControls({
       {['INSTRUCTIE', 'CHECK', 'VERWERKEN'].includes(session.active_phase) && (
         <button 
           onClick={() => setComposingSignal('WORD')}
-          className="w-full mt-4 p-6 rounded-[2rem] border-2 transition-all flex items-center justify-center gap-4 bg-white/80 backdrop-blur-md border-indigo-100/50 text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-lg active:scale-95"
+          className="w-full mt-4 p-4 rounded-xl border-2 transition-all flex items-center justify-center gap-3 bg-white/80 backdrop-blur-md border-indigo-100/50 text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-lg active:scale-95"
         >
           <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
              <MessageSquare className="w-5 h-5 text-indigo-500" />
@@ -155,7 +155,7 @@ export function StudentSignalControls({
       )}
 
       {(session.active_phase === 'START' || session.active_phase === 'AFSLUITING') && (
-        <div className="text-center p-12 bg-white/60 backdrop-blur-md rounded-[2.5rem] border border-white shadow-xl shadow-black/5 w-full">
+        <div className="text-center p-8 bg-white/60 backdrop-blur-md rounded-3xl border border-white shadow-xl shadow-black/5 w-full">
           <p className="text-xl font-bold text-slate-500 leading-relaxed max-w-[250px] mx-auto">
             {session.active_phase === 'START' ? 'Kijk naar het bord voor de start van de les.' : 'De les is afgelopen. Kijk naar het bord.'}
           </p>

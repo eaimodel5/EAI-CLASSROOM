@@ -63,7 +63,7 @@ export function ActivePromptCard({
   const responseSignals = signals.filter(s => s.prompt_id === activePrompt.id && s.signal_type === 'RESPONSE');
 
   return (
-    <div className={`rounded-3xl shadow-xl border p-8 text-white relative overflow-hidden transition-all ${cardBgClass}`}>
+    <div className={`rounded-2xl shadow-xl border p-6 text-white relative overflow-hidden transition-all ${cardBgClass}`}>
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-bl-full -mr-32 -mt-32 z-0 mix-blend-overlay"></div>
       
       <div className="relative z-10 flex justify-between items-start mb-6">
@@ -80,7 +80,7 @@ export function ActivePromptCard({
       </div>
       <p className="text-lg font-bold mb-4 leading-tight max-w-2xl">{activePrompt.prompt_text}</p>
       
-      <div className={`rounded-2xl p-6 ${innerBgClass} backdrop-blur-sm border border-white/10 shadow-inner relative z-10`}>
+      <div className={`rounded-xl p-4 ${innerBgClass} backdrop-blur-sm border border-white/10 shadow-inner relative z-10`}>
         <h3 className={`text-xs font-bold mb-4 uppercase tracking-widest ${textClass}`}>
           {activePrompt.response_mode === 'ACKNOWLEDGE' ? 'Gelezen door' : 'Antwoorden van leerlingen'}
         </h3>

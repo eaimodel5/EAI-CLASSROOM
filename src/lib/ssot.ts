@@ -36,7 +36,7 @@ export const getSsotMetadata = () => {
   };
 };
 
-export const getSsotContextForPrompt = (session: any) => {
+export const getSsotContextForPrompt = (session: any, commandId?: string) => {
   if (!ssotData) return '';
 
   const phaseId = session.active_phase;
@@ -76,10 +76,29 @@ Lesvoorbereiding Context:
     }
   }
 
+  let commandContext = '';
+  if (commandId) {
+    const cmdDesc = ssotData.command_library?.commands[commandId];
+    if (cmdDesc) {
+      commandContext += `\nBeoogd Commando (Bandwidth Contract): ${commandId} -> ${cmdDesc}`;
+    }
+    const profile = ssotData.command_profiles?.[commandId];
+    if (profile) {
+      commandContext += `\nCommand Profile Constraints:\n- Intent: ${profile.intent}\n- AI Constraints: ${profile.ai_constraint}`;
+    }
+  }
+
+  let diagnosticContext = '';
+  if (ssotData.didactic_diagnostics) {
+    diagnosticContext = `\nDidactische Diagnostiek Guardrails:\n- Required Views: ${ssotData.didactic_diagnostics.required_views?.join(', ')}`;
+  }
+
   return `
 Didactische Context:
 - Fase: ${phaseId}
 - Doel van deze fase: ${phaseDescription}
 ${prepContext}
+${commandContext}
+${diagnosticContext}
   `;
 };

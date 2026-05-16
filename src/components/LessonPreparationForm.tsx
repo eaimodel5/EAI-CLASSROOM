@@ -382,7 +382,7 @@ Guardrails:
         {/* Right Content Area */}
         <div className="flex-1 flex flex-col bg-transparent relative z-10 w-full">
           
-          <div className="flex-1 p-5 md:p-8 relative">
+          <div className="flex-1 p-5 md:p-6 relative">
             {/* Step Content */}
             <div className="max-w-2xl animate-in slide-in-from-right-4 fade-in duration-300 fill-mode-forwards" key={activeStep}>
               
@@ -605,7 +605,7 @@ Guardrails:
             </div>
           </div>
 
-          <div className="border-t border-slate-200/60 p-4 md:p-6 flex flex-col-reverse sm:flex-row items-center justify-between gap-4 bg-slate-50/50 backdrop-blur-sm relative z-10">
+          <div className="border-t border-slate-200/60 p-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-4 bg-slate-50/50 backdrop-blur-sm relative z-10">
             <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
               {onCancel && activeStep === 0 && (
                 <button
@@ -680,11 +680,11 @@ Guardrails:
             </div>
             <div className="p-4 overflow-y-auto flex-1 bg-slate-50/20">
               {libraryLoading ? (
-                <div className="flex items-center justify-center p-8 text-slate-400">
+                <div className="flex items-center justify-center p-6 text-slate-400">
                   <Loader2 className="w-6 h-6 animate-spin mr-2" /> Bibliotheek laden...
                 </div>
               ) : libraryTemplates.length === 0 ? (
-                <div className="text-center p-8 text-slate-500">
+                <div className="text-center p-6 text-slate-500">
                   <BookOpen className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                   <p>Nog geen lessen in de bibliotheek gevonden.</p>
                 </div>

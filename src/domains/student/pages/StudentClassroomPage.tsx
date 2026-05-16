@@ -55,7 +55,7 @@ export function StudentClassroomPage() {
     return (
       <div className="min-h-[100dvh] bg-slate-50/50 flex flex-col items-center justify-center p-4 relative">
         <div className="absolute inset-0 bg-white/40 backdrop-blur-sm z-0"></div>
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 p-10 max-w-sm w-full text-center relative z-10 animate-in zoom-in-95 duration-500 overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-8 max-w-sm w-full text-center relative z-10 animate-in zoom-in-95 duration-500 overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-2 bg-slate-300"></div>
           <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
             <CheckCircle className="w-10 h-10 text-slate-400" />
@@ -79,10 +79,10 @@ export function StudentClassroomPage() {
     return (
       <div className="min-h-[100dvh] bg-orange-50/50 flex flex-col items-center justify-center p-4 relative">
         <div className="absolute inset-0 bg-white/40 backdrop-blur-sm z-0"></div>
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-orange-200/60 p-10 max-w-sm w-full text-center relative z-10 animate-in zoom-in-95 duration-500 overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-orange-200/60 p-8 max-w-sm w-full text-center relative z-10 animate-in zoom-in-95 duration-500 overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-2 bg-orange-400"></div>
           <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-            <span className="text-4xl animate-bounce">⏳</span>
+            <span className="text-3xl animate-bounce">⏳</span>
           </div>
           <h1 className="text-xl md:text-2xl font-bold text-slate-800 mb-3 tracking-tight">Kijk naar de docent</h1>
           <p className="text-slate-600 font-medium leading-relaxed">Je hebt een time-out gekregen van de docent. Je kunt even niet actief deelnemen.</p>
@@ -96,7 +96,7 @@ export function StudentClassroomPage() {
       <div className="min-h-[100dvh] bg-slate-900 flex flex-col items-center justify-center p-4">
         <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900/20 to-slate-900 pointer-events-none"></div>
         <div className="text-center relative z-10 animate-in fade-in zoom-in-95 duration-500">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-widest uppercase opacity-90 drop-shadow-sm">Kijk naar de docent</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-4 tracking-widest uppercase opacity-90 drop-shadow-sm">Kijk naar de docent</h1>
           <p className="text-slate-400 text-xl font-medium">Je scherm is tijdelijk vergrendeld.</p>
         </div>
       </div>

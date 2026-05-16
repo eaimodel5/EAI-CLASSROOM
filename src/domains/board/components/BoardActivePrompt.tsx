@@ -11,7 +11,7 @@ interface BoardActivePromptProps {
 
 export function BoardActivePrompt({ activePrompt, signals, sharedSignalId, allSignals }: BoardActivePromptProps) {
   return (
-    <div className="bg-white/95 backdrop-blur-md p-8 md:p-10 rounded-3xl shadow-2xl shadow-indigo-900/5 border border-slate-200/60 w-full max-w-3xl mx-auto animate-in zoom-in-95 duration-500 relative overflow-hidden">
+    <div className="bg-white/95 backdrop-blur-md p-6 md:p-8 rounded-2xl shadow-2xl shadow-indigo-900/5 border border-slate-200/60 w-full max-w-2xl mx-auto animate-in zoom-in-95 duration-500 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/30 rounded-bl-full -mr-32 -mt-32 z-0 mix-blend-multiply opacity-50"></div>
       
       <div className="relative z-10 flex items-center justify-center gap-2 mb-4 text-indigo-600">
@@ -26,7 +26,7 @@ export function BoardActivePrompt({ activePrompt, signals, sharedSignalId, allSi
         )}
         <h2 className="text-xs font-bold tracking-widest uppercase opacity-90">{activePrompt.title}</h2>
       </div>
-      <p className="relative z-10 text-xl md:text-2xl font-bold leading-snug text-slate-800 mb-8 max-w-2xl mx-auto text-center">
+      <p className="relative z-10 text-lg md:text-xl font-bold leading-snug text-slate-800 mb-6 max-w-2xl mx-auto text-center">
         {activePrompt.prompt_text}
       </p>
       
@@ -38,7 +38,7 @@ export function BoardActivePrompt({ activePrompt, signals, sharedSignalId, allSi
       </div>
 
       {sharedSignalId && (
-        <div className="relative z-10 mt-8 bg-slate-50/80 backdrop-blur p-6 rounded-2xl border border-slate-200/60 animate-in zoom-in-95 duration-500 text-left overflow-hidden">
+        <div className="relative z-10 mt-6 bg-slate-50/80 backdrop-blur p-5 rounded-xl border border-slate-200/60 animate-in zoom-in-95 duration-500 text-left overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
           <div className="flex items-center gap-2 text-indigo-600 mb-3">
             <Lightbulb className="w-5 h-5" />
@@ -58,7 +58,7 @@ export function BoardActivePrompt({ activePrompt, signals, sharedSignalId, allSi
 
             return (
               <>
-                <p className="text-lg md:text-xl text-slate-800 font-medium leading-relaxed italic">
+                <p className="text-base md:text-lg text-slate-800 font-medium leading-relaxed italic">
                   "{sharedSignal.text_value}"
                 </p>
                 {definition && (
@@ -75,16 +75,6 @@ export function BoardActivePrompt({ activePrompt, signals, sharedSignalId, allSi
         </div>
       )}
 
-      {activePrompt.prompt_type === 'PEER_FEEDBACK' && signals.length > 0 && !sharedSignalId && (
-        <div className="relative z-10 mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
-          {signals.map((signal, idx) => (
-            <div key={signal.id} className="bg-white backdrop-blur p-5 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${idx * 100}ms` }}>
-              <p className="text-slate-800 text-sm md:text-base italic font-medium leading-snug">"{signal.text_value}"</p>
-              <div className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Leerling {idx + 1}</div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

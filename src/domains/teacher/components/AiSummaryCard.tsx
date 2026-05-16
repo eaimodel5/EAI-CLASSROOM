@@ -22,10 +22,10 @@ export function AiSummaryCard({ activePhaseSummary, generatingSummary, onGenerat
   }
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50/90 to-purple-50/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-indigo-200/40 border-4 border-indigo-100 p-10 lg:p-12 relative overflow-hidden">
+    <div className="bg-gradient-to-br from-indigo-50/90 to-purple-50/90 backdrop-blur-xl rounded-2xl shadow-xl shadow-indigo-200/40 border-2 border-indigo-100 p-6 lg:p-8 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-80 h-80 bg-white/40 rounded-bl-full -mr-32 -mt-32 z-0 pointer-events-none mix-blend-overlay"></div>
       
-      <div className="relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 gap-4 border-b-2 border-indigo-100/50 pb-6">
+      <div className="relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-start mb-6 gap-4 border-b-2 border-indigo-100/50 pb-4">
         <div>
           <h2 className="text-lg font-bold text-indigo-900 flex items-center gap-3">
             <span className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center border-2 border-indigo-200">
@@ -48,14 +48,14 @@ export function AiSummaryCard({ activePhaseSummary, generatingSummary, onGenerat
       
       <div className="relative z-10">
         {activePhaseSummary ? (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
-            <div className="bg-white/60 p-8 rounded-3xl border-2 border-indigo-100 shadow-sm">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+            <div className="bg-white/60 p-6 rounded-2xl border-2 border-indigo-100 shadow-sm">
               <h3 className="text-xl font-bold tracking-tight text-slate-800 mb-4">{activePhaseSummary.headline}</h3>
               <p className="text-slate-700 text-lg font-medium leading-relaxed whitespace-pre-wrap">{activePhaseSummary.body}</p>
             </div>
             
             {suggestedActivity && (
-              <div className="bg-white rounded-3xl border-4 border-indigo-100 p-8 group hover:border-indigo-300 transition-colors shadow-xl shadow-indigo-100/50">
+              <div className="bg-white rounded-2xl border-2 border-indigo-100 p-6 group hover:border-indigo-300 transition-colors shadow-xl shadow-indigo-100/50">
                 <h4 className="text-xl font-black text-indigo-900 flex items-center gap-3 mb-4">
                   <span className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center border-2 border-indigo-200">
                     <Activity className="w-5 h-5 text-indigo-600" />
@@ -64,8 +64,8 @@ export function AiSummaryCard({ activePhaseSummary, generatingSummary, onGenerat
                 </h4>
                 <p className="text-base font-medium text-slate-600 leading-relaxed whitespace-pre-wrap">{activityRationale}</p>
                 
-                <div className="mt-8 pt-6 border-t-2 border-indigo-50 flex justify-end">
-                  <button className="text-base font-bold px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 active:translate-y-1">
+                <div className="mt-6 pt-4 border-t-2 border-indigo-50 flex justify-end">
+                  <button className="text-sm font-bold px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 active:translate-y-1">
                     Start {suggestedActivity}
                   </button>
                 </div>
@@ -78,7 +78,7 @@ export function AiSummaryCard({ activePhaseSummary, generatingSummary, onGenerat
             </div>
           </div>
         ) : (
-          <div className="p-8 bg-white/40 rounded-2xl border border-dashed border-indigo-200/70 text-center animate-in fade-in">
+          <div className="p-6 bg-white/40 rounded-xl border border-dashed border-indigo-200/70 text-center animate-in fade-in">
             <Activity className="w-8 h-8 text-indigo-300 mx-auto mb-3" />
             <p className="text-sm text-indigo-700 font-medium">
               Nog geen AI-analyse voor deze fase. Klik op 'Duid deze fase' om signalen te clusteren en een passende werkvorm voorgesteld te krijgen.

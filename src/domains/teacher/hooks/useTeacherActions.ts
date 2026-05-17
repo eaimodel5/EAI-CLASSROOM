@@ -3,7 +3,7 @@ import { ClassroomSession, ClassroomParticipant, LessonPreparation } from '../..
 import { WidgetType, WidgetInstance } from '../../../components/widgets/WidgetRegistry';
 import { PromptType, PROMPT_CONFIG } from '../types';
 import { doc, updateDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { auth, db } from '../../../lib/firebase';
 
 interface UseTeacherActionsProps {
   session: ClassroomSession | null;
@@ -28,30 +28,41 @@ export function useTeacherActions({
 }: UseTeacherActionsProps) {
   const [generatingSummary, setGeneratingSummary] = useState(false);
 
+  const generateSessionCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
   const startSession = async (prep: LessonPreparation) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          teacher_user_id: 'teacher-demo-1', // Hardcoded for MVP
-          subject: prep.subject,
-          grade: prep.className,
-          level: prep.level,
-          lesson_goal: prep.learningGoal,
-          prep_json: JSON.stringify(prep)
-        })
-      });
-      const data = await res.json();
-      try {
-        await setDoc(doc(db, 'classroom_sessions', data.id), data);
-      } catch (e) {
-        console.warn('Firebase session could not be created:', e);
-      }
-      setSession(data);
+      if (!auth.currentUser) throw new Error('Niet ingelogd.');
+      const id = Math.random().toString(36).substring(2, 10);
+      const sessionData: any = {
+        id,
+        teacher_user_id: auth.currentUser.uid,
+        session_code: generateSessionCode(),
+        subject: prep.subject || 'Onderwerp',
+        grade: prep.className || '',
+        level: prep.level || '',
+        lesson_goal: prep.learningGoal || '',
+        active_phase: 'START',
+        status: 'ACTIVE',
+        started_at: serverTimestamp(),
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+        prep_json: JSON.stringify(prep)
+      };
+      
+      await setDoc(doc(db, 'classroom_sessions', id), sessionData);
+      setSession(sessionData);
     } catch (err) {
       console.error(err);
+      alert('Sessie kon niet worden gestart. Check je internetverbinding of ingelogde account.');
     } finally {
       setLoading(false);
     }
@@ -60,56 +71,40 @@ export function useTeacherActions({
   const updateSessionPrep = async (prep: LessonPreparation) => {
     if (!session) return;
     try {
-      const res = await fetch(`/api/sessions/${session.id}/prep`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: prep.subject,
-          grade: prep.className,
-          level: prep.level,
-          lesson_goal: prep.learningGoal,
-          prep_json: JSON.stringify(prep)
-        })
-      });
-      const data = await res.json();
-      try {
-        await updateDoc(doc(db, 'classroom_sessions', session.id), {
-          subject: data.subject,
-          grade: data.grade,
-          level: data.level,
-          lesson_goal: data.lesson_goal,
-          prep_json: data.prep_json
-        });
-      } catch (e) { console.warn(e); }
-      setSession(data);
+      const updates = {
+        subject: prep.subject,
+        grade: prep.className,
+        level: prep.level,
+        lesson_goal: prep.learningGoal,
+        prep_json: JSON.stringify(prep),
+        updated_at: serverTimestamp()
+      };
+      await updateDoc(doc(db, 'classroom_sessions', session.id), updates);
+      setSession({ ...session, ...updates } as any);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const changePhase = async (newPhase: string) => {
+  const changePhase = async (newPhase: "START"| "INSTRUCTIE"| "CHECK"| "VERWERKEN"| "AFSLUITING") => {
     if (!session) return;
     try {
-      const res = await fetch(`/api/sessions/${session.id}/phase`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active_phase: newPhase })
-      });
-      const data = await res.json();
-      try {
-        await updateDoc(doc(db, 'classroom_sessions', session.id), { active_phase: newPhase });
-      } catch (e) { console.warn(e); }
-      setSession(data);
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { active_phase: newPhase, updated_at: serverTimestamp() });
+      setSession({ ...session, active_phase: newPhase, updated_at: new Date().toISOString() });
     } catch (err) {
       console.error(err);
     }
   };
 
-  const generateSummary = async () => {
+  const generateSummary = async (currentSignals: any[]) => {
     if (!session) return;
     setGeneratingSummary(true);
     try {
-      const res = await fetch(`/api/sessions/${session.id}/summarize`, { method: 'POST' });
+      const res = await fetch(`/api/sessions/${session.id}/summarize`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session, signals: currentSignals })
+      });
       const data = await res.json();
       if (!res.ok) {
         console.error('Summary generation error:', data);
@@ -117,6 +112,9 @@ export function useTeacherActions({
       } else if (data.message) {
         alert(data.message);
       } else if (data.id) {
+        try {
+          await setDoc(doc(db, `classroom_sessions/${session.id}/summaries`, data.id), data);
+        } catch (e) { console.warn(e); }
         setSummaries(prev => {
           if (prev.find(s => s.id === data.id)) return prev;
           return [data, ...prev];
@@ -133,12 +131,7 @@ export function useTeacherActions({
   const endSession = async () => {
     if (!session || !window.confirm('Weet je zeker dat je deze les wilt beëindigen?')) return false;
     try {
-      await fetch(`/api/sessions/${session.id}/end`, { method: 'PUT' });
-      try {
-        await updateDoc(doc(db, 'classroom_sessions', session.id), { status: 'ENDED' });
-      } catch (e) {
-        console.warn('Firebase session could not be updated:', e);
-      }
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { status: 'ENDED', ended_at: serverTimestamp(), updated_at: serverTimestamp() });
       setSession(null);
       setParticipants([]);
       setSignals([]);
@@ -155,22 +148,26 @@ export function useTeacherActions({
     if (!session || !newPromptText.trim()) return false;
     
     const config = PROMPT_CONFIG[promptType];
+    const promptId = Math.random().toString(36).substring(2, 9);
     
     try {
-      const res = await fetch(`/api/sessions/${session.id}/prompts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: config.title,
-          prompt_text: newPromptText,
-          prompt_type: promptType,
-          response_mode: config.responseMode
-        })
-      });
-      const data = await res.json();
-      try {
-        await setDoc(doc(db, `classroom_sessions/${session.id}/prompts`, data.id), data);
-      } catch (e) { console.warn(e); }
+      const promptData: any = {
+        id: promptId,
+        classroom_session_id: session.id,
+        created_by_user_id: session.teacher_user_id,
+        phase: session.active_phase,
+        prompt_type: promptType,
+        title: config.title,
+        prompt_text: newPromptText,
+        response_mode: config.responseMode,
+        target_participant_id: null,
+        status: 'OPEN',
+        opened_at: serverTimestamp(),
+        created_at: serverTimestamp()
+      };
+      
+      await setDoc(doc(db, `classroom_sessions/${session.id}/prompts`, promptId), promptData);
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { active_prompt_id: promptId, updated_at: serverTimestamp() });
       return true;
     } catch (err) {
       console.error(err);
@@ -182,13 +179,8 @@ export function useTeacherActions({
   const closePrompt = async (activePromptId: string) => {
     if (!session || !activePromptId) return;
     try {
-      await fetch(`/api/sessions/${session.id}/prompts/${activePromptId}/close`, { method: 'POST' });
-      try {
-        await updateDoc(doc(db, `classroom_sessions/${session.id}/prompts`, activePromptId), { status: 'CLOSED' });
-      } catch (e) {
-        // Fallback for phantom docs depending on UI flow
-        console.warn(e);
-      }
+      await updateDoc(doc(db, `classroom_sessions/${session.id}/prompts`, activePromptId), { status: 'CLOSED', closed_at: serverTimestamp() });
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { active_prompt_id: null, updated_at: serverTimestamp() });
     } catch (err) {
       console.error(err);
     }
@@ -197,18 +189,9 @@ export function useTeacherActions({
   const toggleLock = async () => {
     if (!session) return;
     try {
-      const res = await fetch(`/api/sessions/${session.id}/lock`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_locked: !session.is_locked })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        try {
-          await updateDoc(doc(db, 'classroom_sessions', session.id), { is_locked: data.is_locked });
-        } catch (e) { console.warn(e); }
-        setSession(data);
-      }
+      const newLockedStatus = session.is_locked ? 0 : 1;
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { is_locked: newLockedStatus, updated_at: serverTimestamp() });
+      setSession({ ...session, is_locked: newLockedStatus });
     } catch (err) {
       console.error('Failed to toggle lock', err);
     }
@@ -217,18 +200,18 @@ export function useTeacherActions({
   const setTimer = async (minutes: number) => {
     if (!session) return;
     try {
-      const res = await fetch(`/api/sessions/${session.id}/timer`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ duration_seconds: minutes === 0 ? null : minutes * 60 })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        try {
-          await updateDoc(doc(db, 'classroom_sessions', session.id), { timer_ends_at: data.timer_ends_at });
-        } catch (e) { console.warn(e); }
-        setSession(data);
+      const duration = minutes === 0 ? null : minutes * 60;
+      const updates: any = {};
+      if (duration === null) {
+        updates.timer_started_at = null;
+        updates.timer_duration_seconds = null;
+      } else {
+        updates.timer_started_at = new Date().toISOString();
+        updates.timer_duration_seconds = duration;
       }
+      updates.updated_at = serverTimestamp();
+      await updateDoc(doc(db, 'classroom_sessions', session.id), updates);
+      setSession({ ...session, ...updates });
     } catch (err) {
       console.error('Failed to set timer', err);
     }
@@ -237,13 +220,8 @@ export function useTeacherActions({
   const removeParticipant = async (participantId: string) => {
     if (!session || !window.confirm('Weet je zeker dat je deze leerling wilt verwijderen?')) return;
     try {
-      const res = await fetch(`/api/sessions/${session.id}/participants/${participantId}`, { method: 'DELETE' });
-      if (res.ok) {
-        try {
-          await deleteDoc(doc(db, `classroom_sessions/${session.id}/participants`, participantId));
-        } catch (e) { console.warn(e); }
-        setParticipants(prev => prev.filter(p => p.id !== participantId));
-      }
+      await deleteDoc(doc(db, `classroom_sessions/${session.id}/participants`, participantId));
+      setParticipants(prev => prev.filter(p => p.id !== participantId));
     } catch (err) {
       console.error('Failed to remove participant', err);
     }
@@ -252,15 +230,8 @@ export function useTeacherActions({
   const updateParticipant = async (participantId: string, updates: { display_name?: string, timeout_until?: string | null, can_draw?: boolean, team_name?: string | null }) => {
     if (!session) return;
     try {
-      const res = await fetch(`/api/sessions/${session.id}/participants/${participantId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setParticipants(prev => prev.map(p => p.id === participantId ? updated : p));
-      }
+      await updateDoc(doc(db, `classroom_sessions/${session.id}/participants`, participantId), updates);
+      setParticipants(prev => prev.map(p => p.id === participantId ? { ...p, ...updates } : p));
     } catch (err) {
       console.error('Failed to update participant', err);
     }
@@ -268,17 +239,21 @@ export function useTeacherActions({
 
   const sendPrivateMessage = async (participantId: string, message: string) => {
     if (!session) return;
+    const promptId = Math.random().toString(36).substring(2, 9);
     try {
-      await fetch(`/api/sessions/${session.id}/prompts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: 'Direct Message',
-          prompt_text: message,
-          prompt_type: 'HINT',
-          response_mode: 'ACKNOWLEDGE',
-          target_participant_id: participantId
-        })
+      await setDoc(doc(db, `classroom_sessions/${session.id}/prompts`, promptId), {
+        id: promptId,
+        classroom_session_id: session.id,
+        created_by_user_id: session.teacher_user_id,
+        phase: session.active_phase,
+        prompt_type: 'HINT',
+        title: 'Direct Message',
+        prompt_text: message,
+        response_mode: 'ACKNOWLEDGE',
+        target_participant_id: participantId,
+        status: 'OPEN',
+        opened_at: serverTimestamp(),
+        created_at: serverTimestamp()
       });
     } catch (err) {
       console.error('Failed to send private message', err);
@@ -291,18 +266,24 @@ export function useTeacherActions({
       return;
     }
     const randomStudent = participants[Math.floor(Math.random() * participants.length)];
+    const promptId = Math.random().toString(36).substring(2, 9);
     
     try {
-      await fetch(`/api/sessions/${session.id}/prompts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: PROMPT_CONFIG.WHEEL_OF_NAMES.title,
-          prompt_text: `${randomStudent.display_name} is aan de beurt!`,
-          prompt_type: 'WHEEL_OF_NAMES',
-          response_mode: PROMPT_CONFIG.WHEEL_OF_NAMES.responseMode
-        })
+      await setDoc(doc(db, `classroom_sessions/${session.id}/prompts`, promptId), {
+        id: promptId,
+        classroom_session_id: session.id,
+        created_by_user_id: session.teacher_user_id,
+        phase: session.active_phase,
+        prompt_type: 'WHEEL_OF_NAMES',
+        title: PROMPT_CONFIG.WHEEL_OF_NAMES.title,
+        prompt_text: `${randomStudent.display_name} is aan de beurt!`,
+        response_mode: PROMPT_CONFIG.WHEEL_OF_NAMES.responseMode,
+        target_participant_id: null,
+        status: 'OPEN',
+        opened_at: serverTimestamp(),
+        created_at: serverTimestamp()
       });
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { active_prompt_id: promptId, updated_at: serverTimestamp() });
     } catch (err) {
       console.error(err);
       alert('Fout bij het kiezen van een willekeurige leerling');
@@ -312,18 +293,8 @@ export function useTeacherActions({
   const shareSignal = async (signalId: string | null) => {
     if (!session) return;
     try {
-      const res = await fetch(`/api/sessions/${session.id}/share-signal`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shared_signal_id: signalId })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        try {
-          await updateDoc(doc(db, 'classroom_sessions', session.id), { shared_signal_id: data.shared_signal_id });
-        } catch (e) { console.warn(e); }
-        setSession(data);
-      }
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { shared_signal_id: signalId, updated_at: serverTimestamp() });
+      setSession({ ...session, shared_signal_id: signalId });
     } catch (err) {
       console.error('Failed to share signal', err);
     }
@@ -346,11 +317,7 @@ export function useTeacherActions({
     const widgetsJson = JSON.stringify(updatedWidgets);
     
     try {
-      await fetch(`/api/sessions/${session.id}/widgets`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ widgets_json: widgetsJson })
-      });
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { widgets_json: widgetsJson, updated_at: serverTimestamp() });
       setSession({ ...session, widgets_json: widgetsJson });
       return true;
     } catch (e) {
@@ -366,11 +333,7 @@ export function useTeacherActions({
     const widgetsJson = JSON.stringify(updatedWidgets);
     
     try {
-      await fetch(`/api/sessions/${session.id}/widgets`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ widgets_json: widgetsJson })
-      });
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { widgets_json: widgetsJson, updated_at: serverTimestamp() });
       setSession({ ...session, widgets_json: widgetsJson });
     } catch (e) {
       console.error('Failed to remove widget', e);
@@ -384,11 +347,7 @@ export function useTeacherActions({
     const widgetsJson = JSON.stringify(updatedWidgets);
     
     try {
-      await fetch(`/api/sessions/${session.id}/widgets`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ widgets_json: widgetsJson })
-      });
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { widgets_json: widgetsJson, updated_at: serverTimestamp() });
       setSession({ ...session, widgets_json: widgetsJson });
     } catch (e) {
       console.error('Failed to update widget', e);

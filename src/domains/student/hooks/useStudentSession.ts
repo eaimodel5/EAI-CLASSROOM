@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClassroomSession, ClassroomParticipant, ClassroomPrompt } from '../../../types';
 import { db, auth } from '../../../lib/firebase';
-import { doc, collection, onSnapshot, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, onSnapshot, setDoc, updateDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../../../lib/firebase-error';
 
 export function useStudentSession() {
@@ -81,9 +81,14 @@ export function useStudentSession() {
       if (!auth.currentUser) throw new Error("Authentication failed");
       const localCode = sessionCode.toUpperCase();
       
-      const res = await fetch(`/api/sessions/code/${localCode}`);
-      if (!res.ok) throw new Error('Sessie niet gevonden');
-      const sessionData = await res.json();
+      const sessionsRef = collection(db, 'classroom_sessions');
+      const qSession = query(sessionsRef, where('session_code', '==', localCode), where('status', '==', 'ACTIVE'));
+      const sessionSnap = await getDocs(qSession);
+      
+      if (sessionSnap.empty) throw new Error('Sessie niet gevonden of niet actief');
+      
+      const sessionDoc = sessionSnap.docs[0];
+      const sessionData = { ...sessionDoc.data(), id: sessionDoc.id } as ClassroomSession;
       
       const pId = Math.random().toString(36).substring(2, 9);
       const participantRef = doc(db, `classroom_sessions/${sessionData.id}/participants`, pId);
@@ -95,13 +100,14 @@ export function useStudentSession() {
         participant_key: pId,
         join_status: 'JOINED',
         device_type: deviceType,
-        joined_at: serverTimestamp()
+        joined_at: serverTimestamp(),
+        last_seen_at: new Date().toISOString()
       };
       
       await setDoc(participantRef, newParticipant);
       
       setSession(sessionData);
-      setParticipant({ ...newParticipant, id: pId } as ClassroomParticipant);
+      setParticipant({ ...newParticipant, id: pId, joined_at: new Date().toISOString() } as unknown as ClassroomParticipant);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Er is een fout opgetreden');
     } finally {
@@ -117,7 +123,8 @@ export function useStudentSession() {
 
     try {
       const sigId = Math.random().toString(36).substring(2, 9);
-      await setDoc(doc(db, `classroom_sessions/${session.id}/signals`, sigId), {
+      const signalRef = doc(db, `classroom_sessions/${session.id}/signals`, sigId);
+      await setDoc(signalRef, {
         classroom_session_id: session.id,
         participant_id: participant.id,
         phase: session.active_phase,
@@ -133,7 +140,11 @@ export function useStudentSession() {
          fetch(`/api/sessions/${session.id}/word`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ participant_id: participant.id, phase: session.active_phase, word: textValue })
+          body: JSON.stringify({ participant_id: participant.id, phase: session.active_phase, word: textValue, session })
+        }).then(res => res.json()).then(data => {
+            if (data.payload_json) {
+              updateDoc(signalRef, { payload_json: data.payload_json }).catch(console.error);
+            }
         }).catch(e => console.error(e));
       }
     } catch (err) {

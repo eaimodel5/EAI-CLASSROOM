@@ -98,6 +98,31 @@ export function LessonPreparationForm({
   const [libraryTemplates, setLibraryTemplates] = useState<LessonTemplateDoc[]>([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
 
+  // Draft management
+  useEffect(() => {
+    // Only load draft for new preps (when initial is empty)
+    if (!initialValue.title && !initialValue.subject) {
+      const draft = localStorage.getItem("eai_lesson_draft");
+      if (draft) {
+        try {
+          const parsed = JSON.parse(draft);
+          setPrep(parsed);
+        } catch(e) {}
+      }
+    }
+  }, [initialValue]);
+
+  useEffect(() => {
+    if (!initialValue.title && !initialValue.subject) {
+      localStorage.setItem("eai_lesson_draft", JSON.stringify(prep));
+    }
+  }, [prep, initialValue]);
+
+  const handleSave = (prepData: LessonPreparation) => {
+    localStorage.removeItem("eai_lesson_draft");
+    onSave(prepData);
+  };
+
   const fetchLibrary = async () => {
     setLibraryLoading(true);
     setShowLibrary(true);
@@ -649,7 +674,7 @@ Guardrails:
                   )}
                   <button
                     className="flex-1 sm:flex-none group flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/20 active:scale-95"
-                    onClick={() => onSave(prep)}
+                    onClick={() => handleSave(prep)}
                   >
                     <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     Digibord Les

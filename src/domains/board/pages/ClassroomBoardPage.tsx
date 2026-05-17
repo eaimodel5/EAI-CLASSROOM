@@ -86,6 +86,8 @@ export function ClassroomBoardPage() {
                   participants={participants}
                   isTeacher={false} 
                   inlineMode={true}
+                  session={session}
+                  signals={allSignals}
                   className="w-full shadow-2xl shadow-slate-200/40 bg-white/95 backdrop-blur-md rounded-2xl border border-white/60 overflow-hidden transform transition-all hover:scale-[1.01]"
                 />
               ))}

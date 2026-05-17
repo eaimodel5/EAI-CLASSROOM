@@ -10,75 +10,18 @@ interface BoardSharedSignalProps {
 
 export function BoardSharedSignal({ session, allSignals, signals }: BoardSharedSignalProps) {
   if (!session.shared_signal_id) {
-    const prep: LessonPreparation | null = session.prep_json ? JSON.parse(session.prep_json) : null;
-    
-    let phaseContent = null;
-    
-    if (prep) {
-      if (session.active_phase === 'START' && prep.priorKnowledgeQuestions && prep.priorKnowledgeQuestions[0]) {
-        phaseContent = (
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">Start Vraag</h3>
-            {prep.priorKnowledgeQuestions.filter(Boolean).map((q, i) => (
-              <p key={i} className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
-            ))}
-          </div>
-        );
-      } else if (session.active_phase === 'INSTRUCTIE' && prep.instructionActivities && prep.instructionActivities[0]) {
-        phaseContent = (
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-3">Tijdens de instructie</h3>
-            {prep.instructionActivities.filter(Boolean).map((q, i) => (
-              <p key={i} className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
-            ))}
-          </div>
-        );
-      } else if (session.active_phase === 'CHECK' && prep.checkQuestions && prep.checkQuestions[0]) {
-        phaseContent = (
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-orange-600 uppercase tracking-widest mb-3">Formatieve Check</h3>
-            {prep.checkQuestions.filter(Boolean).map((q, i) => (
-              <p key={i} className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
-            ))}
-          </div>
-        );
-      } else if (session.active_phase === 'VERWERKEN' && prep.processingActivities && prep.processingActivities[0]) {
-        phaseContent = (
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">Verwerkingsopdracht</h3>
-            {prep.processingActivities.filter(Boolean).map((q, i) => (
-              <p key={i} className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
-            ))}
-          </div>
-        );
-      } else if (session.active_phase === 'AFSLUITING' && prep.exitTicketQuestions && prep.exitTicketQuestions[0]) {
-        phaseContent = (
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-3">Afsluiting</h3>
-            {prep.exitTicketQuestions.filter(Boolean).map((q, i) => (
-              <p key={i} className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{q}</p>
-            ))}
-          </div>
-        );
-      }
-    }
-
     return (
       <>
           <div className="space-y-4 mb-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl w-full mx-auto bg-white/60 backdrop-blur p-6 rounded-2xl border border-slate-200/50 shadow-md">
-            {phaseContent || (
+            {session.lesson_goal ? (
               <>
-                {session.lesson_goal ? (
-                  <>
-                    <h3 className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">Het Lesdoel van Vandaag</h3>
-                    <p className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{session.lesson_goal}</p>
-                  </>
-                ) : (
-                  <div className="text-lg md:text-xl font-bold text-slate-800/40 animate-pulse">
-                    Kijk naar de docent voor instructies.
-                  </div>
-                )}
+                <h3 className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">Het Lesdoel van Vandaag</h3>
+                <p className="text-base md:text-lg lg:text-xl font-bold leading-relaxed text-slate-800 drop-shadow-sm">{session.lesson_goal}</p>
               </>
+            ) : (
+              <div className="text-lg md:text-xl font-bold text-slate-800/40 animate-pulse">
+                Kijk naar de docent voor instructies.
+              </div>
             )}
           </div>
 

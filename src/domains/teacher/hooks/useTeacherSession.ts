@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ClassroomSession, ClassroomParticipant, ClassroomSignal, ClassroomSummary, ClassroomPrompt } from '../../../types';
 import { db, auth } from '../../../lib/firebase';
-import { doc, collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+import { doc, collection, onSnapshot, query, orderBy, where, getDocs } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../../../lib/firebase-error';
 
 export function useTeacherSession() {
@@ -11,6 +11,32 @@ export function useTeacherSession() {
   const [summaries, setSummaries] = useState<ClassroomSummary[]>([]);
   const [activePrompt, setActivePrompt] = useState<ClassroomPrompt | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // Load existing session on mount
+  useEffect(() => {
+    const loadActiveSession = async () => {
+      try {
+        if (!auth.currentUser) return;
+        const q = query(
+          collection(db, 'classroom_sessions'),
+          where('teacher_user_id', '==', auth.currentUser.uid),
+          where('status', '==', 'ACTIVE')
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const docSnap = snap.docs[0];
+          setSession({ ...docSnap.data(), id: docSnap.id } as ClassroomSession);
+        }
+      } catch (err) {
+        console.error('Failed to load active session:', err);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    
+    loadActiveSession();
+  }, []);
 
   useEffect(() => {
     if (!session?.id) return;
@@ -71,6 +97,7 @@ export function useTeacherSession() {
     activePrompt,
     setActivePrompt,
     loading,
-    setLoading
+    setLoading,
+    initialLoading
   };
 }

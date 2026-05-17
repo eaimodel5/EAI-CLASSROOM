@@ -156,6 +156,8 @@ export function TeacherClassroomPage() {
                               inlineMode={true}
                               onUpdate={actions.handleUpdateWidget}
                               onRemove={actions.handleRemoveWidget}
+                              session={session}
+                              signals={signals}
                             />
                           ))}
                         </div>
@@ -208,7 +210,7 @@ export function TeacherClassroomPage() {
                      <AiSummaryCard 
                         activePhaseSummary={activePhaseSummary}
                         generatingSummary={actions.generatingSummary}
-                        onGenerateSummary={actions.generateSummary}
+                        onGenerateSummary={() => actions.generateSummary(signals)}
                       />
                   </div>
                 

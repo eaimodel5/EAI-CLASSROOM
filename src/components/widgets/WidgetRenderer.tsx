@@ -9,17 +9,23 @@ interface WidgetRendererProps {
   inlineMode?: boolean;
   className?: string;
   participants?: any[];
+  session?: any;
+  signals?: any[];
 }
 
-const EAIFeedforwardWidget = ({ data, onUpdate, isTeacher }: any) => {
+const EAIFeedforwardWidget = ({ data, onUpdate, isTeacher, session, participants, signals }: any) => {
   const [loading, setLoading] = useState(false);
-  const sessionId = window.location.pathname.split('/').pop();
+  const sessionId = session?.id || window.location.pathname.split('/').pop();
 
   const handleGenerate = async () => {
-    if (!sessionId) return;
+    if (!sessionId || !session) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/sessions/${sessionId}/feedforward`, { method: 'POST' });
+      const res = await fetch(`/api/sessions/${sessionId}/feedforward`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session, participants, signals })
+      });
       if (res.ok) {
         const result = await res.json();
         if (onUpdate) onUpdate(result);
@@ -108,7 +114,7 @@ const EAIFeedforwardWidget = ({ data, onUpdate, isTeacher }: any) => {
   );
 };
 
-export const WidgetRenderer: React.FC<WidgetRendererProps> = ({ widget, onUpdate, onRemove, isTeacher, inlineMode, className, participants }) => {
+export const WidgetRenderer: React.FC<WidgetRendererProps> = ({ widget, onUpdate, onRemove, isTeacher, inlineMode, className, participants, session, signals }) => {
   const def = WIDGET_REGISTRY.find(w => w.type === widget.type);
   const [isDragging, setIsDragging] = useState(false);
   const [pos, setPos] = useState({ x: widget.x, y: widget.y });
@@ -164,7 +170,7 @@ export const WidgetRenderer: React.FC<WidgetRendererProps> = ({ widget, onUpdate
     }
   }, [widget.x, widget.y, isDragging]);
 
-  const renderContent = () => {
+    const renderContent = () => {
     switch (widget.type) {
       case 'CLOCK':
         return <ClockWidget />;
@@ -179,11 +185,11 @@ export const WidgetRenderer: React.FC<WidgetRendererProps> = ({ widget, onUpdate
       case 'TEXT_NOTE':
         return <TextNoteWidget data={widget.data} onUpdate={(data: any) => onUpdate?.(widget.id, { data })} isTeacher={isTeacher} />;
       case 'EAI_EXPLAINER':
-        return <EAIExplainerWidget data={widget.data} onUpdate={(data: any) => onUpdate?.(widget.id, { data })} isTeacher={isTeacher} />;
+        return <EAIExplainerWidget data={widget.data} onUpdate={(data: any) => onUpdate?.(widget.id, { data })} isTeacher={isTeacher} session={session} />;
       case 'EAI_DIFFERENTIATION':
-        return <EAIDifferentiationWidget data={widget.data} onUpdate={(data: any) => onUpdate?.(widget.id, { data })} isTeacher={isTeacher} inlineMode={inlineMode} participants={participants || []} />;
+        return <EAIDifferentiationWidget data={widget.data} onUpdate={(data: any) => onUpdate?.(widget.id, { data })} isTeacher={isTeacher} inlineMode={inlineMode} participants={participants || []} session={session} signals={signals} />;
       case 'EAI_FEEDFORWARD':
-        return <EAIFeedforwardWidget data={widget.data} onUpdate={(data: any) => onUpdate?.(widget.id, { data })} isTeacher={isTeacher} />;
+        return <EAIFeedforwardWidget data={widget.data} onUpdate={(data: any) => onUpdate?.(widget.id, { data })} isTeacher={isTeacher} session={session} participants={participants || []} signals={signals} />;
       case 'LESSON_PLAN':
         return <LessonPlanWidget data={widget.data} />;
       default:
@@ -599,20 +605,20 @@ const TextNoteWidget = ({ data, onUpdate, isTeacher }: any) => {
   );
 };
 
-const EAIExplainerWidget = ({ data, onUpdate, isTeacher }: any) => {
+const EAIExplainerWidget = ({ data, onUpdate, isTeacher, session }: any) => {
   const [loading, setLoading] = useState(false);
   const [topicInput, setTopicInput] = useState(data?.lastTopic || '');
   
-  const sessionId = window.location.pathname.split('/').pop();
+  const sessionId = session?.id || window.location.pathname.split('/').pop();
 
   const handleGenerate = async () => {
-    if (!sessionId) return;
+    if (!sessionId || !session) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/sessions/${sessionId}/explain`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topicInput })
+        body: JSON.stringify({ topic: topicInput, session })
       });
       if (res.ok) {
         const result = await res.json();
@@ -681,16 +687,20 @@ const EAIExplainerWidget = ({ data, onUpdate, isTeacher }: any) => {
   );
 };
 
-const EAIDifferentiationWidget = ({ data, onUpdate, isTeacher, participants }: any) => {
+const EAIDifferentiationWidget = ({ data, onUpdate, isTeacher, participants, session, signals }: any) => {
   const [loading, setLoading] = useState(false);
 
-  const sessionId = window.location.pathname.split('/').pop();
+  const sessionId = session?.id || window.location.pathname.split('/').pop();
 
   const handleGenerate = async () => {
-    if (!sessionId) return;
+    if (!sessionId || !session) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/sessions/${sessionId}/differentiation`, { method: 'POST' });
+      const res = await fetch(`/api/sessions/${sessionId}/differentiation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session, participants, signals })
+      });
       if (res.ok) {
         const result = await res.json();
         if (onUpdate) onUpdate(result);

@@ -7,7 +7,7 @@ import StudentClassroomPage from './pages/StudentClassroomPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import GridBackground from './components/GridBackground';
 import { auth } from './lib/firebase';
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, signInAnonymously } from 'firebase/auth';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -265,18 +265,34 @@ export default function App() {
     return <div className="flex h-screen w-screen items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
   }
 
-  if (!user) {
-    return (
-      <div className="flex h-[100dvh] w-screen flex-col items-center justify-center bg-gray-50 relative font-sans">
-        <div className="fixed inset-0 z-0">
-          <GridBackground />
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/teacher/classroom" element={user ? <TeacherClassroomPage /> : <GoogleLoginPrompt allowAnonymous />} />
+        <Route path="/student/classroom" element={<StudentWrapper user={user} />} />
+        <Route path="/board/:sessionCode" element={<BoardWrapper user={user} />} />
+        <Route path="/admin" element={user && !user.isAnonymous ? <AdminDashboardPage /> : <GoogleLoginPrompt />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function GoogleLoginPrompt({ allowAnonymous = false }: { allowAnonymous?: boolean }) {
+  return (
+    <div className="flex h-[100dvh] w-screen flex-col items-center justify-center bg-gray-50 relative font-sans">
+      <div className="fixed inset-0 z-0">
+        <GridBackground />
+      </div>
+      <div className="bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-xl z-10 max-w-sm w-full mx-4 border border-white flex flex-col items-center text-center">
+        <div className="w-16 h-16 bg-indigo-600 rounded-2xl shadow-lg flex items-center justify-center mb-6 transform rotate-3">
+          <span className="text-white font-black text-2xl tracking-tighter">EAI</span>
         </div>
-        <div className="bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-xl z-10 max-w-sm w-full mx-4 border border-white flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-indigo-600 rounded-2xl shadow-lg flex items-center justify-center mb-6 transform rotate-3">
-            <span className="text-white font-black text-2xl tracking-tighter">EAI</span>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Inloggen vereist</h2>
-          <p className="text-gray-500 mb-8 font-medium">Log in met je Google-account om de omgeving te betreden.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Inloggen</h2>
+        <p className="text-gray-500 mb-8 font-medium">Log in of ga anoniem door. Anonieme sessies worden niet bewaard.</p>
+        
+        <div className="w-full space-y-3">
           <button 
             onClick={() => {
               const provider = new GoogleAuthProvider();
@@ -293,21 +309,49 @@ export default function App() {
             <LogIn className="w-5 h-5 text-indigo-600" />
             Inloggen met Google
           </button>
+
+          {allowAnonymous && (
+            <button 
+              onClick={() => {
+                signInAnonymously(auth).catch(err => {
+                  console.error('Anonymous login failed:', err);
+                  alert('Fout bij anoniem doorgaan.');
+                });
+              }}
+              className="w-full py-3 px-4 bg-transparent border-2 border-transparent text-gray-500 font-bold rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center shadow-none hover:text-gray-700"
+            >
+              Anoniem doorgaan
+            </button>
+          )}
         </div>
       </div>
-    );
-  }
-
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/teacher/classroom" element={<TeacherClassroomPage />} />
-        <Route path="/student/classroom" element={<StudentClassroomPage />} />
-        <Route path="/board/:sessionCode" element={<ClassroomBoardPage />} />
-        <Route path="/admin" element={<AdminDashboardPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    </div>
   );
 }
+
+function StudentWrapper({ user }: { user: User | null }) {
+  useEffect(() => {
+    if (!user) {
+      signInAnonymously(auth).catch(console.error);
+    }
+  }, [user]);
+
+  if (!user) {
+    return <div className="flex h-screen w-screen items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+  }
+  return <StudentClassroomPage />;
+}
+
+function BoardWrapper({ user }: { user: User | null }) {
+  useEffect(() => {
+    if (!user) {
+      signInAnonymously(auth).catch(console.error);
+    }
+  }, [user]);
+
+  if (!user) {
+    return <div className="flex h-screen w-screen items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+  }
+  return <ClassroomBoardPage />;
+}
+

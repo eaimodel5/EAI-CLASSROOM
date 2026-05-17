@@ -9,22 +9,15 @@ export const aiRouter = Router({ mergeParams: true });
 
 aiRouter.post('/summarize', async (req: Request, res: Response) => {
   try {
-    const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(req.params.id) as any;
-    if (!session) return res.status(404).json({ error: 'Session not found' });
+    const { session, signals } = req.body;
+    if (!session) return res.status(400).json({ error: 'Session data not provided' });
 
-    const signals = db.prepare(`
-      SELECT s.*, p.display_name 
-      FROM classroom_signals s
-      JOIN classroom_participants p ON s.participant_id = p.id
-      WHERE s.classroom_session_id = ? AND s.phase = ?
-    `).all(session.id, session.active_phase) as any[];
-
-    if (signals.length === 0) {
+    if (!signals || signals.length === 0) {
       return res.json({ message: 'No signals to summarize' });
     }
 
-    const signalsText = signals.map(s => {
-      let line = '- ' + s.display_name + ': ' + s.signal_type;
+    const signalsText = signals.map((s: any) => {
+      let line = '- ' + (s.display_name || s.participant_id) + ': ' + s.signal_type;
       if (s.text_value) {
         line += ' ("' + s.text_value + '")';
       }
@@ -78,27 +71,20 @@ Geef me UITSLUITEND een geldig JSON object terug (zonder markdown) met exact de 
     const result = JSON.parse(resultText);
 
     const summaryId = uuidv4();
-    const stmt = db.prepare(`
-      INSERT INTO classroom_summaries (id, classroom_session_id, phase, summary_type, headline, body, evidence_count, confidence_label, summary_json, generator_type)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    
-    stmt.run(
-      summaryId, 
-      session.id, 
-      session.active_phase, 
-      'PHASE_BRIEFING', 
-      result.headline || 'Samenvatting', 
-      result.body || '', 
-      signals.length, 
-      result.confidence_label || 'MEDIUM', 
-      JSON.stringify(result),
-      'GEMINI_FLASH'
-    );
+    const summary = {
+      id: summaryId,
+      classroom_session_id: session.id,
+      phase: session.active_phase,
+      summary_type: 'PHASE_BRIEFING',
+      headline: result.headline || 'Samenvatting',
+      body: result.body || '',
+      evidence_count: signals.length,
+      confidence_label: result.confidence_label || 'MEDIUM',
+      summary_json: JSON.stringify(result),
+      generator_type: 'GEMINI_FLASH',
+      created_at: new Date().toISOString()
+    };
 
-    const summary = db.prepare('SELECT * FROM classroom_summaries WHERE id = ?').get(summaryId);
-
-    broadcast({ type: 'SUMMARY_GENERATED', session_id: session.id, summary });
     res.json(summary);
   } catch (error) {
     console.error('Error generating summary:', error);
@@ -108,21 +94,13 @@ Geef me UITSLUITEND een geldig JSON object terug (zonder markdown) met exact de 
 
 aiRouter.post('/differentiation', async (req: Request, res: Response) => {
   try {
-    const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(req.params.id) as any;
-    if (!session) return res.status(404).json({ error: 'Session not found' });
-
-    const participants = db.prepare('SELECT id, display_name FROM classroom_participants WHERE classroom_session_id = ? AND status = "ACTIVE"').all(session.id) as any[];
-    const signals = db.prepare(`
-      SELECT s.participant_id, p.display_name, s.signal_type, s.text_value
-      FROM classroom_signals s
-      JOIN classroom_participants p ON s.participant_id = p.id
-      WHERE s.classroom_session_id = ? AND s.phase = ?
-    `).all(session.id, session.active_phase) as any[];
+    const { session, participants, signals } = req.body;
+    if (!session) return res.status(400).json({ error: 'Session not provided' });
 
     const ssotContext = getSsotContextForPrompt(session, '/diff');
     
-    const participantsList = participants.map(p => `- ${p.display_name} (ID: ${p.id})`).join('\n');
-    const signalsList = signals.map(s => `- ${s.display_name} (ID: ${s.participant_id}): ${s.signal_type} ${s.text_value ? `("${s.text_value}")` : ''}`).join('\n');
+    const participantsList = (participants || []).map((p: any) => `- ${p.display_name} (ID: ${p.id})`).join('\n');
+    const signalsList = (signals || []).map((s: any) => `- ${s.display_name || s.participant_id} (ID: ${s.participant_id}): ${s.signal_type} ${s.text_value ? `("${s.text_value}")` : ''}`).join('\n');
 
     const prompt = `
 Je bent de EAI CLASSROOM Agent gebonden aan de didactiek van SSOT 16.2.
@@ -166,11 +144,10 @@ Geef me UITSLUITEND een geldig JSON object terug met de volgende structuur:
 
 aiRouter.post('/word', async (req: Request, res: Response) => {
   const { id: sessionId } = req.params;
-  const { participant_id, word, phase } = req.body;
+  const { participant_id, word, phase, session } = req.body;
   const id = uuidv4();
 
   try {
-    const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(sessionId) as any;
     const ssotContext = session ? getSsotContextForPrompt(session, '/vocab') : '';
 
     const prompt = `Geef een korte, kindvriendelijke en duidelijke betekenis voor het Nederlandse woord "${word}". Maximaal 2 zinnen.
@@ -187,16 +164,7 @@ Gebruik GEEN emoji's of emoticons. Houd de toon professioneel en zakelijk. Zorg 
 
     const payload_json = JSON.stringify({ definition });
 
-    const stmt = db.prepare(`
-      INSERT INTO classroom_signals (id, classroom_session_id, participant_id, phase, signal_type, urgency, status, text_value, payload_json)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    stmt.run(id, sessionId, participant_id, phase, 'WORD', 'LOW', 'NEW', word, payload_json);
-
-    const signal = db.prepare('SELECT * FROM classroom_signals WHERE id = ?').get(id);
-    
-    broadcast({ type: 'SIGNAL_RECEIVED', session_id: sessionId, signal });
-    res.status(201).json(signal);
+    res.status(201).json({ id, participant_id, phase, signal_type: 'WORD', text_value: word, payload_json });
   } catch (error) {
     console.error('Error processing difficult word:', error);
     res.status(500).json({ error: 'Failed to process difficult word' });
@@ -205,10 +173,9 @@ Gebruik GEEN emoji's of emoticons. Houd de toon professioneel en zakelijk. Zorg 
 
 aiRouter.post('/explain', async (req: Request, res: Response) => {
   try {
-    const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(req.params.id) as any;
-    if (!session) return res.status(404).json({ error: 'Session not found' });
+    const { topic, session } = req.body;
+    if (!session) return res.status(400).json({ error: 'Session not provided' });
     
-    const { topic } = req.body;
     const targetTopic = topic || session.lesson_goal || 'het huidige lesonderwerp';
     const ssotContext = getSsotContextForPrompt(session, '/beeld');
 
@@ -244,23 +211,15 @@ Regels:
 
 aiRouter.post('/feedforward', async (req: Request, res: Response) => {
   try {
-    const session = db.prepare('SELECT * FROM classroom_sessions WHERE id = ?').get(req.params.id) as any;
-    if (!session) return res.status(404).json({ error: 'Session not found' });
-
-    const participants = db.prepare('SELECT id, display_name FROM classroom_participants WHERE classroom_session_id = ? AND status = "ACTIVE"').all(session.id) as any[];
-    const signals = db.prepare(`
-      SELECT s.participant_id, p.display_name, s.signal_type, s.text_value, s.phase
-      FROM classroom_signals s
-      JOIN classroom_participants p ON s.participant_id = p.id
-      WHERE s.classroom_session_id = ?
-    `).all(session.id) as any[];
+    const { session, participants, signals } = req.body;
+    if (!session) return res.status(400).json({ error: 'Session not provided' });
 
     const ssotContext = getSsotContextForPrompt(session);
     
-    const participantsList = participants.map(p => `- ${p.display_name} (ID: ${p.id})`).join('\n');
-    const signalsList = signals.map(s => {
+    const participantsList = (participants || []).map((p: any) => `- ${p.display_name} (ID: ${p.id})`).join('\n');
+    const signalsList = (signals || []).map((s: any) => {
       const textVal = s.text_value ? `("${s.text_value}")` : '';
-      return `- [Fase: ${s.phase}] ${s.display_name} (ID: ${s.participant_id}): ${s.signal_type} ${textVal}`;
+      return `- [Fase: ${s.phase}] ${s.display_name || s.participant_id} (ID: ${s.participant_id}): ${s.signal_type} ${textVal}`;
     }).join('\n');
 
     const prompt = `

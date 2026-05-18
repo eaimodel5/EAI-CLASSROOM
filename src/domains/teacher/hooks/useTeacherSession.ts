@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ClassroomSession, ClassroomParticipant, ClassroomSignal, ClassroomSummary, ClassroomPrompt } from '../../../types';
+import { ClassroomSession, ClassroomParticipant, ClassroomSignal, ClassroomSummary, ClassroomPrompt, TeacherProposal } from '../../../types';
 import { db, auth } from '../../../lib/firebase';
 import { doc, collection, onSnapshot, query, orderBy, where, getDocs } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../../../lib/firebase-error';
@@ -9,6 +9,7 @@ export function useTeacherSession() {
   const [participants, setParticipants] = useState<ClassroomParticipant[]>([]);
   const [signals, setSignals] = useState<ClassroomSignal[]>([]);
   const [summaries, setSummaries] = useState<ClassroomSummary[]>([]);
+  const [proposals, setProposals] = useState<TeacherProposal[]>([]);
   const [activePrompt, setActivePrompt] = useState<ClassroomPrompt | null>(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -68,6 +69,13 @@ export function useTeacherSession() {
       setSummaries(sums);
     }, (error) => handleFirestoreError(error, OperationType.GET, `classroom_sessions/${session.id}/summaries`));
 
+    const qProposals = query(collection(db, `classroom_sessions/${session.id}/proposals`), orderBy('created_at', 'desc'));
+    const unsubProposals = onSnapshot(qProposals, (snap) => {
+      const props: TeacherProposal[] = [];
+      snap.forEach(d => props.push({ ...d.data(), id: d.id } as TeacherProposal));
+      setProposals(props);
+    }, (error) => handleFirestoreError(error, OperationType.GET, `classroom_sessions/${session.id}/proposals`));
+
     const qPrompts = query(collection(db, `classroom_sessions/${session.id}/prompts`));
     const unsubPrompts = onSnapshot(qPrompts, (snap) => {
       const prompts: ClassroomPrompt[] = [];
@@ -81,6 +89,7 @@ export function useTeacherSession() {
       unsubParticipants();
       unsubSignals();
       unsubSummaries();
+      unsubProposals();
       unsubPrompts();
     };
   }, [session?.id]);
@@ -94,6 +103,8 @@ export function useTeacherSession() {
     setSignals,
     summaries,
     setSummaries,
+    proposals,
+    setProposals,
     activePrompt,
     setActivePrompt,
     loading,

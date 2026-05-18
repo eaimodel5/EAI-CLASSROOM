@@ -5,7 +5,19 @@ import { broadcast } from '../websocket.ts';
 import { generateAiContent } from '../services/ai.ts';
 import { getSsotContextForPrompt } from '../../lib/ssot.ts';
 
+import { generateTeacherProposal } from '../services/classroomAnalysis.ts';
+
 export const aiRouter = Router({ mergeParams: true });
+
+aiRouter.post('/proposal', async (req: Request, res: Response) => {
+  try {
+    const proposal = await generateTeacherProposal(req.body);
+    res.json(proposal);
+  } catch (error) {
+    console.error('Error generating teacher proposal:', error);
+    res.status(500).json({ error: 'Failed to generate teacher proposal' });
+  }
+});
 
 aiRouter.post('/summarize', async (req: Request, res: Response) => {
   try {

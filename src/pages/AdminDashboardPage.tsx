@@ -14,8 +14,8 @@ export default function AdminDashboardPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Basic auth check
-    if (localStorage.getItem('admin_auth') !== 'true') {
+    if (!auth.currentUser || auth.currentUser.email !== 'vis@emmauscollege.nl') {
+      alert('Geen toegang. Dit gedeelte is alleen voor de beheerder (vis@emmauscollege.nl).');
       navigate('/');
       return;
     }

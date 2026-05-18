@@ -96,6 +96,41 @@ export function useTeacherActions({
     }
   };
 
+  const generateTeacherProposal = async (currentSignals: any[], participants: any[], mode = 'PHASE_BRIEFING') => {
+    if (!session) return;
+    setGeneratingSummary(true);
+    try {
+      const res = await fetch(`/api/proposal`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode, session, participants, signals: currentSignals })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Proposal generation error:', data);
+        alert(data.error || 'Fout bij genereren van de analyse.');
+      } else if (data.message) {
+        alert(data.message);
+      } else if (data.id) {
+        try {
+          await setDoc(doc(db, `classroom_sessions/${session.id}/proposals`, data.id), data);
+        } catch (e) { console.warn(e); }
+        // Let's store proposals in state? We need proposals state
+      }
+    } catch (err) {
+      console.error('Network error during proposal generation:', err);
+      alert('Netwerkfout bij het genereren van de analyse.');
+    } finally {
+      setGeneratingSummary(false);
+    }
+  };
+
+  const startTeacherAction = async (action: any) => {
+    if (action.action_type === 'CREATE_PROMPT') {
+      await createPrompt(action.payload.prompt_type || 'CHECK_QUESTION', action.payload.prompt_text || 'Genereerde vraag');
+    }
+  };
+
   const generateSummary = async (currentSignals: any[]) => {
     if (!session) return;
     setGeneratingSummary(true);

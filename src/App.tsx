@@ -11,20 +11,6 @@ import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, signInAn
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email === 'vis@emmauscollege.nl' && password === 'AnalyseAdvies') {
-      localStorage.setItem('admin_auth', 'true');
-      navigate('/admin');
-    } else {
-      setError('Gegevens onjuist');
-    }
-  };
 
   return (
     <div className="min-h-[100dvh] bg-gray-50 relative flex flex-col font-sans">
@@ -33,48 +19,12 @@ const LandingPage = () => {
       </div>
       
       <button 
-        onClick={() => setShowAdminLogin(true)}
+        onClick={() => navigate('/admin')}
         className="fixed top-4 right-4 p-3 bg-white/80 hover:bg-white backdrop-blur-sm rounded-full shadow-sm text-gray-400 hover:text-gray-900 transition-colors z-50 border"
         title="Admin Login"
       >
         <Lock className="w-5 h-5" />
       </button>
-
-      {showAdminLogin && (
-        <div className="fixed inset-0 z-[100] bg-gray-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full animate-in fade-in zoom-in-95">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-900"><Lock className="w-5 h-5 text-gray-400" /> Superuser toegang</h2>
-            {error && <p className="text-red-600 bg-red-50 p-2 text-sm mb-4 rounded-md font-medium border border-red-100">{error}</p>}
-            <form onSubmit={handleAdminLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">E-mailadres</label>
-                <input 
-                  type="email" 
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-lg p-2.5 outline-none focus:border-blue-500 transition-colors"
-                  placeholder="vis@emmauscollege.nl"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Wachtwoord</label>
-                <input 
-                  type="password" 
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-lg p-2.5 outline-none focus:border-blue-500 transition-colors"
-                  required
-                />
-              </div>
-              <div className="flex gap-3 mt-8">
-                <button type="button" onClick={() => setShowAdminLogin(false)} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors">Annuleren</button>
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors shadow-md shadow-blue-500/20">Inloggen</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Hero Section */}
       <section className="min-h-[100dvh] flex flex-col items-center justify-center px-4 relative z-10 pt-16 pb-32">
@@ -297,6 +247,7 @@ function GoogleLoginPrompt({ allowAnonymous = false }: { allowAnonymous?: boolea
             onClick={() => {
               const provider = new GoogleAuthProvider();
               provider.setCustomParameters({ prompt: 'select_account' });
+              // If already anonymous, signing in with redirect/popup will link or replace the account
               signInWithPopup(auth, provider).catch(err => {
                 if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                   console.error('Google login failed:', err);

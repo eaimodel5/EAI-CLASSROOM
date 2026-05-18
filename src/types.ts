@@ -121,3 +121,49 @@ export interface ClassroomPrompt {
   opened_at: string;
   closed_at: string | null;
 }
+
+export interface TeacherAction {
+  id: string;
+  label: string;
+  action_type:
+    | 'CREATE_PROMPT'
+    | 'SHOW_GROUPS'
+    | 'SEND_PRIVATE_MESSAGE'
+    | 'START_WIDGET'
+    | 'CREATE_FEEDFORWARD'
+    | 'NO_ACTION';
+  payload: Record<string, any>;
+}
+
+export interface TeacherProposal {
+  id: string;
+  classroom_session_id: string;
+  phase: string;
+  proposal_type: 'PHASE_BRIEFING' | 'DIFFERENTIATION' | 'FEEDFORWARD';
+  headline: string;
+  summary: string;
+  main_need: string;
+  suggested_activity: {
+    label: string;
+    rationale: string;
+    activity_type: string;
+    prompt_type?: string;
+    prompt_text?: string;
+  };
+  groups?: {
+    needs_support: string[];
+    can_continue: string[];
+    check_in: string[];
+  };
+  evidence: {
+    signal_count: number;
+    response_count: number;
+    help_count: number;
+    word_count: number;
+    confidence_label: 'HIGH' | 'MEDIUM' | 'LOW';
+  };
+  teacher_actions: TeacherAction[];
+  status: 'DRAFT' | 'SEEN' | 'ACCEPTED' | 'DISMISSED';
+  created_at: string;
+  updated_at: string;
+}

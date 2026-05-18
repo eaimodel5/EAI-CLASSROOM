@@ -19,6 +19,7 @@ import { ClassManagement } from '../components/ClassManagement';
 import { ActiveStudentsList } from '../components/ActiveStudentsList';
 import { ActivePromptCard } from '../components/ActivePromptCard';
 import { AiSummaryCard } from '../components/AiSummaryCard';
+import { TeacherProposalCard } from '../components/TeacherProposalCard';
 import { ClassStats } from '../components/ClassStats';
 import { LiveFeed } from '../components/LiveFeed';
 import { PromptModal } from '../components/PromptModal';
@@ -27,8 +28,20 @@ import GridBackground from '../../../components/GridBackground';
 
 type DashboardModule = 'OVERVIEW' | 'INTERACTIONS' | 'MONITOR' | 'STUDENTS';
 
+import { auth } from '../../../lib/firebase';
+import { signOut } from 'firebase/auth';
+
 export function TeacherClassroomPage() {
   const navigate = useNavigate();
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      navigate('/');
+    } catch (err) {
+      console.error('Sign out error', err);
+    }
+  };
   
   const {
     session,
@@ -39,6 +52,8 @@ export function TeacherClassroomPage() {
     setSignals,
     summaries,
     setSummaries,
+    proposals,
+    setProposals,
     activePrompt,
     setActivePrompt,
     loading,
@@ -88,7 +103,12 @@ export function TeacherClassroomPage() {
   };
 
   const parsedPrep: LessonPreparation | null = session?.prep_json ? JSON.parse(session.prep_json) : null;
-  const activePhaseSummary = summaries.find(s => s.phase === session?.active_phase);
+  const activePhaseProposals = session ? proposals.filter((p: any) => p.phase === session.active_phase && p.status !== 'DISMISSED') : [];
+
+  const handleDismissProposal = async (id: string) => {
+    // We could update Firestore here: await updateDoc(doc(db, \`classroom_sessions/\${session!.id}/proposals\`, id), { status: 'DISMISSED' })
+    // For now, let's keep it simple if we want UI dismiss
+  };
 
   if (session && !isEditingPrep) {
     const activeWidgets = JSON.parse(session.widgets_json || '[]');
@@ -207,11 +227,30 @@ export function TeacherClassroomPage() {
 
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                   <div className="xl:col-span-12">
-                     <AiSummaryCard 
-                        activePhaseSummary={activePhaseSummary}
-                        generatingSummary={actions.generatingSummary}
-                        onGenerateSummary={() => actions.generateSummary(signals)}
-                      />
+                     <div className="flex justify-between items-center mb-4">
+                       <h3 className="font-bold text-slate-800">Didactische Voorstellen (AI)</h3>
+                       <button
+                         onClick={() => actions.generateTeacherProposal(signals, participants, 'PHASE_BRIEFING')}
+                         disabled={actions.generatingSummary}
+                         className="text-sm px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium shadow-sm"
+                       >
+                         {actions.generatingSummary ? 'Bezig met analyseren...' : 'Genereer nieuw voorstel'}
+                       </button>
+                     </div>
+                     {activePhaseProposals.length > 0 ? (
+                       activePhaseProposals.map((proposal) => (
+                         <TeacherProposalCard
+                           key={proposal.id}
+                           proposal={proposal}
+                           onStartAction={actions.startTeacherAction}
+                           onDismiss={handleDismissProposal}
+                         />
+                       ))
+                     ) : (
+                       <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6 text-center text-indigo-800">
+                         Nog geen specifieke voorstellen voor deze lesfase.
+                       </div>
+                     )}
                   </div>
                 
                   <div className="xl:col-span-12 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl shadow-slate-200/40 border border-slate-200/60 p-4 md:p-6 lg:p-8 relative overflow-hidden">
@@ -441,12 +480,18 @@ export function TeacherClassroomPage() {
         <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]"></div>
       </div>
       
-      <div className="w-full max-w-4xl mb-4 mt-8">
+      <div className="w-full max-w-4xl mb-4 mt-8 flex justify-between items-center px-4">
         <button 
           onClick={() => navigate('/')} 
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-medium"
         >
           <ArrowLeft className="w-4 h-4" /> Terug naar start
+        </button>
+        <button
+          onClick={handleSignOut}
+          className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
+        >
+          Uitloggen / Ander account
         </button>
       </div>
       

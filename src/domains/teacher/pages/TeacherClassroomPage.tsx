@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, XCircle, Wrench, MessagesSquare, LayoutGrid, LayoutDashboard, Zap, Activity, Users, Radio, PanelRightClose } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../../lib/firebase';
 import { emptyLessonPreparation, LessonPreparation } from '../../../types';
 import { WidgetSelector } from '../../../components/widgets/WidgetSelector';
 import { WidgetRenderer } from '../../../components/widgets/WidgetRenderer';
@@ -106,8 +108,15 @@ export function TeacherClassroomPage() {
   const activePhaseProposals = session ? proposals.filter((p: any) => p.phase === session.active_phase && p.status !== 'DISMISSED') : [];
 
   const handleDismissProposal = async (id: string) => {
-    // We could update Firestore here: await updateDoc(doc(db, \`classroom_sessions/\${session!.id}/proposals\`, id), { status: 'DISMISSED' })
-    // For now, let's keep it simple if we want UI dismiss
+    if (!session) return;
+    try {
+      await updateDoc(doc(db, `classroom_sessions/${session.id}/proposals`, id), {
+        status: 'DISMISSED',
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error('Failed to dismiss proposal', err);
+    }
   };
 
   if (session && !isEditingPrep) {

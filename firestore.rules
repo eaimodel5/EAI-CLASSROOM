@@ -79,7 +79,7 @@ service cloud.firestore {
         }
 
         // Anyone in the session can read participants
-        allow read: if true;
+        allow read: if isSignedIn();
         
         // Let students join (create)
         allow create: if isSignedIn() && isValidId(sessionId) && isValidId(participantId) && isValidParticipant(incoming()) && exists(/databases/$(database)/documents/classroom_sessions/$(sessionId));
@@ -105,7 +105,7 @@ service cloud.firestore {
                   data.created_at == request.time;
         }
         
-        allow read: if true;
+        allow read: if isSignedIn() && get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid;
         allow create: if isSignedIn() && isValidId(sessionId) && isValidId(signalId) && isValidSignal(incoming());
         allow update: if isSignedIn() && isValidId(sessionId) && isValidId(signalId) && (
            // Teacher acknowledging/resolving
@@ -114,18 +114,18 @@ service cloud.firestore {
       }
       
       match /prompts/{promptId} {
-         allow read: if true;
+         allow read: if isSignedIn();
          // Prompts can only be managed by teachers
          allow create, update, delete: if isSignedIn() && isValidId(sessionId) && isValidId(promptId) && get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid;
       }
       
       match /summaries/{summaryId} {
-         allow read: if true;
+         allow read: if isSignedIn() && get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid;
          allow create, update, delete: if isSignedIn() && isValidId(sessionId) && isValidId(summaryId) && get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid;
       }
 
       match /proposals/{proposalId} {
-         allow read: if true;
+         allow read: if isSignedIn() && get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid;
          allow create, update, delete: if isSignedIn() && isValidId(sessionId) && isValidId(proposalId) && get(/databases/$(database)/documents/classroom_sessions/$(sessionId)).data.teacher_user_id == request.auth.uid;
       }
     }

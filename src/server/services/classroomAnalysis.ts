@@ -37,15 +37,18 @@ function normalizeSignals(signals: any[]) {
 
 function anonymizeSignals(signals: any[], participants: any[]) {
   const mapping: Record<string, string> = {};
+  const reserveMapping: Record<string, string> = {};
   
-  const anonParticipants = participants.map(p => {
-    mapping[p.id] = p.id; // for this prototype we keep IDs but just hide names
-    return { id: p.id };
+  const anonParticipants = participants.map((p, index) => {
+    const anonId = `student_${index + 1}`;
+    mapping[anonId] = p.id;
+    reserveMapping[p.id] = anonId;
+    return { id: anonId };
   });
 
   const anonSignals = signals.map(s => {
     return {
-      participant_id: s.participant_id,
+      participant_id: reserveMapping[s.participant_id] || 'unknown',
       phase: s.phase,
       signal_type: s.signal_type,
       text_value: s.text_value,
@@ -113,7 +116,26 @@ Gebruik deze JSON-structuur exact:
 }
 
 function validateTeacherProposal(raw: any) {
-  return raw;
+  const safeStr = (v: any) => typeof v === 'string' ? v : '';
+  const confidenceLabels = ['HIGH', 'MEDIUM', 'LOW'];
+  return {
+    headline: safeStr(raw.headline) || 'Nieuw voorstel',
+    summary: safeStr(raw.summary) || 'Geen samenvatting gegenereerd.',
+    main_need: safeStr(raw.main_need) || '',
+    suggested_activity: {
+      label: safeStr(raw.suggested_activity?.label) || 'Geen actie voorgesteld',
+      rationale: safeStr(raw.suggested_activity?.rationale) || '',
+      activity_type: safeStr(raw.suggested_activity?.activity_type) || 'NO_ACTION',
+      prompt_type: safeStr(raw.suggested_activity?.prompt_type),
+      prompt_text: safeStr(raw.suggested_activity?.prompt_text)
+    },
+    groups: {
+      needs_support: Array.isArray(raw.groups?.needs_support) ? raw.groups.needs_support : [],
+      can_continue: Array.isArray(raw.groups?.can_continue) ? raw.groups.can_continue : [],
+      check_in: Array.isArray(raw.groups?.check_in) ? raw.groups.check_in : []
+    },
+    confidence_label: confidenceLabels.includes(raw.confidence_label) ? raw.confidence_label : 'MEDIUM'
+  };
 }
 
 function mapStudentRefsBack(proposal: any, mapping: Record<string, string>, session: any, mode: string, stats: any) {
@@ -132,6 +154,12 @@ function mapStudentRefsBack(proposal: any, mapping: Record<string, string>, sess
     });
   }
 
+  const mappedGroups = {
+    needs_support: (proposal.groups?.needs_support || []).map((id: string) => mapping[id] || id),
+    can_continue: (proposal.groups?.can_continue || []).map((id: string) => mapping[id] || id),
+    check_in: (proposal.groups?.check_in || []).map((id: string) => mapping[id] || id)
+  };
+
   return {
     id: uuidv4(),
     classroom_session_id: session.id,
@@ -141,7 +169,7 @@ function mapStudentRefsBack(proposal: any, mapping: Record<string, string>, sess
     summary: proposal.summary || '',
     main_need: proposal.main_need || '',
     suggested_activity: proposal.suggested_activity || { label: '', rationale: '', activity_type: 'NO_ACTION' },
-    groups: proposal.groups || { needs_support: [], can_continue: [], check_in: [] },
+    groups: mappedGroups,
     evidence: {
       signal_count: stats.signalCount,
       response_count: stats.responseCount,

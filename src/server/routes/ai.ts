@@ -19,6 +19,7 @@ aiRouter.post('/proposal', async (req: Request, res: Response) => {
   }
 });
 
+// LEGACY ROUTE: Should be replaced by /proposal flow.
 aiRouter.post('/summarize', async (req: Request, res: Response) => {
   try {
     const { session, signals } = req.body;
@@ -29,7 +30,7 @@ aiRouter.post('/summarize', async (req: Request, res: Response) => {
     }
 
     const signalsText = signals.map((s: any) => {
-      let line = '- ' + (s.display_name || s.participant_id) + ': ' + s.signal_type;
+      let line = '- Participant ' + s.participant_id + ': ' + s.signal_type;
       if (s.text_value) {
         line += ' ("' + s.text_value + '")';
       }

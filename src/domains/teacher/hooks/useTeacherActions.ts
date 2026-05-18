@@ -100,7 +100,7 @@ export function useTeacherActions({
     if (!session) return;
     setGeneratingSummary(true);
     try {
-      const res = await fetch(`/api/proposal`, { 
+      const res = await fetch(`/api/sessions/${session.id}/proposal`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode, session, participants, signals: currentSignals })
@@ -395,6 +395,8 @@ export function useTeacherActions({
     updateSessionPrep,
     changePhase,
     generateSummary,
+    generateTeacherProposal,
+    startTeacherAction,
     endSession,
     createPrompt,
     closePrompt,

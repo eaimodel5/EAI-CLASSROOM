@@ -1,5 +1,5 @@
 import React from 'react';
-import { TeacherProposal, TeacherAction } from '../../../../types';
+import { TeacherProposal, TeacherAction } from '../../../types';
 import { Bot, PlayCircle } from 'lucide-react';
 
 interface TeacherProposalCardProps {

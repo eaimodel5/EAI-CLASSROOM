@@ -53,8 +53,8 @@ export function PhaseControls({ activePhase, onChangePhase }: PhaseControlsProps
             </span>
             
             {/* Content */}
-            <div className={`transition-all rounded-2xl p-3 -mt-1 -ml-2 border-2 ${isActive ? 'bg-indigo-50/80 border-indigo-200 shadow-sm' : 'border-transparent hover:bg-slate-50 hover:border-slate-200'}`}>
-              <div className={`font-black text-base ${isActive ? 'text-indigo-900' : isPast ? 'text-slate-700' : 'text-slate-500'}`}>
+            <div className={`transition-all rounded-2xl p-3 -mt-1 -ml-2 border ${isActive ? 'bg-indigo-50/80 border-indigo-200/80 shadow-sm' : 'border-transparent hover:bg-slate-50 hover:border-slate-200/40'}`}>
+              <div className={`font-bold text-sm md:text-base ${isActive ? 'text-indigo-900' : isPast ? 'text-slate-700' : 'text-slate-500'}`}>
                 {index + 1}. {phase.label}
               </div>
               {isActive && (

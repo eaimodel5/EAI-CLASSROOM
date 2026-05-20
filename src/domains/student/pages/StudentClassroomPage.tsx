@@ -110,7 +110,14 @@ export function StudentClassroomPage() {
         <div className={`absolute inset-0 transition-colors duration-500 ${getPhaseStyles()} opacity-90 backdrop-blur-[2px]`}></div>
       </div>
 
-      <StudentHeader session={session} participant={participant} />
+      <StudentHeader 
+        session={session} 
+        participant={participant} 
+        activeSignal={activeSignal}
+        setActiveSignal={setActiveSignal}
+        sendSignal={sendSignal}
+        setComposingSignal={setComposingSignal}
+      />
 
       <main className="flex-1 p-4 flex flex-col items-center justify-center max-w-md mx-auto w-full space-y-4 relative">
         {participant.can_draw === 1 && (

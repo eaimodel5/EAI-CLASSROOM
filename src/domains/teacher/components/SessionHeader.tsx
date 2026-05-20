@@ -36,16 +36,16 @@ export function SessionHeader({ session, onOpenWidgets, onEditPrep }: SessionHea
             <button 
               onClick={onOpenWidgets}
               title="Open mini-apps op het centrale lesbord (digibord)"
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-xl font-black text-sm md:text-base transition-all border-2 border-indigo-200 shadow-sm active:scale-95 group"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 md:gap-2.5 px-3 py-1.5 md:px-4 md:py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-bold text-sm md:text-sm.5 transition-all border border-indigo-200/80 shadow-sm hover:shadow active:scale-95 group"
             >
-              <LayoutGrid className="w-4 h-4 md:w-5 md:h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
+              <LayoutGrid className="w-4 h-4 md:w-4.5 md:h-4.5 text-indigo-500 group-hover:scale-105 transition-transform" />
               Bord Tools
             </button>
             <button 
               onClick={() => window.open(`/board/${session.session_code}`, '_blank')}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-black text-sm md:text-base transition-all border-2 border-slate-200 shadow-sm active:scale-95"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 md:gap-2.5 px-3 py-1.5 md:px-4 md:py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-sm md:text-sm.5 transition-all border border-slate-200 shadow-sm hover:shadow active:scale-95"
             >
-              <Presentation className="w-4 h-4 md:w-5 md:h-5 text-slate-400" />
+              <Presentation className="w-4 h-4 md:w-4.5 md:h-4.5 text-slate-400" />
               Open Board
             </button>
           </div>

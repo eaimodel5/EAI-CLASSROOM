@@ -6,8 +6,9 @@ import ClassroomBoardPage from './pages/ClassroomBoardPage';
 import StudentClassroomPage from './pages/StudentClassroomPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import GridBackground from './components/GridBackground';
-import { auth } from './lib/firebase';
+import { auth, db } from './lib/firebase';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, signInAnonymously } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -183,6 +184,7 @@ const LandingPage = () => {
 export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [globalAnnouncement, setGlobalAnnouncement] = useState<string>('');
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -193,7 +195,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Fetch and apply global settings
+    // 1. Fetch initially for robustness
     fetch('/api/admin/settings')
       .then(res => res.json())
       .then(settings => {
@@ -207,8 +209,33 @@ export default function App() {
         if (settings.app_title) {
           document.title = settings.app_title;
         }
+        if (settings.global_announcement) {
+          setGlobalAnnouncement(settings.global_announcement);
+        }
       })
       .catch(err => console.error('Failed to load settings', err));
+
+    // 2. Real-time Firebase Firestore observer for live propagation of superuser settings
+    const unsubSettings = onSnapshot(doc(db, 'admin_settings', 'global'), (docSnap) => {
+      if (docSnap.exists()) {
+        const settings = docSnap.data();
+        if (settings.theme_color_primary) {
+          document.documentElement.style.setProperty('--color-primary', settings.theme_color_primary);
+        }
+        if (settings.theme_font_family) {
+          document.documentElement.style.setProperty('--font-family', settings.theme_font_family);
+          document.body.style.fontFamily = settings.theme_font_family;
+        }
+        if (settings.app_title) {
+          document.title = settings.app_title;
+        }
+        setGlobalAnnouncement(settings.global_announcement || '');
+      }
+    }, (err) => {
+      console.warn('Firestore settings listener error (expected if anonymous/offline):', err);
+    });
+
+    return () => unsubSettings();
   }, []);
 
   if (!authReady) {
@@ -216,20 +243,48 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/teacher/classroom" element={user ? <TeacherClassroomPage /> : <GoogleLoginPrompt allowAnonymous />} />
-        <Route path="/student/classroom" element={<StudentWrapper user={user} />} />
-        <Route path="/board/:sessionCode" element={<BoardWrapper user={user} />} />
-        <Route path="/admin" element={user && !user.isAnonymous ? <AdminDashboardPage /> : <GoogleLoginPrompt />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <div className="flex flex-col min-h-screen">
+      {globalAnnouncement && (
+        <div className="bg-red-600 text-white text-center px-4 py-2 font-bold text-xs md:text-sm z-[9999] shadow-md flex items-center justify-center gap-2 animate-in slide-in-from-top duration-300">
+          <span className="inline-block animate-pulse">⚠️</span> {globalAnnouncement}
+        </div>
+      )}
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/teacher/classroom" element={user ? <TeacherClassroomPage /> : <GoogleLoginPrompt allowAnonymous />} />
+          <Route path="/student/classroom" element={<StudentWrapper user={user} />} />
+          <Route path="/board/:sessionCode" element={<BoardWrapper user={user} />} />
+          <Route 
+            path="/admin" 
+            element={
+              (user && !user.isAnonymous) || localStorage.getItem('admin_bypass_active') === 'true' 
+                ? <AdminDashboardPage /> 
+                : <GoogleLoginPrompt />
+            } 
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
   );
 }
 
 function GoogleLoginPrompt({ allowAnonymous = false }: { allowAnonymous?: boolean }) {
+  const [showPinInput, setShowPinInput] = useState(false);
+  const [pinCode, setPinCode] = useState('');
+
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pinCode === 'emmaus2026') {
+      localStorage.setItem('admin_bypass_active', 'true');
+      alert('Superuser bypass geactiveerd! Welkom.');
+      window.location.reload();
+    } else {
+      alert('Onjuiste bypass-code.');
+    }
+  };
+
   return (
     <div className="flex h-[100dvh] w-screen flex-col items-center justify-center bg-gray-50 relative font-sans">
       <div className="fixed inset-0 z-0">
@@ -247,7 +302,6 @@ function GoogleLoginPrompt({ allowAnonymous = false }: { allowAnonymous?: boolea
             onClick={() => {
               const provider = new GoogleAuthProvider();
               provider.setCustomParameters({ prompt: 'select_account' });
-              // If already anonymous, signing in with redirect/popup will link or replace the account
               signInWithPopup(auth, provider).catch(err => {
                 if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                   console.error('Google login failed:', err);
@@ -274,6 +328,42 @@ function GoogleLoginPrompt({ allowAnonymous = false }: { allowAnonymous?: boolea
               Anoniem doorgaan
             </button>
           )}
+
+          <div className="pt-4 border-t border-gray-100 mt-4">
+            {!showPinInput ? (
+              <button
+                onClick={() => setShowPinInput(true)}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+              >
+                Inloggen met bypass-code?
+              </button>
+            ) : (
+              <form onSubmit={handlePinSubmit} className="space-y-2 mt-2">
+                <input
+                  type="password"
+                  placeholder="Voer bypass-code in"
+                  value={pinCode}
+                  onChange={(e) => setPinCode(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none font-medium text-center"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPinInput(false)}
+                    className="flex-1 py-1 px-2 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-lg transition-colors"
+                  >
+                    Annuleer
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-1 px-2 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors"
+                  >
+                    Inloggen
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </div>

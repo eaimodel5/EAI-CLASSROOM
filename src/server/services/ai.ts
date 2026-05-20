@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import db from '../../db/index.ts';
 
 /**
  * Removes markdown code blocks from a string if they exist.
@@ -28,14 +29,35 @@ export async function generateAiContent(prompt: string, responseAsJson: boolean 
 
   const ai = new GoogleGenAI({ apiKey });
   
-  const config: any = {};
+  let modelName = 'gemini-3.1-pro-preview';
+  let temperature = 0.7;
+  
+  try {
+    const modelRecord = db.prepare('SELECT value FROM admin_settings WHERE key = "eai_model_version"').get() as { value: string } | undefined;
+    if (modelRecord?.value) {
+      modelName = modelRecord.value;
+    }
+    const tempRecord = db.prepare('SELECT value FROM admin_settings WHERE key = "eai_temperature"').get() as { value: string } | undefined;
+    if (tempRecord?.value) {
+      const parsed = parseFloat(tempRecord.value);
+      if (!isNaN(parsed)) {
+        temperature = parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to fetch admin settings from database, using fallback values.', e);
+  }
+
+  const config: any = {
+    temperature
+  };
   if (responseAsJson) {
     config.responseMimeType = 'application/json';
   }
   
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: modelName,
       contents: prompt,
       config
     });

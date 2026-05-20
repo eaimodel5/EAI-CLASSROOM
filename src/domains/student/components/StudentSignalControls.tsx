@@ -83,15 +83,11 @@ export function StudentSignalControls({
   return (
     <div className="w-full flex flex-col gap-4">
       {session.active_phase === 'INSTRUCTIE' && (
-        <button 
-          onClick={() => setComposingSignal('HELP')}
-          className="w-full p-6 rounded-3xl border-2 transition-all flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-md border-red-100 text-red-600 hover:border-red-300 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/10 active:scale-95 group"
-        >
-          <div className="w-20 h-20 bg-red-50 group-hover:bg-red-100 rounded-[1.5rem] flex items-center justify-center transition-colors">
-             <HelpCircle className="w-10 h-10 text-red-400 group-hover:text-red-600 transition-colors" />
-          </div>
-          <span className="font-bold text-lg tracking-tight">Ik snap het niet</span>
-        </button>
+        <div className="text-center p-8 bg-white/60 backdrop-blur-md rounded-3xl border border-white shadow-xl shadow-black/5 w-full">
+          <p className="text-xl font-bold text-slate-500 leading-relaxed max-w-[280px] mx-auto">
+            Volg de instructie op het bord. Gebruik de knop bovenin als je een vraag hebt.
+          </p>
+        </div>
       )}
 
       {session.active_phase === 'CHECK' && (

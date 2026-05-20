@@ -52,6 +52,8 @@ export function useTeacherActions({
         lesson_goal: prep.learningGoal || '',
         active_phase: 'START',
         status: 'ACTIVE',
+        is_locked: 0,
+        help_questions_enabled: 1,
         started_at: serverTimestamp(),
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
@@ -232,6 +234,18 @@ export function useTeacherActions({
     }
   };
 
+  const toggleHelpQuestions = async () => {
+    if (!session) return;
+    try {
+      const currentStatus = session.help_questions_enabled === undefined ? 1 : session.help_questions_enabled;
+      const newHelpStatus = currentStatus ? 0 : 1;
+      await updateDoc(doc(db, 'classroom_sessions', session.id), { help_questions_enabled: newHelpStatus, updated_at: serverTimestamp() });
+      setSession({ ...session, help_questions_enabled: newHelpStatus });
+    } catch (err) {
+      console.error('Failed to toggle help questions', err);
+    }
+  };
+
   const setTimer = async (minutes: number) => {
     if (!session) return;
     try {
@@ -401,6 +415,7 @@ export function useTeacherActions({
     createPrompt,
     closePrompt,
     toggleLock,
+    toggleHelpQuestions,
     setTimer,
     removeParticipant,
     updateParticipant,

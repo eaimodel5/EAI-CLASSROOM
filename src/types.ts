@@ -50,6 +50,7 @@ export interface ClassroomSession {
   timer_started_at: string | null;
   timer_duration_seconds: number | null;
   is_locked: number;
+  help_questions_enabled?: number;
   shared_signal_id: string | null;
   widgets_json: string | null;
   prep_json: string | null;

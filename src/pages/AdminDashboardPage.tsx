@@ -14,8 +14,12 @@ export default function AdminDashboardPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!auth.currentUser || auth.currentUser.email !== 'vis@emmauscollege.nl') {
-      alert('Geen toegang. Dit gedeelte is alleen voor de beheerder (vis@emmauscollege.nl).');
+    const allowedAdmins = ['vis@emmauscollege.nl', 'eaimodelserie5@gmail.com'];
+    const isBypassActive = localStorage.getItem('admin_bypass_active') === 'true';
+    const userEmail = auth.currentUser?.email;
+
+    if (!isBypassActive && (!auth.currentUser || (userEmail && !allowedAdmins.includes(userEmail)))) {
+      alert('Geen toegang. Dit gedeelte is alleen voor de beheerder (vis@emmauscollege.nl of eaimodelserie5@gmail.com).');
       navigate('/');
       return;
     }
@@ -83,7 +87,14 @@ export default function AdminDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       });
-      alert('Instellingen succesvol opgeslagen!');
+      
+      const globalSettingsRef = doc(db, 'admin_settings', 'global');
+      await setDoc(globalSettingsRef, {
+        ...settings,
+        updated_at: serverTimestamp()
+      });
+
+      alert('Instellingen succesvol opgeslagen en live doorgezet naar alle actieve sessies!');
       if (settings.theme_color_primary) {
         document.documentElement.style.setProperty('--color-primary', settings.theme_color_primary);
       }

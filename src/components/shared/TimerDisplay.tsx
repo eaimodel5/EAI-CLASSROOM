@@ -4,10 +4,11 @@ import { ClassroomSession } from '../../types';
 
 interface TimerDisplayProps {
   session: ClassroomSession;
-  variant?: 'default' | 'board';
+  variant?: 'default' | 'board' | 'compact';
+  compact?: boolean;
 }
 
-export function TimerDisplay({ session, variant = 'default' }: TimerDisplayProps) {
+export function TimerDisplay({ session, variant = 'default', compact }: TimerDisplayProps) {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   useEffect(() => {
@@ -36,7 +37,18 @@ export function TimerDisplay({ session, variant = 'default' }: TimerDisplayProps
   const isEnded = timeLeft === 0;
 
   const getContainerStyles = () => {
-    const base = 'flex items-center font-mono font-bold';
+    const base = 'flex items-center font-mono font-bold font-black';
+    
+    // For compact variant (dark theme override normally)
+    if (compact || variant === 'compact') {
+      const state = isEnded 
+        ? 'bg-rose-950/50 text-rose-400 border-rose-900/50' 
+        : isWarning 
+        ? 'bg-amber-950/50 text-amber-400 border-amber-900/50 animate-pulse' 
+        : 'bg-indigo-950/30 text-indigo-300 border-indigo-900/30';
+      return `${base} ${state} gap-1 px-1.5 py-0.5 rounded text-[11px] border`;
+    }
+
     const state = isEnded 
       ? 'bg-red-100 text-red-700 border-red-200' 
       : isWarning 
@@ -51,6 +63,10 @@ export function TimerDisplay({ session, variant = 'default' }: TimerDisplayProps
   };
 
   const getIconStyles = () => {
+    if (compact || variant === 'compact') {
+      const state = isEnded ? 'text-rose-400' : isWarning ? 'text-amber-400' : 'text-indigo-400';
+      return `${state} w-3 h-3`;
+    }
     const state = isEnded ? 'text-red-500' : isWarning ? 'text-amber-500' : 'text-blue-500';
     const size = variant === 'board' ? 'w-8 h-8' : 'w-5 h-5';
     return `${state} ${size}`;

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, XCircle, Wrench, MessagesSquare, LayoutGrid, LayoutDashboard, Zap, Activity, Users, Radio, PanelRightClose } from 'lucide-react';
+import { 
+  ArrowLeft, Activity, Radio, Sparkles, Sliders, 
+  ChevronLeft, ChevronRight, Lock, Unlock, HelpCircle, LogOut 
+} from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { db, auth } from '../../../lib/firebase';
+import { signOut } from 'firebase/auth';
 import { emptyLessonPreparation, LessonPreparation } from '../../../types';
 import { WidgetSelector } from '../../../components/widgets/WidgetSelector';
-import { WidgetRenderer } from '../../../components/widgets/WidgetRenderer';
-import { WidgetInstance } from '../../../components/widgets/WidgetRegistry';
 import { LessonPreparationForm } from '../../../components/LessonPreparationForm';
 
 import { useTeacherSession } from '../hooks/useTeacherSession';
@@ -14,36 +16,52 @@ import { useTeacherActions } from '../hooks/useTeacherActions';
 import { PromptType } from '../types';
 
 import { SessionHeader } from '../components/SessionHeader';
-import { PhaseControls } from '../components/PhaseControls';
 import { QuickActions } from '../components/QuickActions';
 import { InterventionTools } from '../components/InterventionTools';
 import { ClassManagement } from '../components/ClassManagement';
-import { ActiveStudentsList } from '../components/ActiveStudentsList';
 import { ActivePromptCard } from '../components/ActivePromptCard';
-import { AiSummaryCard } from '../components/AiSummaryCard';
 import { TeacherProposalCard } from '../components/TeacherProposalCard';
-import { ClassStats } from '../components/ClassStats';
 import { LiveFeed } from '../components/LiveFeed';
 import { PromptModal } from '../components/PromptModal';
 import { PrintableLessonPlan } from '../components/PrintableLessonPlan';
-import GridBackground from '../../../components/GridBackground';
 
-type DashboardModule = 'OVERVIEW' | 'INTERACTIONS' | 'MONITOR' | 'STUDENTS';
+const createTheme = (accent: string, bg: string) => ({
+  '--color-indigo-50': `var(--color-${accent}-50)`,
+  '--color-indigo-100': `var(--color-${accent}-100)`,
+  '--color-indigo-200': `var(--color-${accent}-200)`,
+  '--color-indigo-300': `var(--color-${accent}-300)`,
+  '--color-indigo-400': `var(--color-${accent}-400)`,
+  '--color-indigo-500': `var(--color-${accent}-500)`,
+  '--color-indigo-600': `var(--color-${accent}-600)`,
+  '--color-indigo-700': `var(--color-${accent}-700)`,
+  '--color-indigo-800': `var(--color-${accent}-800)`,
+  '--color-indigo-900': `var(--color-${accent}-900)`,
+  '--color-indigo-950': `var(--color-${accent}-950)`,
+  
+  '--color-slate-50': `var(--color-${bg}-50)`,
+  '--color-slate-100': `var(--color-${bg}-100)`,
+  '--color-slate-200': `var(--color-${bg}-200)`,
+  '--color-slate-300': `var(--color-${bg}-300)`,
+  '--color-slate-400': `var(--color-${bg}-400)`,
+  '--color-slate-500': `var(--color-${bg}-500)`,
+  '--color-slate-600': `var(--color-${bg}-600)`,
+  '--color-slate-700': `var(--color-${bg}-700)`,
+  '--color-slate-800': `var(--color-${bg}-800)`,
+  '--color-slate-900': `var(--color-${bg}-900)`,
+  '--color-slate-950': `var(--color-${bg}-950)`,
+});
 
-import { auth } from '../../../lib/firebase';
-import { signOut } from 'firebase/auth';
+const THEMES = {
+  indigo: null,
+  teal: createTheme('teal', 'cyan'),
+  rose: createTheme('rose', 'stone'),
+  amber: createTheme('amber', 'orange'),
+  emerald: createTheme('emerald', 'teal')
+};
 
 export function TeacherClassroomPage() {
   const navigate = useNavigate();
-  
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      navigate('/');
-    } catch (err) {
-      console.error('Sign out error', err);
-    }
-  };
+  const [themeName, setThemeName] = useState<keyof typeof THEMES>('indigo');
   
   const {
     session,
@@ -74,8 +92,11 @@ export function TeacherClassroomPage() {
     setLoading
   });
 
-  // Local UI State
-  const [activeModule, setActiveModule] = useState<DashboardModule>('OVERVIEW');
+  // Gelaagdheid: Panel-statussen (Standaard compact/open afhankelijk van focus)
+  const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
+  const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
+  
+  // Systeem statussen
   const [showAllTools, setShowAllTools] = useState(false);
   const [showWidgetSelector, setShowWidgetSelector] = useState(false);
   const [showPromptModal, setShowPromptModal] = useState(false);
@@ -83,11 +104,101 @@ export function TeacherClassroomPage() {
   const [newPromptText, setNewPromptText] = useState('');
   const [printModePrep, setPrintModePrep] = useState<LessonPreparation | null>(null);
   const [isEditingPrep, setIsEditingPrep] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      navigate('/');
+    } catch (err) {
+      console.error('Sign out error', err);
+    }
+  };
+
+  const parsedPrep: LessonPreparation | null = session?.prep_json ? JSON.parse(session.prep_json) : null;
+  const activePhaseProposals = session ? proposals.filter((p: any) => p.phase === session.active_phase && p.status !== 'DISMISSED') : [];
+
+  const getDynamicPrefill = (type: PromptType): string => {
+    // 1. Eerst checken of er een onlangs gegenereerd, niet-afgewezen AI voorstel is dat bij dit prompttype past
+    if (session) {
+      const matchingProposal = proposals.find(p => 
+        p.phase === session.active_phase && 
+        p.status !== 'DISMISSED' &&
+        p.suggested_activity?.prompt_type === type &&
+        p.suggested_activity?.prompt_text
+      );
+      if (matchingProposal && matchingProposal.suggested_activity?.prompt_text) {
+        return matchingProposal.suggested_activity.prompt_text;
+      }
+    }
+
+    // 2. Zo niet, val terug op de uiterst gedetailleerde voorbereide leskaart (parsedPrep)
+    if (!parsedPrep) return '';
+
+    switch (type) {
+      case 'PRIOR_KNOWLEDGE':
+        return parsedPrep.priorKnowledgeQuestions?.find(q => q && q.trim()) || 
+               (parsedPrep.title ? `Bespreek met je buurman/buurvrouw: wat herinner je je nog van ons onderwerp '${parsedPrep.title}'? Schrijf de belangrijkste 2 punten op.` : "Wat weet je al over dit onderwerp? Schrijf het op!");
+      
+      case 'DIAGNOSTIC':
+        return parsedPrep.instructionActivities?.find(q => q && q.trim()) || 
+               (parsedPrep.learningGoal ? `We kijken naar ons leerdoel: '${parsedPrep.learningGoal}'. Welke stap in de uitleg of berekening is volgens jou het meest uitdagend?` : "Diagnostische check: Wat vind je tot nu toe het meest onduidelijk?");
+      
+      case 'MISCONCEPTION': {
+        const mis = parsedPrep.misconceptions?.find(q => q && q.trim());
+        if (mis) {
+          return `Stelling: "Sommige mensen denken: ${mis}". Waarom is dit een misconceptie? Leg in je eigen woorden uit hoe het wél zit.`;
+        }
+        return `We horen vaak een verkeerde aanname over ons onderwerp '${parsedPrep.title || 'dit onderwerp'}'. Wat is de meest logische denkfout hierbij en waarom klopt die niet?`;
+      }
+      
+      case 'GO_NO_GO':
+        return `Formatieve Check: Zijn we klaar om zelfstandig aan de slag te gaan met de verwerkingsopdracht over '${parsedPrep.learningGoal || parsedPrep.title || 'dit onderwerp'}'?\n\nA) Ja, ik kan direct en zelfstandig starten.\nB) Ja, maar ik heb nog een korte hint of opstart-vraag nodig.\nC) Nee, ik wil heel graag nog wat extra uitleg of begeleiding van de docent.`;
+      
+      case 'CONFIDENCE':
+        return `Confidence Check: Hoe zeker voel jij je over de stof en het behalen van het leerdoel: '${parsedPrep.learningGoal || parsedPrep.title || 'dit onderwerp'}'?\n\nGeef een cijfer van 1 (zeer onzeker) tot 10 (volledig overtuigd) en geef kort aan wat je helpt om dit cijfer te verhogen.`;
+      
+      case 'CHECK_QUESTION':
+        return parsedPrep.checkQuestions?.find(q => q && q.trim()) || 
+               `Checkvraag over ons leerdoel: Leg in je eigen woorden uit wat de belangrijkste regel of verklaring is die we zojuist hebben behandeld.`;
+      
+      case 'HINT':
+        return parsedPrep.interventions?.find(q => q && q.trim()) || 
+               `💡 Hulp & Hint bij de verwerking:\nDenk bij de opgaven goed aan de succescriteria! Werk stap voor stap en controleer je tussenberekeningen.`;
+      
+      case 'CLASS_INTERVENTION': {
+        const hint = parsedPrep.interventions?.filter(q => q && q.trim())[1] || parsedPrep.interventions?.find(q => q && q.trim());
+        if (hint) {
+          return `⚠️ Klassikale Interventie:\nLaat alles even los en let goed op. Er is een belangrijk aandachtspunt bij deze opdracht:\n\n"${hint}"`;
+        }
+        return `⚠️ Klassikale Interventie:\nIk zie dat we tegen een gezamenlijk obstakel aanlopen bij '${parsedPrep.learningGoal || parsedPrep.title}'. Laten we hier samen even kort bij stilstaan.`;
+      }
+      
+      case 'PEER_FEEDBACK': {
+        const crit = parsedPrep.successCriteria?.find(s => s && s.trim());
+        return `👥 Peer Feedbackmoment:\nWissel je uitwerking of antwoord uit met je schoudermaatje. Geef elkaar feedback op basis van ons succescriterium:\n\n"${crit || 'De nauwkeurigheid en logica van de stappen'}"\n\nSchrijf voor elkaar op:\n- 1 TOP (wat gaat al perfect?)\n- 1 TIP (wat kan nog net iets scherper?)`;
+      }
+      
+      case 'EXIT_TICKET':
+        return parsedPrep.exitTicketQuestions?.find(q => q && q.trim()) || 
+               `Exit Ticket: Formuleer in 1 of 2 zinnen het antwoord op de kernvraag: Hoe weet je of je het leerdoel van vandaag hebt behaald?`;
+      
+      case 'REFLECTION': {
+        const goal = parsedPrep.learningGoal || parsedPrep.title;
+        return `Reflectieprompt:\nKijk kritisch naar je eigen inzet en leerproces vandaag rondom:\n"${goal}"\n\nWelke specifieke actie of gedachte hielp jou vandaag het meest vooruit? En wat neem je mee naar de volgende les?`;
+      }
+      
+      default:
+        return '';
+    }
+  };
 
   const handleOpenPrompt = (type: PromptType, text: string) => {
     setPromptType(type);
-    setNewPromptText(text);
+    if (!text) {
+      setNewPromptText(getDynamicPrefill(type));
+    } else {
+      setNewPromptText(text);
+    }
     setShowPromptModal(true);
   };
 
@@ -96,7 +207,6 @@ export function TeacherClassroomPage() {
     if (success) {
       setShowPromptModal(false);
       setNewPromptText('');
-      setActiveModule('INTERACTIONS'); // Auto-switch to interactions to see active prompt
     }
   };
 
@@ -104,9 +214,6 @@ export function TeacherClassroomPage() {
     await actions.updateSessionPrep(prep);
     setIsEditingPrep(false);
   };
-
-  const parsedPrep: LessonPreparation | null = session?.prep_json ? JSON.parse(session.prep_json) : null;
-  const activePhaseProposals = session ? proposals.filter((p: any) => p.phase === session.active_phase && p.status !== 'DISMISSED') : [];
 
   const handleDismissProposal = async (id: string) => {
     if (!session) return;
@@ -122,372 +229,206 @@ export function TeacherClassroomPage() {
 
   if (initialLoading) {
     return (
-      <div className="min-h-[100dvh] bg-slate-50 flex flex-col items-center justify-center p-4 relative">
-        <div className="fixed inset-0 z-[-1] pointer-events-none">
-          <GridBackground />
-          <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]"></div>
-        </div>
-        <div className="flex flex-col items-center justify-center">
-          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-600 font-semibold text-lg">Laden van actieve sessie...</p>
-          <p className="text-slate-400 text-sm mt-1">Een ogenblik geduld alstublieft</p>
-        </div>
+      <div className="h-screen w-screen bg-slate-950 flex flex-col items-center justify-center font-sans text-xs text-slate-400">
+        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div className="font-bold tracking-tight">CONNECTING TO FIRESTORE STREAM...</div>
       </div>
     );
   }
 
   if (session && !isEditingPrep) {
-    const activeWidgets = JSON.parse(session.widgets_json || '[]');
-
+    const activeTheme = THEMES[themeName];
+    
     return (
-      <div className="h-screen w-screen bg-transparent flex flex-col relative overflow-hidden select-none">
-        <div className="fixed inset-0 z-[-1] pointer-events-none">
-          <GridBackground />
-          <div className="absolute inset-0 bg-slate-50/85 backdrop-blur-[1px]"></div>
-        </div>
+      <div className="h-screen w-screen bg-slate-950 text-slate-200 flex flex-col overflow-hidden antialiased font-sans text-[12px] select-none">
+        
+        {activeTheme && (
+          <style>
+            {`
+              :root {
+                ${Object.entries(activeTheme).map(([k, v]) => `${k}: ${v};`).join('\n')}
+              }
+            `}
+          </style>
+        )}
 
-        <SessionHeader 
-          session={session} 
-          onOpenWidgets={() => setShowWidgetSelector(true)} 
-          onEditPrep={() => setIsEditingPrep(true)}
-        />
-
-        <div className="flex-1 w-full flex flex-row min-h-0 overflow-hidden">
-          {/* Left Sidebar Navigation */}
-          <div className={`transition-all duration-300 ease-in-out shrink-0 bg-white/95 backdrop-blur-2xl border-r border-slate-200/60 flex flex-col justify-between h-full z-10 shadow-[10px_0_30px_rgba(0,0,0,0.015)] ${
-            isSidebarOpen ? 'w-60 p-5' : 'w-16 p-3'
-          }`}>
-            <div className="flex-1 overflow-y-auto hide-scrollbar space-y-6 flex flex-col">
-              <div className="flex justify-between items-center">
-                {isSidebarOpen && <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 select-none">Mijn Cockpit</span>}
-                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors mx-auto">
-                   <PanelRightClose className={`w-4 h-4 transition-transform duration-300 ${isSidebarOpen ? '' : 'rotate-180'}`} />
-                </button>
-              </div>
-              
-              <div>
-                <h3 className={`text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-3 select-none ${isSidebarOpen ? 'block' : 'hidden'}`}>Modules</h3>
-                <nav className="flex flex-col gap-2">
-                  <button 
-                    onClick={() => setActiveModule('OVERVIEW')} 
-                    title="Control Center"
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-xl font-bold transition-all duration-200 ${
-                      activeModule === 'OVERVIEW' 
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15' 
-                        : 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold'
-                    } ${!isSidebarOpen && 'justify-center px-1'}`}
-                  >
-                    <LayoutDashboard className={`w-4.5 h-4.5 shrink-0 ${activeModule === 'OVERVIEW' ? 'text-indigo-200' : 'text-slate-400'}`} />
-                    <span className={`text-xs transition-all duration-150 ${isSidebarOpen ? 'opacity-100 w-auto font-bold' : 'hidden opacity-0 w-0 overflow-hidden'}`}>Control Center</span>
-                  </button>
-
-                  <button 
-                    onClick={() => setActiveModule('INTERACTIONS')}
-                    title="AI & Interacties" 
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-xl font-bold transition-all duration-200 relative ${
-                      activeModule === 'INTERACTIONS' 
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15' 
-                        : 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold'
-                    } ${!isSidebarOpen && 'justify-center px-1'}`}
-                  >
-                    <Zap className={`w-4.5 h-4.5 shrink-0 ${activeModule === 'INTERACTIONS' ? 'text-indigo-200' : 'text-slate-400'}`} />
-                    <span className={`text-xs transition-all duration-150 ${isSidebarOpen ? 'opacity-100 w-auto font-bold' : 'hidden opacity-0 w-0 overflow-hidden'}`}>AI Studio</span>
-                    {activePrompt && (
-                      <span className={`absolute ${isSidebarOpen ? 'right-4' : 'top-1 right-1'} w-2 h-2 rounded-full bg-red-400 animate-pulse`}></span>
-                    )}
-                  </button>
-
-                  <button 
-                    onClick={() => setActiveModule('MONITOR')} 
-                    title="Live Monitor"
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-xl font-bold transition-all duration-200 ${
-                      activeModule === 'MONITOR' 
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15' 
-                        : 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold'
-                    } ${!isSidebarOpen && 'justify-center px-1'}`}
-                  >
-                    <Radio className={`w-4.5 h-4.5 shrink-0 ${activeModule === 'MONITOR' ? 'text-indigo-200' : 'text-slate-400'}`} />
-                    <span className={`text-xs transition-all duration-150 ${isSidebarOpen ? 'opacity-100 w-auto font-bold' : 'hidden opacity-0 w-0 overflow-hidden'}`}>Grote Live Feed</span>
-                  </button>
-
-                  <button 
-                    onClick={() => setActiveModule('STUDENTS')}
-                    title="Klas & Beheer" 
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-xl font-bold transition-all duration-200 ${
-                      activeModule === 'STUDENTS' 
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15' 
-                        : 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold'
-                    } ${!isSidebarOpen && 'justify-center px-1'}`}
-                  >
-                    <Users className={`w-4.5 h-4.5 shrink-0 ${activeModule === 'STUDENTS' ? 'text-indigo-200' : 'text-slate-400'}`} />
-                    <span className={`text-xs transition-all duration-150 ${isSidebarOpen ? 'opacity-100 w-auto font-bold' : 'hidden opacity-0 w-0 overflow-hidden'}`}>Klas & Beheer</span>
-                  </button>
-                </nav>
-              </div>
+        {/* TOP LEVEL BAR: Ruimer formaat */}
+        <header className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 shrink-0 overflow-hidden shadow-sm">
+          <div className="flex items-center gap-4">
+            <span className="font-black text-sm tracking-widest text-white bg-indigo-600 px-2 py-1 rounded">EAI</span>
+            <SessionHeader 
+              session={session} 
+              onOpenWidgets={() => setShowWidgetSelector(true)} 
+              onEditPrep={() => setIsEditingPrep(true)}
+            />
+          </div>
+          
+          {/* Real-time Status indicators */}
+          <div className="flex items-center gap-3 text-xs">
+            {/* Theme Selector */}
+            <div className="flex bg-slate-950 rounded border border-slate-800 p-1 gap-1">
+              {(Object.keys(THEMES) as Array<keyof typeof THEMES>).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setThemeName(t)}
+                  title={`Thema: ${t}`}
+                  className={`w-4 h-4 rounded-sm cursor-pointer transition-transform ${themeName === t ? 'scale-110 ring-2 ring-white/50' : 'hover:scale-110 opacity-70 hover:opacity-100'} ${
+                    t === 'indigo' ? 'bg-indigo-500' :
+                    t === 'teal' ? 'bg-teal-500' :
+                    t === 'rose' ? 'bg-rose-500' :
+                    t === 'emerald' ? 'bg-emerald-500' :
+                    'bg-amber-500'
+                  }`}
+                />
+              ))}
             </div>
 
-            <div className={`pt-4 border-t border-slate-200/80 transition-all duration-300 ${isSidebarOpen ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
+            <div className="flex items-center gap-2 bg-slate-950 px-2.5 py-1 rounded border border-slate-800">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-mono text-slate-400 font-bold">{participants.length} LN</span>
+            </div>
+            <button 
+              onClick={handleSignOut}
+              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+              title="Uitloggen"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+
+        {/* FASE CONTROLLER: Compacte grid-strook direct onder de header */}
+        <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 shrink-0 flex items-center gap-4 overflow-x-auto custom-scrollbar flex-nowrap shadow-sm">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-tight whitespace-nowrap">
+            <Activity className="w-4 h-4 text-indigo-400" />
+            <span>Fase:</span>
+          </div>
+          <div className="flex-1 max-w-2xl grid grid-cols-5 gap-1 bg-slate-950 p-1 rounded border border-slate-800 shrink-0 min-w-[400px]">
+            {['START', 'INSTRUCTIE', 'CHECK', 'VERWERKEN', 'AFSLUITING'].map((phaseKey) => {
+              const isSelected = session.active_phase === phaseKey;
+              return (
+                <button
+                  key={phaseKey}
+                  onClick={() => actions.changePhase(phaseKey as any)}
+                  className={`py-1.5 px-2 rounded-sm text-center transition-all cursor-pointer text-xs font-bold truncate ${
+                    isSelected 
+                      ? 'bg-indigo-600 text-white font-black shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  }`}
+                >
+                  {phaseKey}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* INTERFACE CORE: 3-Koloms Matrix met High-Density Layering */}
+        <main className="flex-1 w-full flex flex-row min-h-0 overflow-hidden bg-slate-950 relative">
+          
+          {/* KOLOM 1: GEREEDSCHAP & IMPULSEN (Inklapbaar) */}
+          <section 
+            className={`h-full flex flex-col min-h-0 bg-slate-900 border-r border-slate-800 transition-all duration-150 absolute md:relative z-20 ${
+              leftPanelExpanded ? 'w-[280px]' : 'w-[40px]'
+            }`}
+          >
+            {/* Minimalistische Toggle header */}
+            <div className="h-10 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between px-2 shrink-0 select-none">
+              {leftPanelExpanded && (
+                <span className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2 px-1">
+                  <Sliders className="w-4 h-4 text-indigo-400" /> Gereedschap
+                </span>
+              )}
               <button 
-                onClick={actions.endSession}
-                className="w-full py-3 px-4 bg-white hover:bg-red-50 text-red-600 font-bold rounded-xl border border-red-100 hover:border-red-200 transition-all flex items-center justify-center gap-2 group"
+                onClick={() => setLeftPanelExpanded(!leftPanelExpanded)}
+                className="w-6 h-6 ml-auto flex items-center justify-center bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 rounded-sm cursor-pointer text-sm font-bold transition-colors"
+                title={leftPanelExpanded ? 'Inklappen' : 'Uitklappen'}
               >
-                <XCircle className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" />
-                <span className="text-xs">Les Beëindigen</span>
+                {leftPanelExpanded ? '−' : '+'}
               </button>
             </div>
-          </div>
 
-          {/* Main Content Workspace (Strictly restricted to 1-screen viewport) */}
-          <main className="flex-1 p-4 lg:p-6 overflow-hidden relative z-0 flex flex-col h-full min-h-0 bg-slate-50/50">
-            
-            {/* OVERVIEW MODULE */}
-            {activeModule === 'OVERVIEW' && (
-              <div className="h-full w-full flex flex-col min-h-0 overflow-hidden gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex-shrink-0 flex items-center justify-between">
-                  <div>
-                    <h1 className="text-xl font-black text-slate-800 tracking-tight leading-none">Cockpit Control Center</h1>
-                    <p className="text-slate-500 font-medium text-xs mt-1">Houd 100% didactisch overzicht over de hele klas in één oogopslag.</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1.5 px-2 py-1 bg-green-50 text-green-700 font-black rounded-lg text-[10px] uppercase border border-green-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                      Realtime Actief
-                    </span>
-                  </div>
-                </div>
-
-                {/* 3-Column Visual Dashboard Grid */}
-                <div className="flex-grow flex-1 min-h-0 grid grid-cols-12 gap-5 overflow-hidden items-stretch">
-                  
-                  {/* Left Column (col-span-4): Live Connection Terminal of student inputs */}
-                  <div className="col-span-4 h-full min-h-0 flex flex-col">
-                    <LiveFeed 
-                      signals={signals}
-                      participants={participants}
-                      sharedSignalId={session.shared_signal_id}
-                      onShareSignal={actions.shareSignal}
-                    />
-                  </div>
-
-                  {/* Center Column (col-span-5): Active Interaction & Step Controls */}
-                  <div className="col-span-5 h-full min-h-0 flex flex-col gap-4">
-                    {/* Compact Horizontal Phase steps bar */}
-                    <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/60 p-4 shrink-0">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                          <Activity className="w-4 h-4 text-indigo-500" /> Lesfase Controller
-                        </h3>
-                        <span className="text-[10px] font-black uppercase bg-indigo-50 text-indigo-700 py-0.5 px-2 rounded-md border border-indigo-100">
-                          {session.active_phase === 'START' ? 'Fase 1: Start' :
-                           session.active_phase === 'INSTRUCTIE' ? 'Fase 2: Instructie' :
-                           session.active_phase === 'CHECK' ? 'Fase 3: Check' :
-                           session.active_phase === 'VERWERKEN' ? 'Fase 4: Verwerking' : 'Fase 5: Sluiting'}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-5 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/40">
-                        {['START', 'INSTRUCTIE', 'CHECK', 'VERWERKEN', 'AFSLUITING'].map((phaseKey, index) => {
-                          const isSelected = session.active_phase === phaseKey;
-                          const labels: Record<string, string> = {
-                            START: 'Start',
-                            INSTRUCTIE: 'Instr.',
-                            CHECK: 'Check',
-                            VERWERKEN: 'Verwerk.',
-                            AFSLUITING: 'Afsluit.'
-                          };
-                          return (
-                            <button
-                              key={phaseKey}
-                              onClick={() => actions.changePhase(phaseKey as "START" | "INSTRUCTIE" | "CHECK" | "VERWERKEN" | "AFSLUITING")}
-                              className={`py-1.5 px-1 rounded-lg text-xs font-black transition-all text-center select-none cursor-pointer ${
-                                isSelected 
-                                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/15'
-                                  : 'text-slate-500 hover:bg-white/50 hover:text-slate-800'
-                              }`}
-                            >
-                              <span className="block text-[8px] opacity-70 mb-0.5">{index + 1}</span>
-                              <span className="block truncate text-[11px] font-bold">{labels[phaseKey]}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Interaction Arena */}
-                    <div className="flex-1 min-h-0 bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/60 p-4 flex flex-col overflow-hidden">
-                      {activePrompt ? (
-                        <div className="h-full flex flex-col min-h-0 overflow-hidden">
-                          <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 flex-shrink-0">
-                            <span className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                              ⚡ Actieve Vraag op het Bord
-                            </span>
-                            <button
-                              onClick={() => actions.closePrompt(activePrompt.id)}
-                              className="text-[10px] font-black text-red-600 hover:text-red-700 hover:bg-red-50 py-1 px-2 rounded-lg border border-red-200 animate-pulse transition-all cursor-pointer"
-                            >
-                              Sluit Vraag
-                            </button>
-                          </div>
-                          <div className="flex-1 overflow-y-auto pr-1">
-                            <ActivePromptCard 
-                              activePrompt={activePrompt}
-                              signals={signals}
-                              participants={participants}
-                              sharedSignalId={session.shared_signal_id}
-                              onClosePrompt={() => actions.closePrompt(activePrompt.id)}
-                              onShareSignal={actions.shareSignal}
-                              onUpdateParticipant={actions.updateParticipant}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="h-full flex flex-col min-h-0 overflow-hidden">
-                          <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 flex-shrink-0">
-                            <span className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                              🚀 Start een Interactie
-                            </span>
-                            <button 
-                              onClick={() => setShowAllTools(!showAllTools)} 
-                              className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded-md transition-colors font-bold"
-                            >
-                              {showAllTools ? 'Gefilterd' : 'Toon alles'}
-                            </button>
-                          </div>
-
-                          <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin">
-                            {/* Prepared Questions Section */}
-                            {parsedPrep && (
-                              <div className="space-y-1.5">
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 pl-1.5">
-                                  <span>📖</span> Bereidde Vragen uit Leskaart
-                                </h4>
-                                <QuickActions 
-                                  parsedPrep={parsedPrep}
-                                  activePhase={session.active_phase}
-                                  showAllTools={showAllTools}
-                                  hasActivePrompt={!!activePrompt}
-                                  onOpenPrompt={handleOpenPrompt}
-                                />
-                              </div>
-                            )}
-
-                            {/* Standard interaction prompts deck */}
-                            <div className="space-y-1.5">
-                              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 pl-1.5">
-                                <span>🛠️</span> On-the-fly Werkvormen
-                              </h4>
-                              <InterventionTools 
-                                activePhase={session.active_phase}
-                                showAllTools={showAllTools}
-                                hasActivePrompt={!!activePrompt}
-                                hasParticipants={participants.length > 0}
-                                onOpenPrompt={handleOpenPrompt}
-                                onPickRandomName={actions.pickRandomName}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Right Column (col-span-3): Hardware overrides & seat grid */}
-                  <div className="col-span-3 h-full min-h-0 flex flex-col gap-4">
-                    {/* Compact Admin Settings bar */}
-                    <div className="flex-shrink-0 bg-slate-800 text-white backdrop-blur-xl rounded-2xl p-4 shadow-xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-slate-700/30 rounded-bl-full -mr-16 -mt-16 pointer-events-none"></div>
-                      <div className="relative z-10">
-                        <ClassManagement 
-                          isLocked={session.is_locked}
-                          onToggleLock={actions.toggleLock}
-                          isHelpQuestionsEnabled={session.help_questions_enabled !== 0}
-                          onToggleHelpQuestions={actions.toggleHelpQuestions}
-                          onSetTimer={actions.setTimer}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Quick Active Student Grid */}
-                    <div className="flex-1 min-h-0">
-                      <ActiveStudentsList 
-                        participants={participants}
-                        onRemoveParticipant={actions.removeParticipant}
-                        onUpdateParticipant={actions.updateParticipant}
-                        onSendPrivateMessage={actions.sendPrivateMessage}
-                      />
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            )}
-
-            {/* AI & INTERACTIES MODULE */}
-            {activeModule === 'INTERACTIONS' && (
-              <div className="h-full w-full flex flex-col min-h-0 overflow-hidden gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex-shrink-0 flex items-center justify-between">
-                  <div>
-                    <h1 className="text-xl font-black text-slate-800 tracking-tight leading-none font-sans">AI & Interacties Studio</h1>
-                    <p className="text-slate-500 font-medium text-xs mt-1">Zet AI-analyses in en raadpleeg didactische voorstellen om leerlingen te triggeren.</p>
-                  </div>
-                </div>
-
-                <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 scrollbar-thin">
-                  {activePrompt && (
-                    <div className="w-full shrink-0">
-                      <ActivePromptCard 
-                        activePrompt={activePrompt}
-                        signals={signals}
-                        participants={participants}
-                        sharedSignalId={session.shared_signal_id}
-                        onClosePrompt={() => actions.closePrompt(activePrompt.id)}
-                        onShareSignal={actions.shareSignal}
-                        onUpdateParticipant={actions.updateParticipant}
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-5 flex flex-col shadow-sm">
-                    <div className="flex justify-between items-center mb-4 border-b border-slate-50 pb-3">
-                      <h3 className="font-bold text-slate-800 text-sm">Didactische Voorstellen (AI)</h3>
-                      <button
-                        onClick={() => actions.generateTeacherProposal(signals, participants, 'PHASE_BRIEFING')}
-                        disabled={actions.generatingSummary}
-                        className="text-xs px-3 py-1.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            {/* Inhoud Kolom 1 */}
+            {leftPanelExpanded ? (
+              <div className="flex-1 overflow-y-auto p-1.5 space-y-3 custom-scrollbar">
+                {parsedPrep && (
+                  <div className="bg-slate-950/50 border border-slate-800 rounded p-1.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-tight text-indigo-400">Lesplan-items</span>
+                      <button 
+                        onClick={() => setShowAllTools(!showAllTools)}
+                        className="text-[9px] px-1 bg-slate-900 border border-slate-700 rounded-sm text-slate-400 hover:text-slate-200"
                       >
-                        {actions.generatingSummary ? 'Analyseren...' : 'Genereer nieuw voorstel'}
+                        {showAllTools ? 'Filter' : 'Alle'}
                       </button>
                     </div>
-                    {activePhaseProposals.length > 0 ? (
-                      <div className="space-y-3">
-                        {activePhaseProposals.map((proposal) => (
-                          <TeacherProposalCard
-                            key={proposal.id}
-                            proposal={proposal}
-                            onStartAction={actions.startTeacherAction}
-                            onDismiss={handleDismissProposal}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6 text-center text-xs text-indigo-700 font-medium leading-relaxed">
-                        Nog geen Didactische AI-voorstellen gegenereerd voor deze lesfase. Klik op de knop om te starten!
-                      </div>
-                    )}
+                    <QuickActions 
+                      parsedPrep={parsedPrep}
+                      activePhase={session.active_phase}
+                      showAllTools={showAllTools}
+                      hasActivePrompt={!!activePrompt}
+                      onOpenPrompt={handleOpenPrompt}
+                    />
                   </div>
+                )}
+
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-tight text-slate-500 block px-0.5">Live Interventies</span>
+                  <InterventionTools 
+                    activePhase={session.active_phase}
+                    showAllTools={showAllTools}
+                    hasActivePrompt={!!activePrompt}
+                    hasParticipants={participants.length > 0}
+                    onOpenPrompt={handleOpenPrompt}
+                    onPickRandomName={actions.pickRandomName}
+                  />
                 </div>
               </div>
+            ) : (
+              /* Compacte verticale icon-strip wanneer ingeklapt */
+              <div className="flex-1 flex flex-col items-center pt-2 gap-3 text-slate-600">
+                <span className="text-[9px] font-black tracking-widest uppercase rotate-90 my-4 origin-left whitespace-nowrap text-slate-500">GEREEDSCHAP</span>
+              </div>
             )}
+          </section>
 
-            {/* LIVE MONITOR MODULE */}
-            {activeModule === 'MONITOR' && (
-              <div className="h-full w-full flex flex-col min-h-0 overflow-hidden gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex-shrink-0">
-                  <h1 className="text-xl font-black text-slate-800 tracking-tight leading-none">Grote Live Monitor</h1>
-                  <p className="text-slate-500 font-medium text-xs mt-1">Eindeloos grootscherm-overzicht van alle activiteit, reacties en tekeningen.</p>
+          {/* KOLOM 2: NUCLEUS / DATA-CENTER (Schakelt dynamisch of toont split) */}
+          <section className="flex-1 h-full flex flex-col min-h-0 bg-slate-950 border-r border-slate-800 pl-[40px] md:pl-0 pr-[40px] md:pr-0">
+            {activePrompt ? (
+              /* INTERACTIE-MODUS: Er staat een vraag open */
+              <div className="flex-1 flex flex-col min-h-0 animate-in fade-in duration-100">
+                <div className="h-10 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 shrink-0">
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-rose-400">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                    <span>Interactie Live op schermen</span>
+                  </div>
+                  <button
+                    onClick={() => actions.closePrompt(activePrompt.id)}
+                    className="text-xs font-black bg-rose-600/90 hover:bg-rose-600 text-white px-3 py-1.5 rounded-sm shadow-sm transition-colors cursor-pointer"
+                  >
+                    Sluit Vraag & Haal van bord
+                  </button>
                 </div>
-
-                <div className="flex-1 min-h-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col">
+                <div className="flex-1 min-h-0 p-1 overflow-y-auto custom-scrollbar">
+                  <ActivePromptCard 
+                    activePrompt={activePrompt}
+                    signals={signals}
+                    participants={participants}
+                    sharedSignalId={session.shared_signal_id}
+                    onClosePrompt={() => actions.closePrompt(activePrompt.id)}
+                    onShareSignal={actions.shareSignal}
+                    onUpdateParticipant={actions.updateParticipant}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* MONITORING-MODUS: Algemene Live-feed */
+              <div className="flex-1 flex flex-col min-h-0 animate-in fade-in duration-100">
+                <div className="h-10 bg-slate-900 border-b border-slate-800 flex items-center px-4 shrink-0">
+                  <Radio className="w-4 h-4 text-indigo-400 mr-2" />
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-400">Live klasoverzicht & voortgang feed</span>
+                </div>
+                <div className="flex-1 min-h-0">
                   <LiveFeed 
                     signals={signals}
                     participants={participants}
@@ -497,50 +438,99 @@ export function TeacherClassroomPage() {
                 </div>
               </div>
             )}
+          </section>
 
-            {/* STUDENTS & BEHEER MODULE */}
-            {activeModule === 'STUDENTS' && (
-              <div className="h-full w-full flex flex-col min-h-0 overflow-hidden gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex-shrink-0 flex justify-between items-center">
-                  <div>
-                    <h1 className="text-xl font-black text-slate-800 tracking-tight leading-none">Klassenlijst & Rechten</h1>
-                    <p className="text-slate-500 font-medium text-xs mt-1">Klik op leerlingen om privileges te veranderen, te muten of te verwijderen.</p>
+          {/* KOLOM 3: ANALYSE & HARDWARE BEHEER (Inklapbaar) */}
+          <section 
+            className={`h-full flex flex-col min-h-0 bg-slate-900 border-l border-slate-800 transition-all duration-150 absolute md:relative right-0 z-20 ${
+              rightPanelExpanded ? 'w-[280px]' : 'w-[40px]'
+            }`}
+          >
+            {/* Header met inline +/- regie */}
+            <div className="h-10 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between px-2 shrink-0 select-none">
+              <button 
+                onClick={() => setRightPanelExpanded(!rightPanelExpanded)}
+                className="w-6 h-6 mr-2 flex items-center justify-center bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 rounded-sm cursor-pointer text-sm font-bold transition-colors"
+                title={rightPanelExpanded ? 'Inklappen' : 'Uitklappen'}
+              >
+                {rightPanelExpanded ? '−' : '+'}
+              </button>
+              {rightPanelExpanded && (
+                <span className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2 mr-auto px-1">
+                  <Sparkles className="w-4 h-4 text-indigo-400" /> Analyse & Regie
+                </span>
+              )}
+            </div>
+
+            {/* Inhoud Kolom 3 */}
+            {rightPanelExpanded ? (
+              <div className="flex-1 overflow-y-auto p-1.5 space-y-2.5 custom-scrollbar">
+                
+                {/* AI-Assistent container (Super compact) */}
+                <div className="bg-slate-950/40 border border-slate-800 rounded p-1.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-black uppercase tracking-tight text-indigo-400">Real-time AI</span>
+                    <button
+                      onClick={() => actions.generateTeacherProposal(signals, participants, 'PHASE_BRIEFING')}
+                      disabled={actions.generatingSummary}
+                      className="text-[9px] px-1.5 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-sm disabled:opacity-40 transition-colors cursor-pointer"
+                    >
+                      {actions.generatingSummary ? 'Scant...' : 'Scan klas'}
+                    </button>
                   </div>
-                  <span className="text-xs font-black bg-indigo-50 text-indigo-700 py-1.5 px-3 rounded-lg border border-indigo-100">
-                    {participants.length} Leerlingen Actief
-                  </span>
+                  
+                  <div className="space-y-1 max-h-[160px] overflow-y-auto pr-0.5 custom-scrollbar">
+                    {activePhaseProposals.length > 0 ? (
+                      activePhaseProposals.map((proposal) => (
+                        <TeacherProposalCard
+                          key={proposal.id}
+                          proposal={proposal}
+                          onStartAction={actions.startTeacherAction}
+                          onDismiss={handleDismissProposal}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-[10px] text-slate-600 text-center py-4 border border-dashed border-slate-800 rounded bg-slate-950/20 px-1">
+                        Druk op 'Scan klas' voor live suggesties.
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex-1 min-h-0 grid grid-cols-12 gap-5 h-full overflow-hidden items-stretch">
-                  <div className="col-span-8 h-full min-h-0 flex flex-col">
-                    <ActiveStudentsList 
-                      participants={participants}
-                      onRemoveParticipant={actions.removeParticipant}
-                      onUpdateParticipant={actions.updateParticipant}
-                      onSendPrivateMessage={actions.sendPrivateMessage}
+                {/* Systeembeheer & Noodknoppen */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-tight text-slate-500 block px-0.5">Lock & Timer</span>
+                  <div className="bg-slate-950/40 border border-slate-800 rounded p-1">
+                    <ClassManagement 
+                      isLocked={session.is_locked}
+                      onToggleLock={actions.toggleLock}
+                      isHelpQuestionsEnabled={session.help_questions_enabled !== 0}
+                      onToggleHelpQuestions={actions.toggleHelpQuestions}
+                      onSetTimer={actions.setTimer}
                     />
                   </div>
-                  <div className="col-span-4 h-full overflow-y-auto space-y-4 pr-1">
-                    <div className="bg-slate-800 text-white backdrop-blur-xl rounded-2xl p-5 shadow-xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-slate-700/30 rounded-bl-full pointer-events-none"></div>
-                      <div className="relative z-10">
-                        <ClassManagement 
-                          isLocked={session.is_locked}
-                          onToggleLock={actions.toggleLock}
-                          isHelpQuestionsEnabled={session.help_questions_enabled !== 0}
-                          onToggleHelpQuestions={actions.toggleHelpQuestions}
-                          onSetTimer={actions.setTimer}
-                        />
-                      </div>
-                    </div>
-                  </div>
                 </div>
+
+                {/* Direct Beëindigen Knop */}
+                <button 
+                  onClick={actions.endSession}
+                  className="w-full py-1 text-[11px] bg-slate-950 hover:bg-rose-950/30 text-slate-500 hover:text-rose-400 font-bold rounded border border-slate-800 hover:border-rose-900 transition-all cursor-pointer text-center"
+                >
+                  Beëindig Lessessie
+                </button>
+
+              </div>
+            ) : (
+              /* Compacte verticale icon-strip wanneer ingeklapt */
+              <div className="flex-1 flex flex-col items-center pt-2 gap-3 text-slate-600">
+                <span className="text-[9px] font-black tracking-widest uppercase rotate-90 my-4 origin-left whitespace-nowrap text-slate-500">ANALYSE & REGIE</span>
               </div>
             )}
+          </section>
 
-          </main>
-        </div>
+        </main>
 
+        {/* COMPACTE MODALS */}
         <PromptModal 
           isOpen={showPromptModal}
           type={promptType}
@@ -559,51 +549,40 @@ export function TeacherClassroomPage() {
     );
   }
 
-  // Pre-session setup view
+  {/* PRE-SESSION CONFIGURATOR (Wordt alleen getoond als er geen actieve Firestore-sessie is) */}
   return (
-    <div className="min-h-[100dvh] bg-transparent flex flex-col items-center p-4 relative">
-      <div className="fixed inset-0 z-[-1] pointer-events-none">
-        <GridBackground />
-        <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]"></div>
-      </div>
-      
-      <div className="w-full max-w-4xl mb-4 mt-8 flex justify-between items-center px-4">
-        <button 
-          onClick={() => navigate('/')} 
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" /> Terug naar start
-        </button>
-        <button
-          onClick={handleSignOut}
-          className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
-        >
-          Uitloggen / Ander account
-        </button>
-      </div>
-      
-      {loading ? (
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600 font-medium">Bezig met opslaan...</p>
+    <div className="min-h-screen w-screen bg-slate-950 text-slate-200 flex flex-col items-center justify-center p-4 antialiased font-sans text-xs">
+      <div className="w-full max-w-xl bg-slate-900 border border-slate-800 shadow-xl rounded p-3">
+        <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
+          <button onClick={() => navigate('/')} className="flex items-center gap-1 text-slate-400 hover:text-slate-200 font-bold text-[11px]">
+            <ArrowLeft className="w-3 h-3" /> Dashboard
+          </button>
+          <span className="text-[10px] font-black tracking-wider text-slate-500 uppercase">EAI CONFIGURATOR</span>
         </div>
-      ) : printModePrep ? (
-        <PrintableLessonPlan prep={printModePrep} onBack={() => setPrintModePrep(null)} />
-      ) : isEditingPrep ? (
-        <LessonPreparationForm 
-          initialValue={parsedPrep || emptyLessonPreparation} 
-          onSave={handleSavePrep} 
-          onChoosePrint={setPrintModePrep}
-          onCancel={() => setIsEditingPrep(false)}
-        />
-      ) : (
-        <LessonPreparationForm 
-          initialValue={emptyLessonPreparation} 
-          onSave={actions.startSession} 
-          onChoosePrint={setPrintModePrep}
-          onCancel={() => navigate('/')}
-        />
-      )}
+        
+        {loading ? (
+          <div className="flex flex-col items-center py-12">
+            <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+            <p className="text-slate-500 font-bold text-[11px] tracking-tight">FIRESTORE MUTATIE BEZIG...</p>
+          </div>
+        ) : printModePrep ? (
+          <PrintableLessonPlan prep={printModePrep} onBack={() => setPrintModePrep(null)} />
+        ) : isEditingPrep ? (
+          <LessonPreparationForm 
+            initialValue={parsedPrep || emptyLessonPreparation} 
+            onSave={handleSavePrep} 
+            onChoosePrint={setPrintModePrep}
+            onCancel={() => setIsEditingPrep(false)}
+          />
+        ) : (
+          <LessonPreparationForm 
+            initialValue={emptyLessonPreparation} 
+            onSave={actions.startSession} 
+            onChoosePrint={setPrintModePrep}
+            onCancel={() => navigate('/')}
+          />
+        )}
+      </div>
     </div>
   );
 }

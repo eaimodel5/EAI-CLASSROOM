@@ -378,7 +378,7 @@ function StudentWrapper({ user }: { user: User | null }) {
   }, [user]);
 
   if (!user) {
-    return <div className="flex h-screen w-screen items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+    return <div className="flex h-screen w-screen items-center justify-center bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>;
   }
   return <StudentClassroomPage />;
 }
@@ -391,7 +391,7 @@ function BoardWrapper({ user }: { user: User | null }) {
   }, [user]);
 
   if (!user) {
-    return <div className="flex h-screen w-screen items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+    return <div className="flex h-screen w-screen items-center justify-center bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>;
   }
   return <ClassroomBoardPage />;
 }

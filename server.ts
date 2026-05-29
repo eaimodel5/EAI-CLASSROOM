@@ -33,6 +33,7 @@ async function startServer() {
   // Mount routers
   app.use('/api/sessions', sessionsRouter);
   app.use('/api/sessions/:id', aiRouter); // Mount AI routes under sessions
+  app.use('/api/ai', aiRouter); // Mount general AI routes
   app.use('/api/participants', participantsRouter);
   app.use('/api/signals', signalsRouter);
   app.use('/api/admin', adminRouter);

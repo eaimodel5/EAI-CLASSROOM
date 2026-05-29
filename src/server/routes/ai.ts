@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { broadcast } from '../websocket.ts';
 import { generateAiContent } from '../services/ai.ts';
 import { getSsotContextForPrompt } from '../../lib/ssot.ts';
+import { Type } from '@google/genai';
 
 import { generateTeacherProposal } from '../services/classroomAnalysis.ts';
 
@@ -270,5 +271,71 @@ Regels:
   } catch (error) {
     console.error('Error generating feedforward:', error);
     res.status(500).json({ error: 'Failed to generate feedforward' });
+  }
+});
+
+aiRouter.post('/generate-prep', async (req: Request, res: Response) => {
+  try {
+    const { title, subject, className, gradeYear, level, learningGoal } = req.body;
+    
+    const prompt = `Je bent een vakdidactisch expert en ervaren docent met een focus op actieve didactiek. 
+Maak een uitgebreide en rijke lesvoorbereiding op basis van de volgende gegevens:
+Lesdoel / Onderwerp: ${title}
+Vak: ${subject}
+Klas: ${className || 'Niet gespecificeerd'}
+Leerjaar: ${gradeYear || 'Niet gespecificeerd'}
+Niveau: ${level || 'Niet gespecificeerd'}
+Leerdoel: ${learningGoal || 'Bedenk een passend en concreet leerdoel op basis van de titel en het vak.'}
+
+Genereer de volgende onderdelen in vloeiend, professioneel Nederlands en zorg voor didactische diepgang:
+- learningGoal: Een helder, concreet en meetbaar (SMART) leerdoel dat direct richting geeft aan de les.
+- successCriteria: Een rijke lijst van 3-5 specifieke, direct te toetsen succescriteria (bijv: "Aan het eind van de les kan de leerling...").
+- priorKnowledgeQuestions: 2-3 uitdagende, conceptuele startvragen (voor op de leskaarten) om voorkennis te activeren. Raak de kern van het nieuwe onderwerp. Geen gesloten vragen.
+- instructionActivities: 1-2 actieve of reflectieve denkvragen/werkvormen tijdens de instructie om leerlingen betrokken te houden.
+- checkQuestions: 3-4 formatieve checkvragen (denk aan conceptuele denkvragen). Formuleer ze zo dat ze direct in de klas gesteld kunnen worden. Inclusief evt. een korte opmerking: "(Let op:...)"
+- processingActivities: 1-3 heldere opdrachten of verwerkingstaken voor de fase 'Verwerken'.
+- misconceptions: 3 uitgewerkte veelvoorkomende misconcepties: Wat denkt de leerling verkeerd en waarom?
+- interventions: 2-3 concrete formatieve interventies of hints voor als het misgaat (bijv. "Als een leerling vastloopt, stel dan de vraag...").
+- exitTicketQuestions: 2 formatief ijzersterke exit-ticket opdrachten. Geen simpele vragen als "wat is het belangrijkste", maar een inhoudelijke, korte denkopdracht (bijv. "Leg in je eigen woorden uit waarom X leidt tot Y" of "Welke van deze twee stellingen klopt en waarom?"). Dit moet perfect toetsen of de succescriteria behaald zijn.
+- teacherNotes: Een uitgebreide didactische compacte handleiding: tips voor differentiatie, aanpak van tempoverschillen, en het 'waarom' van deze lesopbouw.
+
+Guardrails:
+- Gebruik GEEN emoji's of emoticons in de gegenereerde tekst. Houd de toon professioneel, vakkundig en zakelijk.
+- Focus op formatief handelen en de actieve betrokkenheid van de leerling bij het lesdoel.`;
+
+    const schema = {
+      type: Type.OBJECT,
+      properties: {
+        learningGoal: { type: Type.STRING },
+        successCriteria: { type: Type.ARRAY, items: { type: Type.STRING } },
+        priorKnowledgeQuestions: { type: Type.ARRAY, items: { type: Type.STRING } },
+        instructionActivities: { type: Type.ARRAY, items: { type: Type.STRING } },
+        checkQuestions: { type: Type.ARRAY, items: { type: Type.STRING } },
+        processingActivities: { type: Type.ARRAY, items: { type: Type.STRING } },
+        misconceptions: { type: Type.ARRAY, items: { type: Type.STRING } },
+        interventions: { type: Type.ARRAY, items: { type: Type.STRING } },
+        exitTicketQuestions: { type: Type.ARRAY, items: { type: Type.STRING } },
+        teacherNotes: { type: Type.STRING }
+      },
+      required: [
+        "learningGoal", 
+        "successCriteria", 
+        "priorKnowledgeQuestions", 
+        "instructionActivities", 
+        "checkQuestions", 
+        "processingActivities", 
+        "misconceptions", 
+        "interventions", 
+        "exitTicketQuestions", 
+        "teacherNotes"
+      ]
+    };
+
+    const resultText = await generateAiContent(prompt, true, schema);
+    const result = JSON.parse(resultText);
+    res.json(result);
+  } catch (error) {
+    console.error('Error generating lesson preparation with AI:', error);
+    res.status(500).json({ error: 'Failed to generate lesson preparation with AI' });
   }
 });

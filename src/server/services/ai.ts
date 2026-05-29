@@ -21,13 +21,20 @@ export function cleanJsonResponse(rawText: string): string {
 /**
  * Executes a Gemini 3 API call with error handling.
  */
-export async function generateAiContent(prompt: string, responseAsJson: boolean = false): Promise<string> {
+export async function generateAiContent(prompt: string, responseAsJson: boolean = false, responseSchema?: any): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not configured.');
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({
+    apiKey,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      }
+    }
+  });
   
   let modelName = 'gemini-3.1-pro-preview';
   let temperature = 0.7;
@@ -53,6 +60,9 @@ export async function generateAiContent(prompt: string, responseAsJson: boolean 
   };
   if (responseAsJson) {
     config.responseMimeType = 'application/json';
+  }
+  if (responseSchema) {
+    config.responseSchema = responseSchema;
   }
   
   try {

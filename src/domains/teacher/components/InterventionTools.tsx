@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageSquare, HelpCircle, CheckCircle2, Lightbulb, Users } from 'lucide-react';
 import { PromptType } from '../types';
+import { FastTooltip } from '../../../components/ui/FastTooltip';
 
 interface InterventionToolsProps {
   activePhase: string;
@@ -19,138 +20,163 @@ export function InterventionTools({
   onOpenPrompt,
   onPickRandomName
 }: InterventionToolsProps) {
+  const getButtonStyles = () => "w-full p-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-[10px] font-medium rounded-sm border border-slate-800 transition-all flex items-center justify-start gap-2 disabled:opacity-50 text-left group cursor-pointer mb-1";
+  const getIconContainerStyles = (color: string) => `w-4 h-4 rounded-[2px] flex items-center justify-center shrink-0 border transition-colors ${color}`;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-0.5">
       {(showAllTools || activePhase === 'START') && (
-        <button
-          onClick={() => onOpenPrompt('PRIOR_KNOWLEDGE', '')}
-          disabled={hasActivePrompt}
-          className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-indigo-800 font-black text-base rounded-2xl border-4 border-indigo-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-indigo-200 disabled:opacity-50 hover:-translate-y-1"
-        >
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-             <MessageSquare className="w-5 h-5 text-indigo-500" />
-          </div>
-          Voorkennis ophalen
-        </button>
+        <FastTooltip content="Stel een vraag om te testen wat de klas al weet over dit onderwerp (voorkennis).">
+          <button
+            onClick={() => onOpenPrompt('PRIOR_KNOWLEDGE', '')}
+            disabled={hasActivePrompt}
+            className={getButtonStyles()}
+          >
+            <div className={getIconContainerStyles('bg-indigo-950/50 border-indigo-500/30 group-hover:bg-indigo-600')}>
+               <MessageSquare className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white" />
+            </div>
+            Voorkennis ophalen
+          </button>
+        </FastTooltip>
       )}
 
       {(showAllTools || activePhase === 'INSTRUCTIE') && (
         <>
-          <button
-            onClick={() => onOpenPrompt('DIAGNOSTIC', '')}
-            disabled={hasActivePrompt}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-indigo-800 font-black text-base rounded-2xl border-4 border-indigo-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-indigo-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-               <MessageSquare className="w-5 h-5 text-indigo-500" />
-            </div>
-            Diagnostische Vraag
-          </button>
-          <button
-            onClick={() => onOpenPrompt('MISCONCEPTION', '')}
-            disabled={hasActivePrompt}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-orange-800 font-black text-base rounded-2xl border-4 border-orange-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-orange-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
-               <HelpCircle className="w-5 h-5 text-orange-500" />
-            </div>
-            Misconceptie Check
-          </button>
+          <FastTooltip content="Snel een testvraag stellen om te kijken of de instructie is begrepen.">
+            <button
+              onClick={() => onOpenPrompt('DIAGNOSTIC', '')}
+              disabled={hasActivePrompt}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-indigo-950/50 border-indigo-500/30 group-hover:bg-indigo-600')}>
+                 <MessageSquare className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white" />
+              </div>
+              Diagnostische Vraag
+            </button>
+          </FastTooltip>
+          <FastTooltip content="Vraag specifiek gericht op een bekende valkuil of denkfout.">
+            <button
+              onClick={() => onOpenPrompt('MISCONCEPTION', '')}
+              disabled={hasActivePrompt}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-orange-950/50 border-orange-500/30 group-hover:bg-orange-600')}>
+                 <HelpCircle className="w-2.5 h-2.5 text-orange-400 group-hover:text-white" />
+              </div>
+              Misconceptie Check
+            </button>
+          </FastTooltip>
         </>
       )}
 
       {(showAllTools || activePhase === 'CHECK') && (
         <>
-          <button
-            onClick={() => onOpenPrompt('GO_NO_GO', '')}
-            disabled={hasActivePrompt}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-indigo-800 font-black text-base rounded-2xl border-4 border-indigo-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-indigo-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-               <CheckCircle2 className="w-5 h-5 text-indigo-500" />
-            </div>
-            Doorgaan / Niet-doorgaan Check
-          </button>
-          <button
-            onClick={() => onOpenPrompt('CONFIDENCE', '')}
-            disabled={hasActivePrompt}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-emerald-800 font-black text-base rounded-2xl border-4 border-emerald-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-emerald-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-               <Lightbulb className="w-5 h-5 text-emerald-500" />
-            </div>
-            Confidence Meter
-          </button>
-          <button
-            onClick={onPickRandomName}
-            disabled={hasActivePrompt || !hasParticipants}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-pink-800 font-black text-base rounded-2xl border-4 border-pink-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-pink-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center shrink-0">
-               <Users className="w-5 h-5 text-pink-500" />
-            </div>
-            Willekeurige Beurt
-          </button>
+          <FastTooltip content="Controleer of je door kan naar het volgende onderwerp (bijv. duimpjes peiling).">
+            <button
+              onClick={() => onOpenPrompt('GO_NO_GO', '')}
+              disabled={hasActivePrompt}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-indigo-950/50 border-indigo-500/30 group-hover:bg-indigo-600')}>
+                 <CheckCircle2 className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white" />
+              </div>
+              Doorgaan / Niet-doorgaan Check
+            </button>
+          </FastTooltip>
+          <FastTooltip content="Laat leerlingen aangeven hoe zeker ze zich voelen over de stof (schaal 1-10 of stoplicht).">
+            <button
+              onClick={() => onOpenPrompt('CONFIDENCE', '')}
+              disabled={hasActivePrompt}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-emerald-950/30 border-emerald-500/30 group-hover:bg-emerald-600')}>
+                 <Lightbulb className="w-2.5 h-2.5 text-emerald-400 group-hover:text-white" />
+              </div>
+              Confidence Meter
+            </button>
+          </FastTooltip>
+          <FastTooltip content="Draai aan het rad om willekeurig een leerling de beurt te geven (geen active prompt, trekt alleen de aandacht).">
+            <button
+              onClick={onPickRandomName}
+              disabled={hasActivePrompt || !hasParticipants}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-pink-950/50 border-pink-500/30 group-hover:bg-pink-600')}>
+                 <Users className="w-2.5 h-2.5 text-pink-400 group-hover:text-white" />
+              </div>
+              Willekeurige Beurt
+            </button>
+          </FastTooltip>
         </>
       )}
 
       {(showAllTools || activePhase === 'VERWERKEN') && (
         <>
-          <button
-            onClick={() => onOpenPrompt('HINT', '')}
-            disabled={hasActivePrompt}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-amber-800 font-black text-base rounded-2xl border-4 border-amber-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-amber-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-               <Lightbulb className="w-5 h-5 text-amber-500" />
-            </div>
-            Deel een Hint
-          </button>
-          <button
-            onClick={() => onOpenPrompt('CLASS_INTERVENTION', '')}
-            disabled={hasActivePrompt}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-red-800 font-black text-base rounded-2xl border-4 border-red-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-red-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-               <MessageSquare className="w-5 h-5 text-red-500" />
-            </div>
-            Klassikale Interventie
-          </button>
-          <button
-            onClick={() => onOpenPrompt('PEER_FEEDBACK', '')}
-            disabled={hasActivePrompt}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-teal-800 font-black text-base rounded-2xl border-4 border-teal-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-teal-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
-               <Users className="w-5 h-5 text-teal-500" />
-            </div>
-            Peer Feedback
-          </button>
+          <FastTooltip content="Stuur een gerichte tip naar alle leerlingen als ze vastlopen tijdens een verwerkingsopdracht.">
+            <button
+              onClick={() => onOpenPrompt('HINT', '')}
+              disabled={hasActivePrompt}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-amber-950/50 border-amber-500/30 group-hover:bg-amber-600')}>
+                 <Lightbulb className="w-2.5 h-2.5 text-amber-400 group-hover:text-white" />
+              </div>
+              Deel een Hint
+            </button>
+          </FastTooltip>
+          <FastTooltip content="Zet de hele klas tijdelijk on-hold om collectief een fout te bespreken.">
+            <button
+              onClick={() => onOpenPrompt('CLASS_INTERVENTION', '')}
+              disabled={hasActivePrompt}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-red-950/50 border-red-500/30 group-hover:bg-red-600')}>
+                 <MessageSquare className="w-2.5 h-2.5 text-red-400 group-hover:text-white" />
+              </div>
+              Klassikale Interventie
+            </button>
+          </FastTooltip>
+          <FastTooltip content="Vraag de leerlingen om feedback of beoordeling op andermans werk, of activeer samenwerking.">
+            <button
+              onClick={() => onOpenPrompt('PEER_FEEDBACK', '')}
+              disabled={hasActivePrompt}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-teal-950/50 border-teal-500/30 group-hover:bg-teal-600')}>
+                 <Users className="w-2.5 h-2.5 text-teal-400 group-hover:text-white" />
+              </div>
+              Peer Feedback
+            </button>
+          </FastTooltip>
         </>
       )}
 
       {(showAllTools || activePhase === 'AFSLUITING') && (
         <>
-          <button
-            onClick={() => onOpenPrompt('EXIT_TICKET', '')}
-            disabled={hasActivePrompt}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-purple-800 font-black text-base rounded-2xl border-4 border-purple-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-purple-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
-               <CheckCircle2 className="w-5 h-5 text-purple-500" />
-            </div>
-            Exit Ticket
-          </button>
-          <button
-            onClick={() => onOpenPrompt('REFLECTION', '')}
-            disabled={hasActivePrompt}
-            className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-emerald-800 font-black text-base rounded-2xl border-4 border-emerald-50 shadow-sm transition-all flex items-center justify-start gap-4 hover:border-emerald-200 disabled:opacity-50 hover:-translate-y-1"
-          >
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-               <MessageSquare className="w-5 h-5 text-emerald-500" />
-            </div>
-            Reflectieprompt
-          </button>
+          <FastTooltip content="Stel één finale afsluitende vraag (exit ticket) om te controleren of het lesdoel is behaald.">
+            <button
+              onClick={() => onOpenPrompt('EXIT_TICKET', '')}
+              disabled={hasActivePrompt}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-purple-950/50 border-purple-500/30 group-hover:bg-purple-600')}>
+                 <CheckCircle2 className="w-2.5 h-2.5 text-purple-400 group-hover:text-white" />
+              </div>
+              Exit Ticket
+            </button>
+          </FastTooltip>
+          <FastTooltip content="Vraag leerlingen om te reflecteren op hun eigen leerproces of inzet vandaag.">
+            <button
+              onClick={() => onOpenPrompt('REFLECTION', '')}
+              disabled={hasActivePrompt}
+              className={getButtonStyles()}
+            >
+              <div className={getIconContainerStyles('bg-emerald-950/30 border-emerald-500/30 group-hover:bg-emerald-600')}>
+                 <MessageSquare className="w-2.5 h-2.5 text-emerald-400 group-hover:text-white" />
+              </div>
+              Reflectieprompt
+            </button>
+          </FastTooltip>
         </>
       )}
     </div>

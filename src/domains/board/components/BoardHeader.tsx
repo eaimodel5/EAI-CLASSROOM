@@ -28,7 +28,7 @@ export function BoardHeader({ session }: BoardHeaderProps) {
       <div className="flex items-center gap-4">
         <TimerDisplay session={session} variant="board" />
         <div className="bg-white/70 backdrop-blur-xl px-5 py-2.5 rounded-2xl shadow-sm border border-white/80 text-center flex flex-col items-center justify-center">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Doe mee op EAIHUB.nl</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Log in met lescode</div>
           <div className="text-2xl md:text-3xl font-mono font-black tracking-widest text-indigo-600 drop-shadow-sm leading-none">{session.session_code}</div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Settings, Clock } from 'lucide-react';
+import { Settings, Clock, Lock, Unlock, HelpCircle } from 'lucide-react';
+import { FastTooltip } from '../../../components/ui/FastTooltip';
 
 interface ClassManagementProps {
   isLocked: boolean;
@@ -11,56 +12,59 @@ interface ClassManagementProps {
 
 export function ClassManagement({ isLocked, onToggleLock, isHelpQuestionsEnabled, onToggleHelpQuestions, onSetTimer }: ClassManagementProps) {
   return (
-    <div className="w-full h-full relative overflow-hidden group">
-      <div className="absolute top-0 right-0 w-48 h-48 bg-slate-700/50 rounded-bl-full -mr-24 -mt-24 z-0 transition-transform duration-700 group-hover:scale-110"></div>
-      
-      <div className="relative z-10">
-        <h2 className="text-lg font-black text-white mb-4 flex items-center gap-3">
-          <Settings className="w-6 h-6 text-indigo-400" />
-          Beheer
-        </h2>
-        <div className="space-y-4">
-          {/* Lock Session */}
-          <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-xl border border-slate-600/50 shadow-inner">
-            <div>
-              <h3 className="font-extrabold text-base text-white">Schermen op Zwart</h3>
-              <p className="text-sm font-bold text-slate-400 mt-1">Blokkeer alle borden</p>
-            </div>
-            <button
-              onClick={onToggleLock}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${isLocked ? 'bg-red-500' : 'bg-slate-600'}`}
-            >
-              <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md ${isLocked ? 'translate-x-7' : 'translate-x-1'}`} />
-            </button>
-          </div>
+    <div className="w-full flex-col space-y-1">
+      {/* Quick Toggles in one row */}
+      <div className="flex gap-1.5 w-full">
+        <FastTooltip content="Zet de digiborden van alle leerlingen op slot. Handig als je de aandacht nodig hebt." position="top">
+          <button
+            onClick={onToggleLock}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-sm border text-[10px] font-bold transition-all cursor-pointer ${
+              isLocked 
+                ? 'bg-rose-950/50 border-rose-900/50 text-rose-400 hover:bg-rose-900/50' 
+                : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'
+            }`}
+          >
+            {isLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+            {isLocked ? 'Ontgrendel' : 'Lock klas'}
+          </button>
+        </FastTooltip>
 
-          {/* Toggle Help Questions */}
-          <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-xl border border-slate-600/50 shadow-inner">
-            <div>
-              <h3 className="font-extrabold text-base text-white">Hulpvragen Actief</h3>
-              <p className="text-sm font-bold text-slate-400 mt-1">Stel-een-vraag knop toestaan</p>
-            </div>
-            <button
-              onClick={onToggleHelpQuestions}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${isHelpQuestionsEnabled ? 'bg-emerald-500' : 'bg-slate-600'}`}
-            >
-              <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md ${isHelpQuestionsEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
-            </button>
-          </div>
+        <FastTooltip content="Schakel hulpvragen in via leerling bord" position="top">
+          <button
+            onClick={onToggleHelpQuestions}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-sm border text-[10px] font-bold transition-all cursor-pointer ${
+              isHelpQuestionsEnabled 
+                ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400 hover:bg-emerald-900/50' 
+                : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'
+            }`}
+          >
+            <HelpCircle className="w-3 h-3" />
+            Hulp {isHelpQuestionsEnabled ? 'Aan' : 'Uit'}
+          </button>
+        </FastTooltip>
+      </div>
 
-          {/* Timer */}
-          <div className="p-4 bg-slate-700/50 rounded-xl border border-slate-600/50 shadow-inner">
-            <h3 className="font-extrabold text-base text-white mb-3 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-indigo-400" />
-              Sessie Timer
-            </h3>
-            <div className="flex gap-3">
-              <button onClick={() => onSetTimer(1)} className="flex-1 py-3 text-sm font-black uppercase tracking-wider bg-slate-600 text-slate-200 border border-slate-500 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-all active:scale-95">1m</button>
-              <button onClick={() => onSetTimer(3)} className="flex-1 py-3 text-sm font-black uppercase tracking-wider bg-slate-600 text-slate-200 border border-slate-500 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-all active:scale-95">3m</button>
-              <button onClick={() => onSetTimer(5)} className="flex-1 py-3 text-sm font-black uppercase tracking-wider bg-slate-600 text-slate-200 border border-slate-500 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-all active:scale-95">5m</button>
-              <button onClick={() => onSetTimer(0)} className="flex-1 py-3 text-sm font-black uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/50 rounded-xl hover:bg-red-500 hover:text-white transition-all active:scale-95">Uit</button>
-            </div>
-          </div>
+      {/* Timer Compact Row */}
+      <div className="flex items-center gap-1 w-full bg-slate-900/50 p-1 border border-slate-800/80 rounded-sm">
+        <div className="px-1 text-slate-500">
+          <Clock className="w-3 h-3" />
+        </div>
+        <div className="flex flex-1 gap-1">
+          {[1, 3, 5].map((m) => (
+             <button 
+                key={m}
+                onClick={() => onSetTimer(m)} 
+                className="flex-1 py-0.5 text-[9px] font-black uppercase text-indigo-400 bg-indigo-950/30 hover:bg-indigo-950/70 border border-indigo-900/50 rounded-sm transition-colors cursor-pointer"
+             >
+                {m}m
+             </button>
+          ))}
+          <button 
+             onClick={() => onSetTimer(0)} 
+             className="flex-1 py-0.5 text-[9px] font-black uppercase text-slate-500 bg-slate-950 hover:text-rose-400 border border-slate-800 hover:border-rose-900/50 rounded-sm transition-colors cursor-pointer"
+          >
+             UIT
+          </button>
         </div>
       </div>
     </div>

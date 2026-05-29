@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { LessonPreparation } from "../types";
 import { Plus, Minus, Save, Wand2, Loader2, BookOpen, Target, MessageCircleQuestion, AlertTriangle, FileText, ChevronRight, ChevronLeft, CheckCircle, Check, PlayCircle, Library, Search, X, PanelLeftClose } from "lucide-react";
-import { GoogleGenAI, Type } from "@google/genai";
 import { db } from "../lib/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
@@ -32,7 +31,7 @@ function StringListField({
       {values.map((value, index) => (
         <div key={index} className="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
           <textarea
-            className="w-full rounded-xl border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 overflow-hidden resize-none min-h-[44px] text-sm"
+            className="w-full rounded-xl border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 text-slate-800 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 overflow-hidden resize-none min-h-[44px] text-sm font-medium"
             rows={1}
             value={value}
             ref={(el) => {
@@ -151,56 +150,25 @@ export function LessonPreparationForm({
     setIsGenerating(true);
     setGenSuccess(false);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
-        contents: `Je bent een vakdidactisch expert en ervaren docent met een focus op actieve didactiek. 
-Maak een uitgebreide en rijke lesvoorbereiding op basis van de volgende gegevens:
-Lesdoel / Onderwerp: ${prep.title}
-Vak: ${prep.subject}
-Klas: ${prep.className || 'Niet gespecificeerd'}
-Leerjaar: ${prep.gradeYear || 'Niet gespecificeerd'}
-Niveau: ${prep.level || 'Niet gespecificeerd'}
-Leerdoel: ${prep.learningGoal || 'Bedenk een passend en concreet leerdoel op basis van de titel en het vak.'}
-
-Genereer de volgende onderdelen in vloeiend, professioneel Nederlands en zorg voor didactische diepgang:
-- learningGoal: Een helder, concreet en meetbaar (SMART) leerdoel dat direct richting geeft aan de les.
-- successCriteria: Een rijke lijst van 3-5 specifieke, direct te toetsen succescriteria (bijv: "Aan het eind van de les kan de leerling...").
-- priorKnowledgeQuestions: 2-3 uitdagende, conceptuele startvragen (voor op de leskaarten) om voorkennis te activeren. Raak de kern van het nieuwe onderwerp. Geen gesloten vragen.
-- instructionActivities: 1-2 actieve of reflectieve denkvragen/werkvormen tijdens de instructie om leerlingen betrokken te houden.
-- checkQuestions: 3-4 formatieve checkvragen (denk aan conceptuele denkvragen). Formuleer ze zo dat ze direct in de klas gesteld kunnen worden. Inclusief evt. een korte opmerking: "(Let op:...)"
-- processingActivities: 1-3 heldere opdrachten of verwerkingstaken voor de fase 'Verwerken'.
-- misconceptions: 3 uitgewerkte veelvoorkomende misconcepties: Wat denkt de leerling verkeerd en waarom?
-- interventions: 2-3 concrete formatieve interventies of hints voor als het misgaat (bijv. "Als een leerling vastloopt, stel dan de vraag...").
-- exitTicketQuestions: 2 formatief ijzersterke exit-ticket opdrachten. Geen simpele vragen als "wat is het belangrijkste", maar een inhoudelijke, korte denkopdracht (bijv. "Leg in je eigen woorden uit waarom X leidt tot Y" of "Welke van deze twee stellingen klopt en waarom?"). Dit moet perfect toetsen of de succescriteria behaald zijn.
-- teacherNotes: Een uitgebreide didactische compacte handleiding: tips voor differentiatie, aanpak van tempoverschillen, en het 'waarom' van deze lesopbouw.
-
-Guardrails:
-- Gebruik GEEN emoji's of emoticons in de gegenereerde tekst. Houd de toon professioneel, vakkundig en zakelijk.
-- Focus op formatief handelen en de actieve betrokkenheid van de leerling bij het lesdoel.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              learningGoal: { type: Type.STRING },
-              successCriteria: { type: Type.ARRAY, items: { type: Type.STRING } },
-              priorKnowledgeQuestions: { type: Type.ARRAY, items: { type: Type.STRING } },
-              instructionActivities: { type: Type.ARRAY, items: { type: Type.STRING } },
-              checkQuestions: { type: Type.ARRAY, items: { type: Type.STRING } },
-              processingActivities: { type: Type.ARRAY, items: { type: Type.STRING } },
-              misconceptions: { type: Type.ARRAY, items: { type: Type.STRING } },
-              interventions: { type: Type.ARRAY, items: { type: Type.STRING } },
-              exitTicketQuestions: { type: Type.ARRAY, items: { type: Type.STRING } },
-              teacherNotes: { type: Type.STRING }
-            },
-            required: ["learningGoal", "successCriteria", "priorKnowledgeQuestions", "instructionActivities", "checkQuestions", "processingActivities", "misconceptions", "interventions", "exitTicketQuestions", "teacherNotes"]
-          }
-        }
+      const res = await fetch("/api/ai/generate-prep", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: prep.title,
+          subject: prep.subject,
+          className: prep.className,
+          gradeYear: prep.gradeYear,
+          level: prep.level,
+          learningGoal: prep.learningGoal
+        })
       });
-
-      if (response.text) {
-        const generated = JSON.parse(response.text);
+      
+      if (!res.ok) {
+        throw new Error("HTTP error " + res.status);
+      }
+      
+      const generated = await res.json();
+      if (generated) {
         setPrep({
           ...prep,
           learningGoal: generated.learningGoal || prep.learningGoal,
@@ -425,7 +393,7 @@ Guardrails:
                     <div className="space-y-2">
                       <label className="font-bold text-slate-800 text-sm tracking-wide">Lesdoel</label>
                       <input
-                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
+                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
                         placeholder="Bijv. Breuken gelijknamig maken"
                         value={prep.title}
                         onChange={(e) => setPrep({ ...prep, title: e.target.value })}
@@ -435,7 +403,7 @@ Guardrails:
                     <div className="space-y-2">
                       <label className="font-bold text-slate-800 text-sm tracking-wide">Vak</label>
                       <input
-                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
+                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
                         placeholder="Bijv. Wiskunde"
                         value={prep.subject}
                         onChange={(e) => setPrep({ ...prep, subject: e.target.value })}
@@ -444,7 +412,7 @@ Guardrails:
                     <div className="space-y-2">
                       <label className="font-bold text-slate-800 text-sm tracking-wide">Klas</label>
                       <input
-                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
+                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
                         placeholder="Bijv. 2B"
                         value={prep.className}
                         onChange={(e) => setPrep({ ...prep, className: e.target.value })}
@@ -453,7 +421,7 @@ Guardrails:
                     <div className="space-y-2">
                       <label className="font-bold text-slate-800 text-sm tracking-wide">Leerjaar</label>
                       <input
-                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
+                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
                         placeholder="Bijv. 2"
                         value={prep.gradeYear}
                         onChange={(e) => setPrep({ ...prep, gradeYear: e.target.value })}
@@ -462,7 +430,7 @@ Guardrails:
                     <div className="space-y-2">
                       <label className="font-bold text-slate-800 text-sm tracking-wide">Niveau</label>
                       <input
-                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
+                        className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-2 text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400 font-medium text-sm"
                         placeholder="Bijv. HAVO"
                         value={prep.level}
                         onChange={(e) => setPrep({ ...prep, level: e.target.value })}
@@ -507,7 +475,7 @@ Guardrails:
                           el.style.height = `${el.scrollHeight}px`;
                         }
                       }}
-                      className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-3 min-h-[80px] focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none resize-none transition-shadow placeholder:text-slate-400 font-medium overflow-hidden text-sm"
+                      className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-3 text-slate-800 min-h-[80px] focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none resize-none transition-shadow placeholder:text-slate-400 font-medium overflow-hidden text-sm"
                       placeholder="Wat moeten leerlingen aan het eind van de les kennen of kunnen?"
                       value={prep.learningGoal}
                       onChange={(e) => {
@@ -614,7 +582,7 @@ Guardrails:
                         el.style.height = `${el.scrollHeight}px`;
                       }
                     }}
-                    className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-3 min-h-[120px] focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none resize-none transition-shadow placeholder:text-slate-400 font-medium overflow-hidden text-sm"
+                    className="w-full rounded-lg border-2 border-slate-200/60 bg-slate-50/50 px-3 py-3 text-slate-800 min-h-[120px] focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none resize-none transition-shadow placeholder:text-slate-400 font-medium overflow-hidden text-sm"
                     placeholder="Persoonlijke krabbels, pagina's uit het boek, of geheugensteuntjes voor tijdens de les..."
                     value={prep.teacherNotes}
                     onChange={(e) => {

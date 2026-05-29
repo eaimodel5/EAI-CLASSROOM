@@ -63,30 +63,24 @@ export function ActivePromptCard({
   const responseSignals = signals.filter(s => s.prompt_id === activePrompt.id && s.signal_type === 'RESPONSE');
 
   return (
-    <div className={`rounded-2xl shadow-xl border p-6 text-white relative overflow-hidden transition-all ${cardBgClass}`}>
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-bl-full -mr-32 -mt-32 z-0 mix-blend-overlay"></div>
+    <div className={`rounded-sm border text-white relative transition-all bg-indigo-950/20 border-indigo-900/50 p-2 overflow-hidden`}>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-[2rem] -mr-16 -mt-16 z-0 mix-blend-overlay pointer-events-none"></div>
       
-      <div className="relative z-10 flex justify-between items-start mb-6">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <Icon className={`w-6 h-6 ${textClass}`} />
-          Actieve {activePrompt.title}
+      <div className="relative z-10 flex flex-col mb-2">
+        <h2 className="text-[10px] font-black uppercase text-indigo-400 flex items-center gap-1.5 tracking-wider mb-1">
+          <Icon className="w-3 h-3 text-indigo-400" />
+          {activePrompt.title}
         </h2>
-        <button 
-          onClick={onClosePrompt}
-          className={`text-sm font-bold px-4 py-2 border rounded-xl transition-all active:scale-95 shadow-sm ${btnClass}`}
-        >
-          Sluit {activePrompt.title}
-        </button>
+        <p className="text-[11px] font-bold text-slate-200 leading-tight break-words">{activePrompt.prompt_text}</p>
       </div>
-      <p className="text-lg font-bold mb-4 leading-tight max-w-2xl">{activePrompt.prompt_text}</p>
       
-      <div className={`rounded-xl p-4 ${innerBgClass} backdrop-blur-sm border border-white/10 shadow-inner relative z-10`}>
-        <h3 className={`text-xs font-bold mb-4 uppercase tracking-widest ${textClass}`}>
+      <div className={`rounded-sm p-1.5 bg-indigo-950/40 border border-indigo-900/30 relative z-10 mx-[-4px]`}>
+        <h3 className={`text-[9px] font-black mb-1.5 uppercase tracking-widest text-indigo-500 pl-1`}>
           {activePrompt.response_mode === 'ACKNOWLEDGE' ? 'Gelezen door' : 'Antwoorden van leerlingen'}
         </h3>
-        <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-1 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
           {responseSignals.length === 0 ? (
-            <p className={`italic text-sm font-medium ${emptyTextClass}`}>
+            <p className={`italic text-[10px] font-medium text-indigo-400/50 pl-1`}>
               Nog geen reacties ontvangen...
             </p>
           ) : (
@@ -94,23 +88,25 @@ export function ActivePromptCard({
               const student = participants.find(p => p.id === signal.participant_id);
               const isShared = sharedSignalId === signal.id;
               return (
-                <div key={signal.id} className={`rounded-xl px-4 py-3 text-sm flex justify-between items-center transition-all ${isShared ? 'bg-white/30 ring-2 ring-white shadow-md' : 'bg-white/10 hover:bg-white/20'}`}>
-                  <div className="flex-1 break-words min-w-0 pr-4">
-                    <span className={`font-bold ${studentTextClass} block mb-1`}>{student?.display_name || 'Onbekend'}</span>
-                    <span className="text-white font-medium text-base">
+                <div key={signal.id} className={`rounded-[2px] px-1.5 py-1 text-[10px] flex justify-between items-center transition-all border ${isShared ? 'bg-indigo-600 border-indigo-500 shadow-sm' : 'bg-slate-900/50 border-slate-800/80 hover:bg-slate-900'}`}>
+                  <div className="flex-1 break-words min-w-0 pr-2">
+                    <span className={`font-bold block mb-0.5 ${isShared ? 'text-indigo-200' : 'text-slate-400'}`}>
+                      {student?.display_name || 'Onbekend'}
+                    </span>
+                    <span className={`font-medium ${isShared ? 'text-white' : 'text-slate-200'}`}>
                       {activePrompt.response_mode === 'ACKNOWLEDGE' ? 'Gelezen ✓' : signal.text_value}
                     </span>
                   </div>
                   {activePrompt.response_mode !== 'ACKNOWLEDGE' && (
                     <button
                       onClick={() => onShareSignal(isShared ? null : signal.id)}
-                      className={`ml-4 px-4 py-2 font-bold rounded-lg transition-all active:scale-95 shadow-sm whitespace-nowrap ${
+                      className={`ml-2 px-1.5 py-0.5 font-bold rounded-sm transition-all shadow-sm whitespace-nowrap text-[9px] cursor-pointer ${
                         isShared 
-                          ? 'bg-white text-indigo-900 hover:bg-slate-50' 
-                          : 'bg-black/20 text-white hover:bg-black/30'
+                          ? 'bg-slate-900 text-indigo-300' 
+                          : 'bg-indigo-950/50 border border-indigo-900 hover:bg-indigo-900 text-indigo-400'
                       }`}
                     >
-                      {isShared ? 'Verberg op bord' : 'Deel op bord'}
+                      {isShared ? 'Verberg' : 'Deel op bord'}
                     </button>
                   )}
                 </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Settings, Activity, Users, MessageSquare, Save, Eye, XCircle, Trash2, ShieldAlert, BarChart, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../lib/firebase';
-import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, getDoc, doc, setDoc, updateDoc, serverTimestamp, getCountFromServer, where, deleteDoc } from 'firebase/firestore';
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -15,10 +15,9 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     const allowedAdmins = ['vis@emmauscollege.nl', 'eaimodelserie5@gmail.com'];
-    const isBypassActive = localStorage.getItem('admin_bypass_active') === 'true';
     const userEmail = auth.currentUser?.email;
 
-    if (!isBypassActive && (!auth.currentUser || (userEmail && !allowedAdmins.includes(userEmail)))) {
+    if (!auth.currentUser || (userEmail && !allowedAdmins.includes(userEmail))) {
       alert('Geen toegang. Dit gedeelte is alleen voor de beheerder (vis@emmauscollege.nl of eaimodelserie5@gmail.com).');
       navigate('/');
       return;
@@ -30,18 +29,52 @@ export default function AdminDashboardPage() {
     setLoading(true);
     try {
       if (activeTab === 'sessions') {
-        const [resSessions, resStats] = await Promise.all([
-          fetch('/api/admin/sessions'),
-          fetch('/api/admin/stats')
-        ]);
-        setSessions(await resSessions.json());
-        setStats(await resStats.json());
+        const sessionsRef = collection(db, 'classroom_sessions');
+        const q = query(sessionsRef, orderBy('created_at', 'desc'));
+        const snap = await getDocs(q);
+        
+        const fetchedSessions = snap.docs.map(docSnap => {
+          const data = docSnap.data();
+          let created_at = data.created_at;
+          if (created_at && created_at.toDate) {
+            created_at = created_at.toDate().toISOString();
+          } else if (!created_at) {
+            created_at = new Date().toISOString();
+          }
+          return {
+            id: docSnap.id,
+            ...data,
+            participant_count: '-',
+            signal_count: '-',
+            created_at,
+            subject: data.prep_json ? JSON.parse(data.prep_json).subject : 'Algemeen',
+            grade: data.prep_json ? JSON.parse(data.prep_json).gradeYear : '',
+            level: data.prep_json ? JSON.parse(data.prep_json).level : '',
+          };
+        });
+        
+        setSessions(fetchedSessions);
+        
+        const totalSessionsSnap = await getCountFromServer(sessionsRef);
+        const activeSessionsSnap = await getCountFromServer(query(sessionsRef, where('status', '==', 'ACTIVE')));
+        
+        setStats({
+          totalSessions: totalSessionsSnap.data().count,
+          activeSessions: activeSessionsSnap.data().count,
+          totalParticipants: '-',
+          totalSignals: '-'
+        });
       } else {
-        const res = await fetch('/api/admin/settings');
-        setSettings(await res.json());
+        const globalSettingsRef = doc(db, 'admin_settings', 'global');
+        const docSnap = await getDoc(globalSettingsRef);
+        if (docSnap.exists()) {
+          setSettings(docSnap.data());
+        } else {
+          setSettings({});
+        }
       }
     } catch (err) {
-      console.error('Failed to fetch admin data', err);
+      console.error('Failed to fetch admin data (check Firestore rules)', err);
     } finally {
       setLoading(false);
     }
@@ -50,13 +83,8 @@ export default function AdminDashboardPage() {
   const handleEndSession = async (id: string) => {
     if (!window.confirm('Weet je zeker dat je deze sessie geforceerd wilt beëindigen?')) return;
     try {
-      await fetch(`/api/admin/sessions/${id}/end`, { method: 'POST' });
       const sessionRef = doc(db, 'classroom_sessions', id);
-      try {
-        await updateDoc(sessionRef, { status: 'ENDED' });
-      } catch (e) {
-        console.warn('Firebase session could not be updated:', e);
-      }
+      await updateDoc(sessionRef, { status: 'ENDED', updated_at: serverTimestamp() });
       fetchData();
     } catch (err) {
       alert('Fout bij beëindigen sessie');
@@ -66,13 +94,9 @@ export default function AdminDashboardPage() {
   const handleDeleteSession = async (id: string) => {
     if (!window.confirm('Weet je zeker dat je deze sessie en alle bijbehorende data (deelnemers, signalen) permanent wilt verwijderen?')) return;
     try {
-      await fetch(`/api/admin/sessions/${id}`, { method: 'DELETE' });
       const sessionRef = doc(db, 'classroom_sessions', id);
-      try {
-        await updateDoc(sessionRef, { status: 'ENDED' }); // Trigger client disconnect before delete
-      } catch (e) {
-        console.warn('Firebase session could not be updated:', e);
-      }
+      // Not deleting subcollections explicitly, but the session itself will be removed.
+      await deleteDoc(sessionRef);
       fetchData();
     } catch (err) {
       alert('Fout bij verwijderen sessie');
@@ -82,12 +106,6 @@ export default function AdminDashboardPage() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
-      });
-      
       const globalSettingsRef = doc(db, 'admin_settings', 'global');
       await setDoc(globalSettingsRef, {
         ...settings,

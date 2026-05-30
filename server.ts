@@ -5,21 +5,13 @@ import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
 
-import { initWebSocket } from './src/server/websocket.ts';
-import { sessionsRouter } from './src/server/routes/sessions.ts';
-import { participantsRouter } from './src/server/routes/participants.ts';
-import { signalsRouter } from './src/server/routes/signals.ts';
 import { aiRouter } from './src/server/routes/ai.ts';
-import { adminRouter } from './src/server/routes/admin.ts';
 
 dotenv.config();
 
 async function startServer() {
   const app = express();
   const server = http.createServer(app);
-  
-  // Initialize WebSocket server
-  initWebSocket(server);
 
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
@@ -31,12 +23,8 @@ async function startServer() {
   });
 
   // Mount routers
-  app.use('/api/sessions', sessionsRouter);
   app.use('/api/sessions/:id', aiRouter); // Mount AI routes under sessions
   app.use('/api/ai', aiRouter); // Mount general AI routes
-  app.use('/api/participants', participantsRouter);
-  app.use('/api/signals', signalsRouter);
-  app.use('/api/admin', adminRouter);
 
   // Vite middleware for development (skip if dist folder exists from a build)
   const distPath = path.join(process.cwd(), 'dist');

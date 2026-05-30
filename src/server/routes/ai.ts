@@ -1,7 +1,5 @@
 import { Router, Request, Response } from 'express';
-import db from '../../db/index.ts';
 import { v4 as uuidv4 } from 'uuid';
-import { broadcast } from '../websocket.ts';
 import { generateAiContent } from '../services/ai.ts';
 import { getSsotContextForPrompt } from '../../lib/ssot.ts';
 import { Type } from '@google/genai';

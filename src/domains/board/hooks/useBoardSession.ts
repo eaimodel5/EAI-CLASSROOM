@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ClassroomSession, ClassroomPrompt, ClassroomSignal, ClassroomParticipant } from '../../../types';
 import { db } from '../../../lib/firebase';
-import { collection, query, where, onSnapshot, doc, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 
 export function useBoardSession(sessionCode: string | undefined) {
   const [session, setSession] = useState<ClassroomSession | null>(null);
@@ -23,17 +23,15 @@ export function useBoardSession(sessionCode: string | undefined) {
     const initializeSession = async () => {
       try {
         const uppercaseCode = sessionCode.toUpperCase();
-        // Since board doesn't know sessionId initially, query by sessionCode
-        const sessionsRef = collection(db, 'classroom_sessions');
-        const qSession = query(sessionsRef, where('session_code', '==', uppercaseCode));
-        const sessionSnap = await getDocs(qSession);
+        // Board uses session_codes lookup
+        const codeRef = doc(db, 'session_codes', uppercaseCode);
+        const codeSnap = await getDoc(codeRef);
         
-        if (sessionSnap.empty) {
+        if (!codeSnap.exists()) {
           throw new Error('Sessie niet gevonden');
         }
 
-        const sessionDoc = sessionSnap.docs[0];
-        const sessionId = sessionDoc.id;
+        const sessionId = codeSnap.data().sessionId;
 
         // Monitor session
         unsubSession = onSnapshot(doc(db, 'classroom_sessions', sessionId), (docSnap) => {

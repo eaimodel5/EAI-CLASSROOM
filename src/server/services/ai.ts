@@ -1,27 +1,24 @@
 import { GoogleGenAI } from '@google/genai';
-import db from '../../db/index.ts';
+import { db } from '../../lib/firebase.ts';
+import { doc, getDoc } from 'firebase/firestore';
 
 /**
  * Removes markdown code blocks from a string if they exist.
  * This ensures JSON.parse won't crash when LLMs wrap their response in markdown.
  */
 export function cleanJsonResponse(rawText: string): string {
-  let cleanText = rawText.trim();
-  if (cleanText.startsWith('\`\`\`json')) {
-    cleanText = cleanText.substring(7);
-  } else if (cleanText.startsWith('\`\`\`')) {
-    cleanText = cleanText.substring(3);
+  let text = rawText.trim();
+  const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (match) {
+    return match[1].trim();
   }
-  if (cleanText.endsWith('\`\`\`')) {
-    cleanText = cleanText.substring(0, cleanText.length - 3);
-  }
-  return cleanText.trim();
+  return text;
 }
 
 /**
  * Executes a Gemini 3 API call with error handling.
  */
-export async function generateAiContent(prompt: string, responseAsJson: boolean = false, responseSchema?: any): Promise<string> {
+export async function generateAiContent(prompt: string, responseAsJson: boolean = false, responseSchema?: any, options?: { model?: string, temperature?: number }): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not configured.');
@@ -36,23 +33,23 @@ export async function generateAiContent(prompt: string, responseAsJson: boolean 
     }
   });
   
-  let modelName = 'gemini-3.1-pro-preview';
-  let temperature = 0.7;
-  
+  let modelName = options?.model || 'gemini-3.1-pro-preview';
+  let temperature = options?.temperature ?? 0.7;
+
   try {
-    const modelRecord = db.prepare('SELECT value FROM admin_settings WHERE key = "eai_model_version"').get() as { value: string } | undefined;
-    if (modelRecord?.value) {
-      modelName = modelRecord.value;
-    }
-    const tempRecord = db.prepare('SELECT value FROM admin_settings WHERE key = "eai_temperature"').get() as { value: string } | undefined;
-    if (tempRecord?.value) {
-      const parsed = parseFloat(tempRecord.value);
-      if (!isNaN(parsed)) {
-        temperature = parsed;
+    const docSnap = await getDoc(doc(db, 'admin_settings', 'global'));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (!options?.model && data.eai_model_version) {
+        modelName = data.eai_model_version;
+      }
+      if (options?.temperature === undefined && data.eai_temperature !== undefined) {
+        const parsed = parseFloat(data.eai_temperature);
+        if (!isNaN(parsed)) temperature = parsed;
       }
     }
-  } catch (e) {
-    console.warn('Failed to fetch admin settings from database, using fallback values.', e);
+  } catch (error) {
+    console.warn('Failed to read admin_settings from Firestore:', error);
   }
 
   const config: any = {

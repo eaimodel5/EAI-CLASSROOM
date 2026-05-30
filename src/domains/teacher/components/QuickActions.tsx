@@ -36,86 +36,96 @@ export function QuickActions({
     <div className="space-y-1">
       {parsedPrep.priorKnowledgeQuestions?.map((q: string, idx: number) => (
         (showAllTools || activePhase === 'START') && q && (
-          <FastTooltip key={`prior-${idx}`} content={q}>
-            <button
-              onClick={() => onOpenPrompt('PRIOR_KNOWLEDGE', q)}
-              disabled={hasActivePrompt}
-              className={getButtonStyles()}
-            >
-              <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
-              <div className={getIconStyles()}>
-                 <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
-              </div>
-            </button>
-          </FastTooltip>
+          <React.Fragment key={`prior-${idx}`}>
+            <FastTooltip content={q}>
+              <button
+                onClick={() => onOpenPrompt('PRIOR_KNOWLEDGE', q)}
+                disabled={hasActivePrompt}
+                className={getButtonStyles()}
+              >
+                <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
+                <div className={getIconStyles()}>
+                   <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
+                </div>
+              </button>
+            </FastTooltip>
+          </React.Fragment>
         )
       ))}
 
       {parsedPrep.instructionActivities?.map((q: string, idx: number) => (
         (showAllTools || activePhase === 'INSTRUCTIE') && q && (
-          <FastTooltip key={`instructie-${idx}`} content={q}>
-            <button
-              onClick={() => onOpenPrompt('DIAGNOSTIC', q)}
-              disabled={hasActivePrompt}
-              className={getButtonStyles()}
-            >
-              <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
-              <div className={getIconStyles()}>
-                 <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
-              </div>
-            </button>
-          </FastTooltip>
+          <React.Fragment key={`instructie-${idx}`}>
+            <FastTooltip content={q}>
+              <button
+                onClick={() => onOpenPrompt('DIAGNOSTIC', q)}
+                disabled={hasActivePrompt}
+                className={getButtonStyles()}
+              >
+                <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
+                <div className={getIconStyles()}>
+                   <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
+                </div>
+              </button>
+            </FastTooltip>
+          </React.Fragment>
         )
       ))}
 
       {parsedPrep.checkQuestions?.map((q: string, idx: number) => (
         (showAllTools || activePhase === 'CHECK') && q && (
-          <FastTooltip key={`check-${idx}`} content={q}>
-            <button
-              onClick={() => onOpenPrompt('CHECK_QUESTION', q)}
-              disabled={hasActivePrompt}
-              className={getButtonStyles()}
-            >
-              <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
-              <div className={getIconStyles()}>
-                 <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
-              </div>
-            </button>
-          </FastTooltip>
+          <React.Fragment key={`check-${idx}`}>
+            <FastTooltip content={q}>
+              <button
+                onClick={() => onOpenPrompt('CHECK_QUESTION', q)}
+                disabled={hasActivePrompt}
+                className={getButtonStyles()}
+              >
+                <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
+                <div className={getIconStyles()}>
+                   <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
+                </div>
+              </button>
+            </FastTooltip>
+          </React.Fragment>
         )
       ))}
 
       {parsedPrep.processingActivities?.map((q: string, idx: number) => (
         (showAllTools || activePhase === 'VERWERKEN') && q && (
-          <FastTooltip key={`verwerken-${idx}`} content={q}>
-            <button
-              onClick={() => onOpenPrompt('CHECK_QUESTION', q)}
-              disabled={hasActivePrompt}
-              className={getButtonStyles()}
-            >
-              <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
-              <div className={getIconStyles()}>
-                 <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
-              </div>
-            </button>
-          </FastTooltip>
+          <React.Fragment key={`verwerken-${idx}`}>
+            <FastTooltip content={q}>
+              <button
+                onClick={() => onOpenPrompt('CHECK_QUESTION', q)}
+                disabled={hasActivePrompt}
+                className={getButtonStyles()}
+              >
+                <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
+                <div className={getIconStyles()}>
+                   <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
+                </div>
+              </button>
+            </FastTooltip>
+          </React.Fragment>
         )
       ))}
 
       {parsedPrep.exitTicketQuestions?.map((q: string, idx: number) => (
         (showAllTools || activePhase === 'AFSLUITING') && q && (
-          <FastTooltip key={`exit-${idx}`} content={q}>
-            <button
-              onClick={() => onOpenPrompt('EXIT_TICKET', q)}
-              disabled={hasActivePrompt}
-              className={getButtonStyles()}
-            >
-              <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
-              <div className={getIconStyles()}>
-                 <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
-              </div>
-            </button>
-          </FastTooltip>
+          <React.Fragment key={`exit-${idx}`}>
+            <FastTooltip content={q}>
+              <button
+                onClick={() => onOpenPrompt('EXIT_TICKET', q)}
+                disabled={hasActivePrompt}
+                className={getButtonStyles()}
+              >
+                <span className="flex-1 whitespace-pre-wrap line-clamp-2">{q}</span>
+                <div className={getIconStyles()}>
+                   <Play className="w-2.5 h-2.5 text-indigo-400 group-hover:text-white ml-0.5" />
+                </div>
+              </button>
+            </FastTooltip>
+          </React.Fragment>
         )
       ))}
     </div>

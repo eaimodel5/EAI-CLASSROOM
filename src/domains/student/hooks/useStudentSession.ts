@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClassroomSession, ClassroomParticipant, ClassroomPrompt } from '../../../types';
 import { db, auth } from '../../../lib/firebase';
-import { doc, collection, onSnapshot, setDoc, updateDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, setDoc, updateDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../../../lib/firebase-error';
 
 export function useStudentSession() {
@@ -81,13 +81,18 @@ export function useStudentSession() {
       if (!auth.currentUser) throw new Error("Authentication failed");
       const localCode = sessionCode.toUpperCase();
       
-      const sessionsRef = collection(db, 'classroom_sessions');
-      const qSession = query(sessionsRef, where('session_code', '==', localCode), where('status', '==', 'ACTIVE'));
-      const sessionSnap = await getDocs(qSession);
+      const codeRef = doc(db, 'session_codes', localCode);
+      const codeSnap = await getDoc(codeRef);
+      if (!codeSnap.exists() || codeSnap.data().status !== 'ACTIVE') {
+        throw new Error('Sessie niet gevonden of niet actief');
+      }
+      const sessionId = codeSnap.data().sessionId;
       
-      if (sessionSnap.empty) throw new Error('Sessie niet gevonden of niet actief');
+      const sessionDocRef = doc(db, 'classroom_sessions', sessionId);
+      const sessionDoc = await getDoc(sessionDocRef);
       
-      const sessionDoc = sessionSnap.docs[0];
+      if (!sessionDoc.exists()) throw new Error('Sessie niet gevonden');
+      
       const sessionData = { ...sessionDoc.data(), id: sessionDoc.id } as ClassroomSession;
       
       const pId = Math.random().toString(36).substring(2, 9);

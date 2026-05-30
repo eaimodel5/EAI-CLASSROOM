@@ -15,7 +15,7 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     
     match /admin_settings/{settingId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && request.auth.token.email == 'vis@emmauscollege.nl';
     }
     
@@ -34,6 +34,11 @@ service cloud.firestore {
       allow delete: if isSignedIn() && isValidId(templateId) && existing().created_by == request.auth.uid;
     }
 
+    match /session_codes/{codeId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
     match /classroom_sessions/{sessionId} {
       // Create session validation
       function isValidSession(data) {
@@ -51,19 +56,19 @@ service cloud.firestore {
                data.updated_at == request.time;
       }
 
-      // Teachers can list their sessions. Students fetch by ID after querying by code securely? 
-      // We can't query by code securely without exposing all. So students use a cloud function or we allow read if they know the ID.
-      // For this prototype, we allow list for all signed in users so they can query by session_code.
+      // Teachers can list their sessions via specific query, students use session_codes lookup
       allow get: if isValidId(sessionId);
-      allow list: if true;
+      allow list: if isSignedIn() && (request.auth.uid == resource.data.teacher_user_id || request.auth.token.email == 'vis@emmauscollege.nl');
       allow create: if isSignedIn() && isValidId(sessionId) && isValidSession(incoming());
       
       allow update: if isSignedIn() && isValidId(sessionId) && isValidSessionUpdate(incoming()) && (
         // Teacher actions override
-        (incoming().diff(existing()).affectedKeys().hasAny(['active_phase', 'status', 'board_message', 'active_prompt_id', 'timer_started_at', 'timer_duration_seconds', 'is_locked', 'shared_signal_id', 'widgets_json', 'prep_json', 'updated_at']) && existing().teacher_user_id == request.auth.uid)
+        (incoming().diff(existing()).affectedKeys().hasAny(['active_phase', 'status', 'board_message', 'active_prompt_id', 'timer_started_at', 'timer_duration_seconds', 'is_locked', 'shared_signal_id', 'widgets_json', 'prep_json', 'updated_at']) && existing().teacher_user_id == request.auth.uid) ||
+        // Admin override
+        request.auth.token.email == 'vis@emmauscollege.nl'
       );
       
-      allow delete: if isSignedIn() && existing().teacher_user_id == request.auth.uid;
+      allow delete: if isSignedIn() && (existing().teacher_user_id == request.auth.uid || request.auth.token.email == 'vis@emmauscollege.nl');
       
       
       match /participants/{participantId} {

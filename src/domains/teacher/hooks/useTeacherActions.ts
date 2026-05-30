@@ -60,6 +60,12 @@ export function useTeacherActions({
         prep_json: JSON.stringify(prep)
       };
       
+      // Store the lookup mapping for students/board
+      await setDoc(doc(db, 'session_codes', sessionData.session_code), {
+        sessionId: id,
+        status: 'ACTIVE'
+      });
+      
       await setDoc(doc(db, 'classroom_sessions', id), sessionData);
       setSession(sessionData);
     } catch (err) {
@@ -169,6 +175,7 @@ export function useTeacherActions({
     if (!session || !window.confirm('Weet je zeker dat je deze les wilt beëindigen?')) return false;
     try {
       await updateDoc(doc(db, 'classroom_sessions', session.id), { status: 'ENDED', ended_at: serverTimestamp(), updated_at: serverTimestamp() });
+      await deleteDoc(doc(db, 'session_codes', session.session_code)).catch(() => {});
       setSession(null);
       setParticipants([]);
       setSignals([]);

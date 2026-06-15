@@ -4,7 +4,7 @@
 2026-05-21
 
 ## Status
-Proposed
+Succesvol afgerond (Implemented)
 
 ## Context
 Na het doorvoeren van fundamentele ai-gegenereerde lesvoorbereidingen en dynamische lesfases, is het essentieel dat we de bediening voor de docent (de TeacherClassroomPage) naar het ultieme niveau tillen. Uit gebruikersinzichten en onze visie blijkt het volgende:
@@ -53,3 +53,6 @@ Om de transitie veilig te doen, refactoren we stapsgewijs:
 **Negatief**:
 - Vereist verfijnde CSS / Tailwind manipulatie met Flexbox (om `overflow` netjes af te vangen).
 - De React component tree van `TeacherClassroomPage` wordt iets complexer door de extra state variables voor uitklappen. Dit compenseren we met strikte component-extractie.
+
+## Review: Mijlpaal Behaald
+*Update JUNI 2026:* De voorgestelde UI verbeteringen, de volledige integratie van Firestore, en de gelaagde widget- en lesson prep functies, zijn stuk voor stuk succesvol doorgevoerd. Alles is perfect in harmonie. Dit is een aanzienlijke mijlpaal in ons traject. Hierdoor kunnen we voortaan de rigide structuur ("anchorpoints" / strikte checks) iets meer loslaten in onze verdere doorontwikkeling. We hebben stevige fundamenten gelegd. We kunnen nu meer de focus leggen op wendbare productdoorontwikkeling.

@@ -17,7 +17,7 @@ export default function AdminDashboardPage() {
     const allowedAdmins = ['vis@emmauscollege.nl', 'eaimodelserie5@gmail.com'];
     const userEmail = auth.currentUser?.email;
 
-    if (!auth.currentUser || (userEmail && !allowedAdmins.includes(userEmail))) {
+    if (!auth.currentUser || !userEmail || !allowedAdmins.includes(userEmail)) {
       alert('Geen toegang. Dit gedeelte is alleen voor de beheerder (vis@emmauscollege.nl of eaimodelserie5@gmail.com).');
       navigate('/');
       return;

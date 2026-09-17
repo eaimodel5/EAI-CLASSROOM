@@ -53,17 +53,39 @@ service cloud.firestore {
         return data.teacher_user_id == existing().teacher_user_id && // Immutable
                data.session_code == existing().session_code &&       // Immutable
                data.created_at == existing().created_at &&           // Immutable
+               data.get('session_snapshot_json', null) == existing().get('session_snapshot_json', null) && // Immutable
+               data.get('prep_json', null) == existing().get('prep_json', null) && // Immutable during runtime
                data.updated_at == request.time;
       }
 
-      // Teachers can list their sessions via specific query, students use session_codes lookup
+      // Note: Firestore rules are not filters. 
+      // For ordinary teachers, the client MUST enforce `where('teacher_user_id', '==', auth.uid)` 
+      // in their list queries for this rule to pass.
       allow get: if isValidId(sessionId);
       allow list: if isSignedIn() && (request.auth.token.email == 'vis@emmauscollege.nl' || request.auth.token.email == 'eaimodelserie5@gmail.com' || request.auth.uid == resource.data.teacher_user_id);
       allow create: if isSignedIn() && isValidId(sessionId) && isValidSession(incoming());
       
       allow update: if isSignedIn() && isValidId(sessionId) && isValidSessionUpdate(incoming()) && (
         // Teacher actions override
-        (incoming().diff(existing()).affectedKeys().hasAny(['active_phase', 'status', 'board_message', 'active_prompt_id', 'timer_started_at', 'timer_duration_seconds', 'is_locked', 'shared_signal_id', 'widgets_json', 'prep_json', 'updated_at']) && existing().teacher_user_id == request.auth.uid) ||
+        (existing().teacher_user_id == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+          'active_phase', 
+          'status', 
+          'board_message', 
+          'active_prompt_id', 
+          'timer_started_at', 
+          'timer_duration_seconds', 
+          'is_locked', 
+          'help_questions_enabled', 
+          'shared_signal_id', 
+          'widgets_json', 
+          'subject', 
+          'grade', 
+          'level', 
+          'lesson_goal', 
+          'runtime_prep_json', 
+          'ended_at', 
+          'updated_at'
+        ])) ||
         // Admin override
         request.auth.token.email == 'vis@emmauscollege.nl' || request.auth.token.email == 'eaimodelserie5@gmail.com'
       );

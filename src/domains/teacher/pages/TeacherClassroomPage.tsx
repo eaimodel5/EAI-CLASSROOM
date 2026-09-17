@@ -8,6 +8,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../../../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { emptyLessonPreparation, LessonPreparation, SessionSnapshot } from '../../../types';
+import { getActiveLessonPrep } from '../../../lib/prepHelpers';
 import { WidgetSelector } from '../../../components/widgets/WidgetSelector';
 import { LessonPreparationForm } from '../../../components/LessonPreparationForm';
 
@@ -114,7 +115,7 @@ export function TeacherClassroomPage() {
     }
   };
 
-  const parsedPrep: (LessonPreparation & { rawPrep?: LessonPreparation }) | null = session?.prep_json ? JSON.parse(session.prep_json) : null;
+  const parsedPrep: LessonPreparation | SessionSnapshot | null = getActiveLessonPrep(session);
   const activePhaseProposals = session ? proposals.filter((p: any) => p.phase === session.active_phase && p.status !== 'DISMISSED') : [];
 
   const getDynamicPrefill = (type: PromptType): string => {
@@ -569,7 +570,7 @@ export function TeacherClassroomPage() {
           <PrintableLessonPlan prep={printModePrep} onBack={() => setPrintModePrep(null)} />
         ) : isEditingPrep ? (
           <LessonPreparationForm 
-            initialValue={parsedPrep?.rawPrep || parsedPrep || emptyLessonPreparation} 
+            initialValue={parsedPrep || emptyLessonPreparation} 
             onSave={handleSavePrep} 
             onChoosePrint={setPrintModePrep}
             onCancel={() => setIsEditingPrep(false)}

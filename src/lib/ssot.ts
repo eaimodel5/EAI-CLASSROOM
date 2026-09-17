@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getActiveLessonPrep } from './prepHelpers';
 
 // Parse the SSOT JSON file
 const ssotPath = path.join(process.cwd(), 'ssot-16.2.json');
@@ -60,10 +61,9 @@ export const getSsotContextForPrompt = (session: any, commandId?: string) => {
   }
 
   let prepContext = '';
-  if (session.prep_json) {
-    try {
-      const prep = JSON.parse(session.prep_json);
-      prepContext = `
+  const prep = getActiveLessonPrep(session as any);
+  if (prep) {
+    prepContext = `
 Lesvoorbereiding Context:
 - Vak: ${prep.subject || 'Niet gespecificeerd'}
 - Klas: ${prep.className || 'Niet gespecificeerd'}
@@ -71,9 +71,6 @@ Lesvoorbereiding Context:
 - Niveau: ${prep.level || 'Niet gespecificeerd'}
 - Leerdoel: ${prep.learningGoal || 'Niet gespecificeerd'}
 `;
-    } catch (e) {
-      console.error('Failed to parse prep_json', e);
-    }
   }
 
   let commandContext = '';

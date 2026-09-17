@@ -21,6 +21,7 @@ function cleanStringArray(arr?: string[] | null): string[] {
 
 export interface SessionCompileResult {
   valid: boolean;
+  errors: string[];
   warnings: string[];
   snapshot: SessionSnapshot;
 }
@@ -32,29 +33,23 @@ export interface SessionCompileResult {
  */
 export function compileSessionSnapshot(workingPrep: LessonPreparation): SessionCompileResult {
   const warnings: string[] = [];
+  const errors: string[] = [];
 
   const rawTitle = cleanString(workingPrep.title);
   const rawSubject = cleanString(workingPrep.subject);
   const rawLearningGoal = cleanString(workingPrep.learningGoal);
 
   if (!rawTitle) {
-    warnings.push('Geen titel opgegeven; standaard titeltoegepast.');
-  }
-  if (!rawSubject) {
-    warnings.push('Geen vak opgegeven; standaard vaktoegepast.');
-  }
-  if (!rawLearningGoal) {
-    warnings.push('Geen specifiek leerdoel geformuleerd.');
+    warnings.push('Geen titel opgegeven.');
   }
 
-  // Gevalideerde en genormaliseerde velden
-  const subject = rawSubject || 'Algemeen';
-  const title = rawTitle || `${subject} Les (${new Date().toLocaleDateString('nl-NL')})`;
-  const className = cleanString(workingPrep.className);
-  const gradeYear = cleanString(workingPrep.gradeYear);
-  const level = cleanString(workingPrep.level);
-  const learningGoal = rawLearningGoal || 'Kennis- en vaardigheidsverdieping tijdens de les.';
-  const teacherNotes = cleanString(workingPrep.teacherNotes);
+  // Strict validatie: Vak en Leerdoel zijn vereist
+  if (!rawSubject) {
+    errors.push('Vak ontbreekt. Dit is verplicht voor de sessie.');
+  }
+  if (!rawLearningGoal) {
+    errors.push('Leerdoel ontbreekt. Dit is verplicht voor de sessie.');
+  }
 
   // Schone arrays zonder lege witregels of loze elementen
   const successCriteria = cleanStringArray(workingPrep.successCriteria);
@@ -66,27 +61,37 @@ export function compileSessionSnapshot(workingPrep: LessonPreparation): SessionC
   const interventions = cleanStringArray(workingPrep.interventions);
   const exitTicketQuestions = cleanStringArray(workingPrep.exitTicketQuestions);
 
+  // Inhoudelijke warnings
+  if (successCriteria.length === 0) warnings.push('Geen succescriteria opgegeven.');
+  if (priorKnowledgeQuestions.length === 0) warnings.push('Geen startvragen of voorkennisvragen opgegeven.');
+  if (misconceptions.length === 0) warnings.push('Geen misconcepties opgegeven.');
+
+  // Gevalideerde en genormaliseerde velden
+  const subject = rawSubject || '';
+  const title = rawTitle || '';
+  const className = cleanString(workingPrep.className);
+  const gradeYear = cleanString(workingPrep.gradeYear);
+  const level = cleanString(workingPrep.level);
+  const learningGoal = rawLearningGoal || '';
+  const teacherNotes = cleanString(workingPrep.teacherNotes);
+
   // Vaste, stabiele structuur voor de 5 fasen
   const phases: Record<'START' | 'INSTRUCTIE' | 'CHECK' | 'VERWERKEN' | 'AFSLUITING', CompiledPhasePlan> = {
     START: {
       phase: 'START',
       title: 'Start & Voorkennis',
-      items: priorKnowledgeQuestions.length > 0 
-        ? priorKnowledgeQuestions 
-        : [`Wat weet je al over ${title}? Denk 1 minuut na en bespreek met je buur.`]
+      items: priorKnowledgeQuestions
     },
     INSTRUCTIE: {
       phase: 'INSTRUCTIE',
       title: 'Instructie & Modelen',
-      items: instructionActivities.length > 0 
-        ? instructionActivities 
-        : [`Toelichting en kerninstructie door docent over leerdoel: ${learningGoal}`]
+      items: instructionActivities
     },
     CHECK: {
       phase: 'CHECK',
       title: 'Formatieve Check',
       items: [
-        ...(checkQuestions.length > 0 ? checkQuestions : [`Begrijp je de kernstap? Geef een signaal of antwoord.`]),
+        ...checkQuestions,
         ...(misconceptions.map((m) => `Let op denkfout: ${m}`)),
         ...(interventions.map((i) => `Hulpactie: ${i}`))
       ]
@@ -94,16 +99,12 @@ export function compileSessionSnapshot(workingPrep: LessonPreparation): SessionC
     VERWERKEN: {
       phase: 'VERWERKEN',
       title: 'Zelfstandige Verwerking',
-      items: processingActivities.length > 0 
-        ? processingActivities 
-        : [`Zelfstandig of in tweetallen werken aan de lesstof.`]
+      items: processingActivities
     },
     AFSLUITING: {
       phase: 'AFSLUITING',
       title: 'Afsluiting & Exit-Ticket',
-      items: exitTicketQuestions.length > 0 
-        ? exitTicketQuestions 
-        : [`Formuleer in één zin wat je vandaag hebt geleerd over het leerdoel.`],
+      items: exitTicketQuestions,
       notes: teacherNotes || undefined
     }
   };
@@ -131,12 +132,12 @@ export function compileSessionSnapshot(workingPrep: LessonPreparation): SessionC
     compiledAt,
     version: '1.0',
     isCompiled: true,
-    phases,
-    rawPrep: { ...workingPrep }
+    phases
   };
 
   return {
-    valid: true,
+    valid: errors.length === 0,
+    errors,
     warnings,
     snapshot
   };

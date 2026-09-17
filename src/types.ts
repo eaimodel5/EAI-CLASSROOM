@@ -47,7 +47,6 @@ export interface SessionSnapshot extends LessonPreparation {
   version: string;
   isCompiled: true;
   phases: Record<'START' | 'INSTRUCTIE' | 'CHECK' | 'VERWERKEN' | 'AFSLUITING', CompiledPhasePlan>;
-  rawPrep: LessonPreparation;
 }
 
 export interface ClassroomSession {
@@ -69,7 +68,12 @@ export interface ClassroomSession {
   help_questions_enabled?: number;
   shared_signal_id: string | null;
   widgets_json: string | null;
+  /** @deprecated backward-compatibility fallback. Op nieuwe sessies is dit de initiële snapshot. */
   prep_json: string | null;
+  /** De onveranderlijke (immutable) startpositie (SessionSnapshot) */
+  session_snapshot_json?: string | null;
+  /** De actuele, bewerkte toestand tijdens de les */
+  runtime_prep_json?: string | null;
   started_at: string | null;
   ended_at: string | null;
   created_at: string;

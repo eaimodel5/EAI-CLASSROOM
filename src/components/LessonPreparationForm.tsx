@@ -121,7 +121,14 @@ export function LessonPreparationForm({
   const handleCompileAndProceed = (targetPath: 'PRINT' | 'DIGITAL') => {
     // Centrale technische validatie & compile stap (geen nieuwe AI call)
     // Zet het bewerkbare werkdocument om naar een stabiele, onveranderlijke sessiesnapshot
-    const { snapshot } = compileSessionSnapshot(prep);
+    const compileResult = compileSessionSnapshot(prep);
+    
+    if (!compileResult.valid) {
+      alert('Kan de sessie niet voorbereiden vanwege de volgende fouten:\n\n- ' + compileResult.errors.join('\n- '));
+      return;
+    }
+
+    const snapshot = compileResult.snapshot;
     localStorage.removeItem("eai_lesson_draft");
 
     // Pas na de compileer-stap gaan de twee paden uiteen: Print of Digitale sessie

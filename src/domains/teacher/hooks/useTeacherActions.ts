@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ClassroomSession, ClassroomParticipant, LessonPreparation, SessionSnapshot } from '../../../types';
 import { compileSessionSnapshot } from '../../../lib/sessionCompiler';
+import { getActiveLessonPrep } from '../../../lib/prepHelpers';
 import { WidgetType, WidgetInstance } from '../../../components/widgets/WidgetRegistry';
 import { PromptType, PROMPT_CONFIG } from '../types';
 import { doc, updateDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
@@ -64,7 +65,9 @@ export function useTeacherActions({
         started_at: serverTimestamp(),
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-        prep_json: JSON.stringify(snapshot)
+        // TODO(Phase-out): Verwijder prep_json in de toekomst zodra alle legacy sessies zijn gemigreerd
+        prep_json: JSON.stringify(snapshot), // Voor backward compatibility
+        session_snapshot_json: JSON.stringify(snapshot) // De onveranderlijke startpositie
       };
       
       // Store the lookup mapping for students/board
@@ -95,7 +98,7 @@ export function useTeacherActions({
         grade: snapshot.className,
         level: snapshot.level,
         lesson_goal: snapshot.learningGoal,
-        prep_json: JSON.stringify(snapshot),
+        runtime_prep_json: JSON.stringify(snapshot), // De actuele, bewerkte toestand
         updated_at: serverTimestamp()
       };
       await updateDoc(doc(db, 'classroom_sessions', session.id), updates);
@@ -370,6 +373,7 @@ export function useTeacherActions({
   const handleAddWidget = async (type: WidgetType) => {
     if (!session) return false;
     const currentWidgets: WidgetInstance[] = JSON.parse(session.widgets_json || '[]');
+    const prepSource = getActiveLessonPrep(session) || {};
     const newWidget: WidgetInstance = {
       id: Math.random().toString(36).substring(2, 9),
       type,
@@ -377,7 +381,7 @@ export function useTeacherActions({
       y: 10 + (currentWidgets.length * 5),
       w: 20,
       h: 30,
-      data: type === 'LESSON_PLAN' ? { prep: JSON.parse(session.prep_json || '{}') } : {}
+      data: type === 'LESSON_PLAN' ? { prep: prepSource } : {}
     };
     
     const updatedWidgets = [...currentWidgets, newWidget];

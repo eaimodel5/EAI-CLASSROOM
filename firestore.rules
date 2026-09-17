@@ -58,7 +58,7 @@ service cloud.firestore {
 
       // Teachers can list their sessions via specific query, students use session_codes lookup
       allow get: if isValidId(sessionId);
-      allow list: if isSignedIn() && (request.auth.uid == resource.data.teacher_user_id || request.auth.token.email == 'vis@emmauscollege.nl' || request.auth.token.email == 'eaimodelserie5@gmail.com');
+      allow list: if isSignedIn() && (request.auth.token.email == 'vis@emmauscollege.nl' || request.auth.token.email == 'eaimodelserie5@gmail.com' || request.auth.uid == resource.data.teacher_user_id);
       allow create: if isSignedIn() && isValidId(sessionId) && isValidSession(incoming());
       
       allow update: if isSignedIn() && isValidId(sessionId) && isValidSessionUpdate(incoming()) && (

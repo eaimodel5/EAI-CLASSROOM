@@ -3,6 +3,7 @@ import { ArrowLeft, Settings, Activity, Users, MessageSquare, Save, Eye, XCircle
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../lib/firebase';
 import { collection, query, orderBy, getDocs, getDoc, doc, setDoc, updateDoc, serverTimestamp, getCountFromServer, where, deleteDoc } from 'firebase/firestore';
+import { getActiveLessonPrep } from '../lib/prepHelpers';
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -41,15 +42,16 @@ export default function AdminDashboardPage() {
           } else if (!created_at) {
             created_at = new Date().toISOString();
           }
+          const activePrep = getActiveLessonPrep(data as any) || {} as any;
           return {
             id: docSnap.id,
             ...data,
             participant_count: '-',
             signal_count: '-',
             created_at,
-            subject: data.prep_json ? JSON.parse(data.prep_json).subject : 'Algemeen',
-            grade: data.prep_json ? JSON.parse(data.prep_json).gradeYear : '',
-            level: data.prep_json ? JSON.parse(data.prep_json).level : '',
+            subject: activePrep.subject || 'Algemeen',
+            grade: activePrep.gradeYear || '',
+            level: activePrep.level || '',
           };
         });
         
@@ -236,14 +238,14 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {session.prep_json && (
+                            {getActiveLessonPrep(session) && (
                                 <>
                                   <button 
                                     onClick={async () => {
                                       if (!window.confirm('Wil je deze les publiceren naar de centrale bibliotheek?')) return;
                                       try {
-                                        const prep_json = session.prep_json; // validate it's correct
-                                        const prep = JSON.parse(prep_json);
+                                        const prep = getActiveLessonPrep(session);
+                                        if (!prep) throw new Error("Ongeldige lesvoorbereiding");
                                         const title = prep.title || 'Onbekend Lesdoel';
                                         const subject = prep.subject || 'Algemeen';
                                         
@@ -254,7 +256,7 @@ export default function AdminDashboardPage() {
                                           title,
                                           subject,
                                           grade_level: prep.gradeYear || 'Niet gespecificeerd',
-                                          prep_json,
+                                          prep_json: JSON.stringify(prep),
                                           created_by: auth.currentUser.uid,
                                           created_at: serverTimestamp(),
                                           downloads_count: 0
@@ -274,7 +276,8 @@ export default function AdminDashboardPage() {
                                   <button 
                                     onClick={() => {
                                       try {
-                                        const prep = JSON.parse(session.prep_json);
+                                        const prep = getActiveLessonPrep(session);
+                                        if (!prep) throw new Error("Ongeldige lesvoorbereiding");
                                         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prep, null, 2));
                                         const downloadAnchorNode = document.createElement('a');
                                         downloadAnchorNode.setAttribute("href",     dataStr);

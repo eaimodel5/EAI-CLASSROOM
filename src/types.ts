@@ -34,6 +34,22 @@ export const emptyLessonPreparation: LessonPreparation = {
   teacherNotes: ""
 };
 
+export interface CompiledPhasePlan {
+  phase: 'START' | 'INSTRUCTIE' | 'CHECK' | 'VERWERKEN' | 'AFSLUITING';
+  title: string;
+  items: string[];
+  notes?: string;
+}
+
+export interface SessionSnapshot extends LessonPreparation {
+  snapshotId: string;
+  compiledAt: string;
+  version: string;
+  isCompiled: true;
+  phases: Record<'START' | 'INSTRUCTIE' | 'CHECK' | 'VERWERKEN' | 'AFSLUITING', CompiledPhasePlan>;
+  rawPrep: LessonPreparation;
+}
+
 export interface ClassroomSession {
   id: string;
   teacher_user_id: string;

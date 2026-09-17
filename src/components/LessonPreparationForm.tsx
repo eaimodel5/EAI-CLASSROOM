@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { LessonPreparation } from "../types";
+import { LessonPreparation, SessionSnapshot } from "../types";
+import { compileSessionSnapshot } from "../lib/sessionCompiler";
 import { Plus, Minus, Save, Wand2, Loader2, BookOpen, Target, MessageCircleQuestion, AlertTriangle, FileText, ChevronRight, ChevronLeft, CheckCircle, Check, PlayCircle, Library, Search, X, PanelLeftClose } from "lucide-react";
 import { db } from "../lib/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
@@ -84,8 +85,8 @@ export function LessonPreparationForm({
   onCancel
 }: {
   initialValue: LessonPreparation;
-  onSave: (prep: LessonPreparation) => void;
-  onChoosePrint?: (prep: LessonPreparation) => void;
+  onSave: (prep: LessonPreparation | SessionSnapshot) => void;
+  onChoosePrint?: (prep: LessonPreparation | SessionSnapshot) => void;
   onCancel?: () => void;
 }) {
   const [prep, setPrep] = useState<LessonPreparation>(initialValue);
@@ -117,9 +118,20 @@ export function LessonPreparationForm({
     }
   }, [prep, initialValue]);
 
-  const handleSave = (prepData: LessonPreparation) => {
+  const handleCompileAndProceed = (targetPath: 'PRINT' | 'DIGITAL') => {
+    // Centrale technische validatie & compile stap (geen nieuwe AI call)
+    // Zet het bewerkbare werkdocument om naar een stabiele, onveranderlijke sessiesnapshot
+    const { snapshot } = compileSessionSnapshot(prep);
     localStorage.removeItem("eai_lesson_draft");
-    onSave(prepData);
+
+    // Pas na de compileer-stap gaan de twee paden uiteen: Print of Digitale sessie
+    if (targetPath === 'PRINT') {
+      if (onChoosePrint) {
+        onChoosePrint(snapshot);
+      }
+    } else {
+      onSave(snapshot);
+    }
   };
 
   const fetchLibrary = async () => {
@@ -592,6 +604,21 @@ export function LessonPreparationForm({
                     }}
                     autoFocus
                   />
+
+                  {/* Technische Validatie & Snapshot Status */}
+                  <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-3.5 flex items-start gap-3 mt-4">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-indigo-950">
+                        Centrale Validatie & Compileer-stap
+                      </p>
+                      <p className="text-[11px] text-indigo-800/80 leading-relaxed font-medium">
+                        Bij sessiestart zet het systeem dit werkdocument direct om naar een stabiele sessiesnapshot met 5 afgebakende fasen. Geen extra AI-wachttijd. Kies hieronder je gewenste pad.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -634,7 +661,7 @@ export function LessonPreparationForm({
                   {onChoosePrint && (
                     <button
                       className="flex-1 sm:flex-none group flex items-center justify-center gap-2 px-6 py-3 border-2 border-indigo-200 text-indigo-700 bg-white rounded-xl font-bold hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm active:scale-95"
-                      onClick={() => onChoosePrint(prep)}
+                      onClick={() => handleCompileAndProceed('PRINT')}
                     >
                       <FileText className="w-5 h-5" />
                       Uitdraai (PDF)
@@ -642,7 +669,7 @@ export function LessonPreparationForm({
                   )}
                   <button
                     className="flex-1 sm:flex-none group flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/20 active:scale-95"
-                    onClick={() => handleSave(prep)}
+                    onClick={() => handleCompileAndProceed('DIGITAL')}
                   >
                     <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     Digibord Les

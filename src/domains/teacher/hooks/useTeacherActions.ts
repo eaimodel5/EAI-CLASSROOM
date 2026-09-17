@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ClassroomSession, ClassroomParticipant, LessonPreparation } from '../../../types';
+import { ClassroomSession, ClassroomParticipant, LessonPreparation, SessionSnapshot } from '../../../types';
+import { compileSessionSnapshot } from '../../../lib/sessionCompiler';
 import { WidgetType, WidgetInstance } from '../../../components/widgets/WidgetRegistry';
 import { PromptType, PROMPT_CONFIG } from '../types';
 import { doc, updateDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
@@ -37,19 +38,25 @@ export function useTeacherActions({
     return code;
   };
 
-  const startSession = async (prep: LessonPreparation) => {
+  const startSession = async (prep: LessonPreparation | SessionSnapshot) => {
     setLoading(true);
     try {
       if (!auth.currentUser) throw new Error('Niet ingelogd.');
+
+      // Centrale technische compileer-garantie naar stabiele sessiesnapshot
+      const snapshot: SessionSnapshot = ('isCompiled' in prep && (prep as any).isCompiled)
+        ? (prep as SessionSnapshot)
+        : compileSessionSnapshot(prep).snapshot;
+
       const id = Math.random().toString(36).substring(2, 10);
       const sessionData: any = {
         id,
         teacher_user_id: auth.currentUser.uid,
         session_code: generateSessionCode(),
-        subject: prep.subject || 'Onderwerp',
-        grade: prep.className || '',
-        level: prep.level || '',
-        lesson_goal: prep.learningGoal || '',
+        subject: snapshot.subject,
+        grade: snapshot.className || '',
+        level: snapshot.level || '',
+        lesson_goal: snapshot.learningGoal || '',
         active_phase: 'START',
         status: 'ACTIVE',
         is_locked: 0,
@@ -57,7 +64,7 @@ export function useTeacherActions({
         started_at: serverTimestamp(),
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-        prep_json: JSON.stringify(prep)
+        prep_json: JSON.stringify(snapshot)
       };
       
       // Store the lookup mapping for students/board
@@ -76,15 +83,19 @@ export function useTeacherActions({
     }
   };
 
-  const updateSessionPrep = async (prep: LessonPreparation) => {
+  const updateSessionPrep = async (prep: LessonPreparation | SessionSnapshot) => {
     if (!session) return;
     try {
+      const snapshot: SessionSnapshot = ('isCompiled' in prep && (prep as any).isCompiled)
+        ? (prep as SessionSnapshot)
+        : compileSessionSnapshot(prep).snapshot;
+
       const updates = {
-        subject: prep.subject,
-        grade: prep.className,
-        level: prep.level,
-        lesson_goal: prep.learningGoal,
-        prep_json: JSON.stringify(prep),
+        subject: snapshot.subject,
+        grade: snapshot.className,
+        level: snapshot.level,
+        lesson_goal: snapshot.learningGoal,
+        prep_json: JSON.stringify(snapshot),
         updated_at: serverTimestamp()
       };
       await updateDoc(doc(db, 'classroom_sessions', session.id), updates);

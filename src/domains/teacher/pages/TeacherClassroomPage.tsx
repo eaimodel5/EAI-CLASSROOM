@@ -7,7 +7,7 @@ import {
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../../../lib/firebase';
 import { signOut } from 'firebase/auth';
-import { emptyLessonPreparation, LessonPreparation } from '../../../types';
+import { emptyLessonPreparation, LessonPreparation, SessionSnapshot } from '../../../types';
 import { WidgetSelector } from '../../../components/widgets/WidgetSelector';
 import { LessonPreparationForm } from '../../../components/LessonPreparationForm';
 
@@ -102,7 +102,7 @@ export function TeacherClassroomPage() {
   const [showPromptModal, setShowPromptModal] = useState(false);
   const [promptType, setPromptType] = useState<PromptType>('CHECK_QUESTION');
   const [newPromptText, setNewPromptText] = useState('');
-  const [printModePrep, setPrintModePrep] = useState<LessonPreparation | null>(null);
+  const [printModePrep, setPrintModePrep] = useState<LessonPreparation | SessionSnapshot | null>(null);
   const [isEditingPrep, setIsEditingPrep] = useState(false);
 
   const handleSignOut = async () => {
@@ -114,7 +114,7 @@ export function TeacherClassroomPage() {
     }
   };
 
-  const parsedPrep: LessonPreparation | null = session?.prep_json ? JSON.parse(session.prep_json) : null;
+  const parsedPrep: (LessonPreparation & { rawPrep?: LessonPreparation }) | null = session?.prep_json ? JSON.parse(session.prep_json) : null;
   const activePhaseProposals = session ? proposals.filter((p: any) => p.phase === session.active_phase && p.status !== 'DISMISSED') : [];
 
   const getDynamicPrefill = (type: PromptType): string => {
@@ -210,7 +210,7 @@ export function TeacherClassroomPage() {
     }
   };
 
-  const handleSavePrep = async (prep: LessonPreparation) => {
+  const handleSavePrep = async (prep: LessonPreparation | SessionSnapshot) => {
     await actions.updateSessionPrep(prep);
     setIsEditingPrep(false);
   };
@@ -569,7 +569,7 @@ export function TeacherClassroomPage() {
           <PrintableLessonPlan prep={printModePrep} onBack={() => setPrintModePrep(null)} />
         ) : isEditingPrep ? (
           <LessonPreparationForm 
-            initialValue={parsedPrep || emptyLessonPreparation} 
+            initialValue={parsedPrep?.rawPrep || parsedPrep || emptyLessonPreparation} 
             onSave={handleSavePrep} 
             onChoosePrint={setPrintModePrep}
             onCancel={() => setIsEditingPrep(false)}

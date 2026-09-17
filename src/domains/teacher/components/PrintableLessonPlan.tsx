@@ -1,8 +1,8 @@
 import React from 'react';
-import { LessonPreparation } from '../../../types';
+import { LessonPreparation, SessionSnapshot } from '../../../types';
 import { ArrowLeft, Printer, Target, AlertTriangle, MessageSquare, CheckSquare } from 'lucide-react';
 
-export function PrintableLessonPlan({ prep, onBack }: { prep: LessonPreparation, onBack: () => void }) {
+export function PrintableLessonPlan({ prep, onBack }: { prep: LessonPreparation | SessionSnapshot, onBack: () => void }) {
   const handlePrint = () => {
     window.print();
   };
